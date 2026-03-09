@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Target, BookOpen, BarChart3, Check, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Landing() {
   const { t } = useTranslation();
