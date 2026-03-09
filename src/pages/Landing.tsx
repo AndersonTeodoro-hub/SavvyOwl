@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Target, BookOpen, BarChart3, Check, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Landing() {
   const { t } = useTranslation();
@@ -64,6 +65,7 @@ export default function Landing() {
             <span className="text-xl font-bold text-foreground">PromptOS</span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <LanguageSelector />
             <Button variant="ghost" asChild>
               <Link to="/login">{t("landing.login")}</Link>
