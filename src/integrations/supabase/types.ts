@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          cost_eur: number | null
+          created_at: string
+          id: string
+          model_used: string | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          cost_eur?: number | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          cost_eur?: number | null
+          created_at?: string
+          id?: string
+          model_used?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          content_preference: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          monthly_budget_eur: number
+          onboarding_completed: boolean
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          content_preference?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          monthly_budget_eur?: number
+          onboarding_completed?: boolean
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          content_preference?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          monthly_budget_eur?: number
+          onboarding_completed?: boolean
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prompts: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_starter: boolean
+          title: string
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          is_starter?: boolean
+          title: string
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_starter?: boolean
+          title?: string
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_logs: {
+        Row: {
+          conversation_id: string | null
+          cost_eur: number
+          created_at: string
+          id: string
+          mode: string
+          model: string
+          tokens_input: number
+          tokens_output: number
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          cost_eur?: number
+          created_at?: string
+          id?: string
+          mode: string
+          model: string
+          tokens_input?: number
+          tokens_output?: number
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          cost_eur?: number
+          created_at?: string
+          id?: string
+          mode?: string
+          model?: string
+          tokens_input?: number
+          tokens_output?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
