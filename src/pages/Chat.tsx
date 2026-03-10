@@ -4,8 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { streamChat, ChatMessage } from "@/lib/chat-stream";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Send, Plus, MessageSquare, Zap, Brain, Pen } from "lucide-react";
@@ -34,7 +32,6 @@ export default function Chat() {
     creator: { label: t("chat.contentCreator"), icon: Pen, desc: t("chat.contentCreatorDesc") },
   };
 
-  // Conversation list
   const { data: conversations } = useQuery({
     queryKey: ["conversations", user?.id],
     enabled: !!user,
@@ -147,9 +144,10 @@ export default function Chat() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
-      <div className="w-64 border-r border-border bg-card/50 flex flex-col shrink-0 hidden md:flex">
+      {/* Conversation sidebar */}
+      <div className="w-64 border-r border-border bg-[hsl(var(--surface-1))] flex flex-col shrink-0 hidden md:flex">
         <div className="p-3">
-          <Button onClick={startNewChat} className="w-full" size="sm">
+          <Button onClick={startNewChat} className="w-full glow-primary" size="sm">
             <Plus className="mr-2 h-4 w-4" />
             {t("chat.newChat")}
           </Button>
@@ -160,8 +158,10 @@ export default function Chat() {
               <button
                 key={c.id}
                 onClick={() => selectConversation(c.id)}
-                className={`w-full text-left p-2.5 rounded-lg text-sm transition-colors truncate ${
-                  conversationId === c.id ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-secondary"
+                className={`w-full text-left p-2.5 rounded-lg text-sm transition-all duration-200 truncate ${
+                  conversationId === c.id
+                    ? "bg-primary/10 text-primary border border-primary/20"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground border border-transparent"
                 }`}
               >
                 <MessageSquare className="h-3 w-3 inline mr-2" />
@@ -184,17 +184,21 @@ export default function Chat() {
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-[50vh] text-center">
-                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 glow-primary">
                   <MessageSquare className="h-8 w-8 text-primary" />
                 </div>
-                <h2 className="text-xl font-semibold text-foreground mb-2">{t("chat.startConversation")}</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-2 text-tracking-tight">{t("chat.startConversation")}</h2>
                 <p className="text-muted-foreground max-w-md">{t("chat.startConversationDesc")}</p>
               </div>
             )}
 
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  msg.role === "user"
+                    ? "bg-border text-foreground rounded-br-md"
+                    : "bg-[hsl(var(--surface-2))] border-l-2 border-primary text-foreground rounded-bl-md"
+                }`}>
                   <div className="prose prose-sm prose-invert max-w-none">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
@@ -211,7 +215,7 @@ export default function Chat() {
 
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
               <div className="flex justify-start">
-                <div className="bg-card border border-border rounded-2xl px-4 py-3">
+                <div className="bg-[hsl(var(--surface-2))] border-l-2 border-primary rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex gap-1">
                     <div className="h-2 w-2 rounded-full bg-primary thinking-dot" />
                     <div className="h-2 w-2 rounded-full bg-primary thinking-dot" />
@@ -224,34 +228,37 @@ export default function Chat() {
           </div>
         </ScrollArea>
 
+        {/* Input bar */}
         <div className="border-t border-border p-4 bg-background">
           <div className="max-w-3xl mx-auto flex gap-3 items-end">
-            <Select value={mode} onValueChange={(v) => setMode(v as Mode)}>
-              <SelectTrigger className="w-[180px] bg-card border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(modeLabels).map(([key, val]) => (
-                  <SelectItem key={key} value={key}>
-                    <span className="flex items-center gap-2">
-                      <val.icon className="h-3 w-3" />
-                      {val.label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Mode selector as pills */}
+            <div className="flex bg-[hsl(var(--surface-1))] rounded-xl p-1 border border-border">
+              {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => (
+                <button
+                  key={key}
+                  onClick={() => setMode(key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    mode === key
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <val.icon className="h-3 w-3" />
+                  {val.label}
+                </button>
+              ))}
+            </div>
             <div className="flex-1 relative">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 placeholder={t("chat.typeMessage")}
-                className="bg-card border-border pr-12"
+                className="bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30 pr-12"
                 disabled={isLoading}
               />
             </div>
-            <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} size="icon">
+            <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} size="icon" className="glow-primary shrink-0">
               <Send className="h-4 w-4" />
             </Button>
           </div>

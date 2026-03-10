@@ -37,9 +37,9 @@ export function OnboardingModal() {
 
   return (
     <Dialog open>
-      <DialogContent className="sm:max-w-md bg-card border-border" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md bg-[hsl(var(--surface-2))] border-border shadow-elevated" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle className="text-foreground">
+          <DialogTitle className="text-foreground text-tracking-tight">
             {step === 1 && t("onboarding.step1Title")}
             {step === 2 && t("onboarding.step2Title")}
             {step === 3 && t("onboarding.step3Title")}
@@ -53,8 +53,8 @@ export function OnboardingModal() {
 
         {step === 1 && (
           <div className="space-y-4">
-            <Input placeholder={t("onboarding.yourName")} value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary border-border" />
-            <Button className="w-full" onClick={() => setStep(2)}>{t("common.continue")}</Button>
+            <Input placeholder={t("onboarding.yourName")} value={name} onChange={(e) => setName(e.target.value)} className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary" />
+            <Button className="w-full glow-primary" onClick={() => setStep(2)}>{t("common.continue")}</Button>
           </div>
         )}
 
@@ -62,12 +62,12 @@ export function OnboardingModal() {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               {contentTypeKeys.map((ct) => (
-                <Button key={ct} variant={contentType === ct ? "default" : "outline"} size="sm" onClick={() => setContentType(ct)} className="text-sm">
+                <Button key={ct} variant={contentType === ct ? "default" : "outline"} size="sm" onClick={() => setContentType(ct)} className={`text-sm ${contentType === ct ? "glow-primary" : "border-border hover:border-primary/30"}`}>
                   {t(`onboarding.contentTypes.${ct}`, ct)}
                 </Button>
               ))}
             </div>
-            <Button className="w-full" onClick={() => setStep(3)}>{t("common.continue")}</Button>
+            <Button className="w-full glow-primary" onClick={() => setStep(3)}>{t("common.continue")}</Button>
           </div>
         )}
 
@@ -81,7 +81,7 @@ export function OnboardingModal() {
               <p>📱 TikTok hook writer</p>
               <p>♻️ Content repurposer</p>
             </div>
-            <Button className="w-full" onClick={handleFinish}>{t("onboarding.letsGo")}</Button>
+            <Button className="w-full glow-primary" onClick={handleFinish}>{t("onboarding.letsGo")}</Button>
           </div>
         )}
       </DialogContent>

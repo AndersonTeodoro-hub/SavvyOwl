@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 import { Euro, Activity, TrendingDown, BarChart3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const PIE_COLORS = ["hsl(217 91% 60%)", "hsl(160 84% 39%)", "hsl(280 70% 60%)"];
+const PIE_COLORS = ["hsl(217 100% 61%)", "hsl(160 100% 48%)", "hsl(280 70% 60%)"];
 
 export default function Analytics() {
   const { user } = useAuth();
@@ -67,6 +67,13 @@ export default function Analytics() {
     },
   });
 
+  const tooltipStyle = {
+    background: "hsl(218 25% 12%)",
+    border: "1px solid hsl(213 35% 18%)",
+    borderRadius: "8px",
+    color: "hsl(214 60% 97%)",
+  };
+
   const stats = [
     { title: t("analytics.totalSpend"), value: `€${(data?.totalSpend || 0).toFixed(2)}`, icon: Euro },
     { title: t("analytics.requests"), value: data?.totalRequests || 0, icon: Activity },
@@ -77,9 +84,9 @@ export default function Analytics() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t("analytics.title")}</h1>
+        <h1 className="text-2xl font-bold text-foreground text-tracking-tight">{t("analytics.title")}</h1>
         <Select value={range} onValueChange={setRange}>
-          <SelectTrigger className="w-[160px] bg-card border-border"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[160px] bg-[hsl(var(--surface-2))] border-border"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="week">{t("analytics.thisWeek")}</SelectItem>
             <SelectItem value="month">{t("analytics.thisMonth")}</SelectItem>
@@ -90,29 +97,29 @@ export default function Analytics() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.title} className="bg-card border-border/50">
+          <Card key={s.title} className="bg-[hsl(var(--surface-2))] border-border hover:border-primary/30 transition-all duration-200">
             <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-                <s.icon className="h-4 w-4" />
-                {s.title}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-muted-foreground uppercase text-tracking-wide">{s.title}</span>
+                <s.icon className="h-4 w-4 text-primary" />
               </div>
-              <p className="text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="text-3xl font-bold text-foreground text-tracking-tight">{s.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="bg-card border-border/50">
-          <CardHeader><CardTitle className="text-lg">{t("analytics.dailySpend")}</CardTitle></CardHeader>
+        <Card className="bg-[hsl(var(--surface-2))] border-border">
+          <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.dailySpend")}</CardTitle></CardHeader>
           <CardContent>
             {data?.dailySpend && data.dailySpend.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={data.dailySpend}>
-                  <XAxis dataKey="date" stroke="hsl(215 20% 65%)" fontSize={12} />
-                  <YAxis stroke="hsl(215 20% 65%)" fontSize={12} tickFormatter={(v) => `€${v}`} />
-                  <Tooltip contentStyle={{ background: "hsl(217 33% 17%)", border: "1px solid hsl(217 33% 25%)", borderRadius: "8px", color: "hsl(210 40% 96%)" }} />
-                  <Bar dataKey="spend" fill="hsl(217 91% 60%)" radius={[4, 4, 0, 0]} />
+                  <XAxis dataKey="date" stroke="hsl(215 25% 63%)" fontSize={12} />
+                  <YAxis stroke="hsl(215 25% 63%)" fontSize={12} tickFormatter={(v) => `€${v}`} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="spend" fill="hsl(217 100% 61%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -121,8 +128,8 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border/50">
-          <CardHeader><CardTitle className="text-lg">{t("analytics.usageByMode")}</CardTitle></CardHeader>
+        <Card className="bg-[hsl(var(--surface-2))] border-border">
+          <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.usageByMode")}</CardTitle></CardHeader>
           <CardContent>
             {data?.modeData && data.modeData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
@@ -130,7 +137,7 @@ export default function Analytics() {
                   <Pie data={data.modeData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                     {data.modeData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />))}
                   </Pie>
-                  <Tooltip contentStyle={{ background: "hsl(217 33% 17%)", border: "1px solid hsl(217 33% 25%)", borderRadius: "8px", color: "hsl(210 40% 96%)" }} />
+                  <Tooltip contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -140,13 +147,13 @@ export default function Analytics() {
         </Card>
       </div>
 
-      <Card className="bg-card border-border/50">
-        <CardHeader><CardTitle className="text-lg">{t("analytics.recentRequests")}</CardTitle></CardHeader>
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
+        <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.recentRequests")}</CardTitle></CardHeader>
         <CardContent>
           {data?.recent && data.recent.length > 0 ? (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="border-border">
                   <TableHead>{t("analytics.date")}</TableHead>
                   <TableHead>{t("analytics.mode")}</TableHead>
                   <TableHead>{t("analytics.model")}</TableHead>
@@ -155,7 +162,7 @@ export default function Analytics() {
               </TableHeader>
               <TableBody>
                 {data.recent.map((r, i) => (
-                  <TableRow key={i}>
+                  <TableRow key={i} className="border-border">
                     <TableCell className="text-muted-foreground">{r.date}</TableCell>
                     <TableCell className="capitalize">{r.mode}</TableCell>
                     <TableCell className="text-muted-foreground">{r.model}</TableCell>

@@ -52,31 +52,31 @@ export default function SettingsPage() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">{t("settings.title")}</h1>
+      <h1 className="text-2xl font-bold text-foreground text-tracking-tight">{t("settings.title")}</h1>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardHeader>
-          <CardTitle>{t("settings.profile")}</CardTitle>
+          <CardTitle className="text-tracking-tight">{t("settings.profile")}</CardTitle>
           <CardDescription>{t("settings.profileDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">{t("settings.name")}</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary border-border" />
+            <Input value={name} onChange={(e) => setName(e.target.value)} className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary" />
           </div>
           <div>
             <label className="text-sm text-muted-foreground mb-1 block">{t("settings.email")}</label>
-            <Input value={user?.email || ""} disabled className="bg-secondary border-border opacity-60" />
+            <Input value={user?.email || ""} disabled className="bg-[hsl(var(--surface-1))] border-border opacity-60" />
           </div>
-          <Button onClick={handleSaveProfile} disabled={saving}>
+          <Button onClick={handleSaveProfile} disabled={saving} className="glow-primary">
             {saving ? t("settings.saving") : t("settings.saveChanges")}
           </Button>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardHeader>
-          <CardTitle>{t("settings.subscription")}</CardTitle>
+          <CardTitle className="text-tracking-tight">{t("settings.subscription")}</CardTitle>
           <CardDescription>{t("settings.subscriptionDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,29 +86,29 @@ export default function SettingsPage() {
               {(profile?.plan || "free").charAt(0).toUpperCase() + (profile?.plan || "free").slice(1)}
             </Badge>
           </div>
-          {profile?.plan === "free" && <Button>{t("settings.upgradeStarter")}</Button>}
-          {profile?.plan === "starter" && <Button>{t("settings.upgradePro")}</Button>}
+          {profile?.plan === "free" && <Button className="glow-primary">{t("settings.upgradeStarter")}</Button>}
+          {profile?.plan === "starter" && <Button className="glow-primary">{t("settings.upgradePro")}</Button>}
           {profile?.plan === "pro" && <p className="text-sm text-muted-foreground">{t("settings.topPlan")}</p>}
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardHeader>
-          <CardTitle>{t("settings.monthlyBudget")}</CardTitle>
+          <CardTitle className="text-tracking-tight">{t("settings.monthlyBudget")}</CardTitle>
           <CardDescription>{t("settings.budgetDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-3">
-            <Input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="bg-secondary border-border w-32" min={0} step={1} />
+            <Input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} className="bg-[hsl(var(--surface-1))] border-border w-32 focus-visible:border-primary" min={0} step={1} />
             <span className="text-muted-foreground self-center">{t("settings.perMonth")}</span>
           </div>
-          <Button onClick={handleSaveBudget}>{t("settings.saveBudget")}</Button>
+          <Button onClick={handleSaveBudget} className="glow-primary">{t("settings.saveBudget")}</Button>
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-destructive/30">
+      <Card className="bg-[hsl(var(--surface-2))] border-destructive/30">
         <CardHeader>
-          <CardTitle className="text-destructive">{t("settings.dangerZone")}</CardTitle>
+          <CardTitle className="text-destructive text-tracking-tight">{t("settings.dangerZone")}</CardTitle>
           <CardDescription>{t("settings.dangerDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,7 +116,7 @@ export default function SettingsPage() {
             <AlertDialogTrigger asChild>
               <Button variant="destructive">{t("settings.deleteAccount")}</Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-card border-border">
+            <AlertDialogContent className="bg-[hsl(var(--surface-2))] border-border shadow-elevated">
               <AlertDialogHeader>
                 <AlertDialogTitle>{t("settings.deleteConfirm")}</AlertDialogTitle>
                 <AlertDialogDescription>{t("settings.deleteWarning")}</AlertDialogDescription>

@@ -117,33 +117,33 @@ export default function Prompts() {
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{t("prompts.title")}</h1>
+          <h1 className="text-2xl font-bold text-foreground text-tracking-tight">{t("prompts.title")}</h1>
           <p className="text-muted-foreground">{t("prompts.subtitle")}</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowCreate(true); }}>
+        <Button onClick={() => { resetForm(); setShowCreate(true); }} className="glow-primary">
           <Plus className="mr-2 h-4 w-4" />
           {t("prompts.newPrompt")}
         </Button>
       </div>
 
       {prompts && prompts.length === 0 && (
-        <Card className="bg-card border-border/50">
+        <Card className="bg-[hsl(var(--surface-2))] border-border">
           <CardContent className="p-12 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">{t("prompts.noPrompts")}</h3>
             <p className="text-muted-foreground mb-4">{t("prompts.noPromptsDesc")}</p>
-            <Button onClick={loadStarters}>{t("prompts.loadStarters")}</Button>
+            <Button onClick={loadStarters} className="glow-primary">{t("prompts.loadStarters")}</Button>
           </CardContent>
         </Card>
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {prompts?.map((p) => (
-          <Card key={p.id} className="bg-card border-border/50 hover:border-primary/30 transition-colors">
+          <Card key={p.id} className="bg-[hsl(var(--surface-2))] border-border hover:border-primary/50 transition-all duration-200 group hover:glow-primary">
             <CardContent className="p-5">
               <div className="flex items-start justify-between mb-3">
-                <h3 className="font-semibold text-foreground">{p.title}</h3>
-                <Badge variant="secondary" className="text-xs shrink-0 ml-2">
+                <h3 className="font-semibold text-foreground text-tracking-tight">{p.title}</h3>
+                <Badge variant="secondary" className="text-[10px] shrink-0 ml-2 uppercase text-tracking-wide">
                   {t(`prompts.categories.${p.category}`, p.category)}
                 </Badge>
               </div>
@@ -151,9 +151,9 @@ export default function Prompts() {
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t("prompts.used")} {p.use_count}{t("prompts.times")}</span>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(p)}>{t("common.edit")}</Button>
-                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDelete(p.id)}>{t("common.delete")}</Button>
-                  <Button size="sm" onClick={() => handleUse(p)}>
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => openEdit(p)}>{t("common.edit")}</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(p.id)}>{t("common.delete")}</Button>
+                  <Button size="sm" onClick={() => handleUse(p)} className="glow-primary">
                     <Play className="mr-1 h-3 w-3" />
                     {t("prompts.use")}
                   </Button>
@@ -165,37 +165,37 @@ export default function Prompts() {
       </div>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-[hsl(var(--surface-2))] border-border shadow-elevated">
           <DialogHeader>
-            <DialogTitle>{editId ? t("prompts.editPrompt") : t("prompts.newPrompt")}</DialogTitle>
+            <DialogTitle className="text-tracking-tight">{editId ? t("prompts.editPrompt") : t("prompts.newPrompt")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input placeholder={t("prompts.promptTitle")} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="bg-secondary border-border" />
+            <Input placeholder={t("prompts.promptTitle")} value={editTitle} onChange={(e) => setEditTitle(e.target.value)} className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary" />
             <Select value={editCategory} onValueChange={setEditCategory}>
-              <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="bg-[hsl(var(--surface-1))] border-border"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {categories.map((c) => <SelectItem key={c} value={c}>{t(`prompts.categories.${c}`, c)}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Textarea placeholder={t("prompts.promptContent")} value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} className="bg-secondary border-border" />
-            <Button className="w-full" onClick={handleSave}>{t("prompts.savePrompt")}</Button>
+            <Textarea placeholder={t("prompts.promptContent")} value={editContent} onChange={(e) => setEditContent(e.target.value)} rows={6} className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary" />
+            <Button className="w-full glow-primary" onClick={handleSave}>{t("prompts.savePrompt")}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showVars} onOpenChange={setShowVars}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-[hsl(var(--surface-2))] border-border shadow-elevated">
           <DialogHeader>
-            <DialogTitle>{t("prompts.fillDetails")}</DialogTitle>
+            <DialogTitle className="text-tracking-tight">{t("prompts.fillDetails")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {selectedPrompt && extractVars(selectedPrompt.content).map((v) => (
               <div key={v}>
                 <label className="text-sm text-muted-foreground capitalize mb-1 block">{v}</label>
-                <Input value={varValues[v] || ""} onChange={(e) => setVarValues((prev) => ({ ...prev, [v]: e.target.value }))} className="bg-secondary border-border" placeholder={`Enter ${v}...`} />
+                <Input value={varValues[v] || ""} onChange={(e) => setVarValues((prev) => ({ ...prev, [v]: e.target.value }))} className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary" placeholder={`Enter ${v}...`} />
               </div>
             ))}
-            <Button className="w-full" onClick={handleFillAndGo}>
+            <Button className="w-full glow-primary" onClick={handleFillAndGo}>
               <Play className="mr-2 h-4 w-4" />
               {t("prompts.useInChat")}
             </Button>

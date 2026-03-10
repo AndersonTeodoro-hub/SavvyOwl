@@ -65,15 +65,15 @@ export default function DashboardHome() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <Card className="bg-card border-border/50">
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardContent className="p-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground text-tracking-tight">
               {getGreeting()}, {profile?.full_name || "there"} 👋
             </h1>
             <p className="text-muted-foreground mt-1">{t("dashboard.activityOverview")}</p>
           </div>
-          <Button onClick={() => navigate("/dashboard/chat")}>
+          <Button onClick={() => navigate("/dashboard/chat")} className="glow-primary">
             <MessageSquare className="mr-2 h-4 w-4" />
             {t("dashboard.newChat")}
           </Button>
@@ -82,29 +82,29 @@ export default function DashboardHome() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((s) => (
-          <Card key={s.title} className="bg-card border-border/50">
+          <Card key={s.title} className="bg-[hsl(var(--surface-2))] border-border hover:border-primary/30 transition-all duration-200">
             <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
-                <s.icon className="h-4 w-4" />
-                {s.title}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-muted-foreground uppercase text-tracking-wide">{s.title}</span>
+                <s.icon className="h-4 w-4 text-primary" />
               </div>
-              <p className="text-2xl font-bold text-foreground">{s.value}</p>
+              <p className="text-3xl font-bold text-foreground text-tracking-tight">{s.value}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardHeader>
-          <CardTitle className="text-lg">{t("dashboard.recentActivity")}</CardTitle>
+          <CardTitle className="text-lg text-tracking-tight">{t("dashboard.recentActivity")}</CardTitle>
         </CardHeader>
         <CardContent>
           {recentActivity && recentActivity.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentActivity.map((conv) => (
                 <div
                   key={conv.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 cursor-pointer hover:bg-secondary transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--surface-1))] border border-transparent cursor-pointer hover:border-primary/30 transition-all duration-200"
                   onClick={() => navigate(`/dashboard/chat?id=${conv.id}`)}
                 >
                   <div>
@@ -120,7 +120,7 @@ export default function DashboardHome() {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-4">{t("dashboard.noActivityYet")}</p>
-              <Button onClick={() => navigate("/dashboard/chat")}>{t("dashboard.startChatting")}</Button>
+              <Button onClick={() => navigate("/dashboard/chat")} className="glow-primary">{t("dashboard.startChatting")}</Button>
             </div>
           )}
         </CardContent>
