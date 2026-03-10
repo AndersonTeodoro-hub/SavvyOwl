@@ -37,42 +37,41 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-[hsl(var(--surface-1))] to-background px-4 relative">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      <Card className="w-full max-w-md bg-card border-border/50">
+      {/* Ambient glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
+      <Card className="w-full max-w-md bg-[hsl(var(--surface-2))] border-border relative z-10 shadow-elevated">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Zap className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold text-foreground">PromptOS</span>
+            <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center glow-primary">
+              <Zap className="h-5 w-5 text-primary" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">{t("auth.welcomeBack")}</CardTitle>
+          <CardTitle className="text-2xl text-tracking-tight">{t("auth.welcomeBack")}</CardTitle>
           <CardDescription>{t("auth.signInAccount")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Input
-                type="email"
-                placeholder={t("auth.email")}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-secondary border-border"
-              />
-            </div>
-            <div>
-              <Input
-                type="password"
-                placeholder={t("auth.password")}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-secondary border-border"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Input
+              type="email"
+              placeholder={t("auth.email")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary focus-visible:ring-primary/30"
+            />
+            <Input
+              type="password"
+              placeholder={t("auth.password")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-[hsl(var(--surface-1))] border-border focus-visible:border-primary focus-visible:ring-primary/30"
+            />
+            <Button type="submit" className="w-full glow-primary" disabled={loading}>
               {loading ? t("auth.signingIn") : t("auth.signIn")}
             </Button>
           </form>
@@ -81,10 +80,10 @@ export default function Login() {
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">{t("common.or")}</span>
+              <span className="bg-[hsl(var(--surface-2))] px-2 text-muted-foreground">{t("common.or")}</span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleLogin}>
+          <Button variant="outline" className="w-full border-border hover:bg-secondary/50" onClick={handleGoogleLogin}>
             {t("auth.continueGoogle")}
           </Button>
           <p className="text-center text-sm text-muted-foreground mt-6">

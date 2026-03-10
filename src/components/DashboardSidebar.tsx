@@ -3,6 +3,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -32,36 +33,63 @@ export function DashboardSidebar() {
   ];
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-[hsl(var(--surface-1))]">
       <div className="h-16 flex items-center gap-2 px-4 border-b border-sidebar-border">
-        <Zap className="h-6 w-6 text-primary shrink-0" />
-        {!collapsed && <span className="text-lg font-bold text-sidebar-foreground">PromptOS</span>}
+        <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 glow-primary">
+          <Zap className="h-4 w-4 text-primary" />
+        </div>
+        {!collapsed && <span className="text-lg font-bold text-sidebar-foreground text-tracking-tight">PromptOS</span>}
       </div>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end={item.url === "/dashboard"} className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-primary font-medium">
-                      <item.icon className="mr-2 h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items.map((item) => {
+                const isActive = item.url === "/dashboard"
+                  ? location.pathname === "/dashboard"
+                  : location.pathname.startsWith(item.url);
+                return (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/dashboard"}
+                        className={`relative rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                        }`}
+                        activeClassName=""
+                      >
+                        {isActive && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
+                        )}
+                        <item.icon className="mr-2 h-4 w-4 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 border-t border-sidebar-border">
         {!collapsed && profile && (
-          <div className="text-xs text-muted-foreground mb-2 truncate px-2">
-            {profile.full_name || "User"}
+          <div className="flex items-center gap-2 px-2 mb-2">
+            <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
+              {(profile.full_name || "U").charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-foreground font-medium truncate">{profile.full_name || "User"}</p>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mt-0.5 h-4">
+                {(profile.plan || "free").charAt(0).toUpperCase() + (profile.plan || "free").slice(1)}
+              </Badge>
+            </div>
           </div>
         )}
-        <Button variant="ghost" size={collapsed ? "icon" : "default"} className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={signOut}>
+        <Button variant="ghost" size={collapsed ? "icon" : "default"} className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50" onClick={signOut}>
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="ml-2">{t("nav.signOut")}</span>}
         </Button>
