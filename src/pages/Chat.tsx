@@ -51,8 +51,7 @@ export default function Chat() {
     (async () => {
       const { data } = await supabase
         .from("messages")
-        .select("role, content, model_used, cost_eur")
-        .eq("conversation_id", conversationId)
+        .select("role, content, model_used, cost_eur, optimized_content, model_recommended, task_type, optimization_savings_eur")
         .order("created_at", { ascending: true });
       if (data) setMessages(data as any);
     })();
