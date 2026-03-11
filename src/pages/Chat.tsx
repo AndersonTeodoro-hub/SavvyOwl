@@ -19,7 +19,7 @@ export default function Chat() {
   const { user, profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversationId, setConversationId] = useState<string | null>(searchParams.get("id"));
-  const [messages, setMessages] = useState<(ChatMessage & { model_used?: string; cost_eur?: number })[]>([]);
+  const [messages, setMessages] = useState<(ChatMessage & { model_used?: string; cost_eur?: number; optimized_content?: string | null; model_recommended?: string | null; task_type?: string | null; optimization_savings_eur?: number | null })[]>([]);
   const [input, setInput] = useState(searchParams.get("prompt") || "");
   const [mode, setMode] = useState<Mode>("quick");
   const [isLoading, setIsLoading] = useState(false);
