@@ -28,17 +28,61 @@ export default function Analytics() {
     queryKey: ["analytics", user?.id, range],
     enabled: !!user,
     queryFn: async () => {
+      const startDate = getStartDate();
+
       const { data: logs } = await supabase
         .from("usage_logs")
         .select("*")
         .eq("user_id", user!.id)
-        .gte("created_at", getStartDate())
+        .gte("created_at", startDate)
         .order("created_at", { ascending: true });
 
       const items = logs || [];
       const totalSpend = items.reduce((s, l) => s + (l.cost_eur || 0), 0);
       const totalRequests = items.length;
-      const moneySaved = totalSpend * 0.4;
+
+      // Fetch real optimization savings from messages
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("user_id", user!.id);
+
+      let moneySaved = 0;
+      let dailySavings: { date: string; savings: number }[] = [];
+      let taskTypeCounts: Record<string, number> = {};
+
+      if (convos && convos.length > 0) {
+        const convoIds = convos.map((c) => c.id);
+        const { data: msgs } = await supabase
+          .from("messages")
+          .select("optimization_savings_eur, task_type, created_at")
+          .in("conversation_id", convoIds)
+          .eq("role", "assistant")
+          .gte("created_at", startDate);
+
+        const msgItems = msgs || [];
+        moneySaved = msgItems.reduce((s, m) => s + (Number(m.optimization_savings_eur) || 0), 0);
+
+        // Daily savings
+        const dailySavingsMap: Record<string, number> = {};
+        msgItems.forEach((m) => {
+          const day = new Date(m.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+          dailySavingsMap[day] = (dailySavingsMap[day] || 0) + (Number(m.optimization_savings_eur) || 0);
+        });
+        dailySavings = Object.entries(dailySavingsMap).map(([date, savings]) => ({ date, savings: +savings.toFixed(4) }));
+
+        // Task type counts
+        msgItems.forEach((m) => {
+          if (m.task_type) {
+            taskTypeCounts[m.task_type] = (taskTypeCounts[m.task_type] || 0) + 1;
+          }
+        });
+      }
+
+      const topTaskTypes = Object.entries(taskTypeCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([type, count]) => ({ type, count }));
 
       const dailyMap: Record<string, number> = {};
       items.forEach((l) => {
@@ -63,7 +107,7 @@ export default function Analytics() {
         cost: `€${(l.cost_eur || 0).toFixed(4)}`,
       }));
 
-      return { totalSpend, totalRequests, moneySaved, dailySpend, modeData, recent };
+      return { totalSpend, totalRequests, moneySaved, dailySpend, modeData, recent, dailySavings, topTaskTypes };
     },
   });
 
@@ -77,7 +121,7 @@ export default function Analytics() {
   const stats = [
     { title: t("analytics.totalSpend"), value: `€${(data?.totalSpend || 0).toFixed(2)}`, icon: Euro },
     { title: t("analytics.requests"), value: data?.totalRequests || 0, icon: Activity },
-    { title: t("analytics.moneySaved"), value: `€${(data?.moneySaved || 0).toFixed(2)}`, icon: TrendingDown },
+    { title: t("analytics.optimizationSavings"), value: `€${(data?.moneySaved || 0).toFixed(2)}`, icon: TrendingDown },
     { title: t("analytics.avgPerRequest"), value: `€${data?.totalRequests ? ((data.totalSpend || 0) / data.totalRequests).toFixed(4) : "0.00"}`, icon: BarChart3 },
   ];
 
@@ -129,6 +173,26 @@ export default function Analytics() {
         </Card>
 
         <Card className="bg-[hsl(var(--surface-2))] border-border">
+          <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.dailySavings")}</CardTitle></CardHeader>
+          <CardContent>
+            {data?.dailySavings && data.dailySavings.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={data.dailySavings}>
+                  <XAxis dataKey="date" stroke="hsl(215 25% 63%)" fontSize={12} />
+                  <YAxis stroke="hsl(215 25% 63%)" fontSize={12} tickFormatter={(v) => `€${v}`} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="savings" fill="hsl(160 100% 48%)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-center py-12">{t("common.noDataYet")}</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card className="bg-[hsl(var(--surface-2))] border-border">
           <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.usageByMode")}</CardTitle></CardHeader>
           <CardContent>
             {data?.modeData && data.modeData.length > 0 ? (
@@ -140,6 +204,32 @@ export default function Analytics() {
                   <Tooltip contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-center py-12">{t("common.noDataYet")}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[hsl(var(--surface-2))] border-border">
+          <CardHeader><CardTitle className="text-lg text-tracking-tight">{t("analytics.topTaskTypes")}</CardTitle></CardHeader>
+          <CardContent>
+            {data?.topTaskTypes && data.topTaskTypes.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border">
+                    <TableHead>{t("analytics.taskType")}</TableHead>
+                    <TableHead className="text-right">{t("analytics.count")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.topTaskTypes.map((tt) => (
+                    <TableRow key={tt.type} className="border-border">
+                      <TableCell className="capitalize">{tt.type}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{tt.count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             ) : (
               <p className="text-muted-foreground text-center py-12">{t("common.noDataYet")}</p>
             )}

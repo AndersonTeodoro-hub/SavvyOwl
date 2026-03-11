@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { MessageSquare, TrendingDown, Activity, Euro } from "lucide-react";
+import { MessageSquare, TrendingDown, Activity, Euro, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function DashboardHome() {
@@ -19,26 +19,59 @@ export default function DashboardHome() {
     return t("dashboard.goodEvening");
   }
 
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  const startISO = startOfMonth.toISOString();
+
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
       const { data: logs } = await supabase
         .from("usage_logs")
-        .select("cost_eur, tokens_input, tokens_output")
+        .select("cost_eur")
         .eq("user_id", user!.id)
-        .gte("created_at", startOfMonth.toISOString());
+        .gte("created_at", startISO);
 
       const totalSpend = logs?.reduce((s, l) => s + (l.cost_eur || 0), 0) || 0;
       const totalRequests = logs?.length || 0;
-      const tokensSaved = logs?.reduce((s, l) => s + (l.tokens_input + l.tokens_output) * 0.15, 0) || 0;
-      const moneySaved = totalSpend * 0.4;
 
-      return { totalSpend, totalRequests, tokensSaved: Math.round(tokensSaved), moneySaved };
+      return { totalSpend, totalRequests };
+    },
+  });
+
+  const { data: optimizationStats } = useQuery({
+    queryKey: ["dashboard-optimization", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      // Get user's conversation IDs for this month
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("user_id", user!.id);
+
+      if (!convos || convos.length === 0) return { moneySaved: 0, efficiencyPct: null };
+
+      const convoIds = convos.map((c) => c.id);
+
+      const { data: msgs } = await supabase
+        .from("messages")
+        .select("optimization_savings_eur, model_recommended")
+        .in("conversation_id", convoIds)
+        .eq("role", "assistant")
+        .gte("created_at", startISO);
+
+      const items = msgs || [];
+      const moneySaved = items.reduce((s, m) => s + (Number(m.optimization_savings_eur) || 0), 0);
+
+      const withModel = items.filter((m) => m.model_recommended);
+      const flashCount = withModel.filter((m) =>
+        m.model_recommended?.toLowerCase().includes("flash")
+      ).length;
+      const efficiencyPct = withModel.length > 0 ? Math.round((flashCount / withModel.length) * 100) : null;
+
+      return { moneySaved, efficiencyPct };
     },
   });
 
@@ -59,8 +92,12 @@ export default function DashboardHome() {
   const statCards = [
     { title: t("dashboard.monthSpend"), value: `€${(stats?.totalSpend || 0).toFixed(2)}`, icon: Euro },
     { title: t("dashboard.requestsMade"), value: stats?.totalRequests || 0, icon: Activity },
-    { title: t("dashboard.optimisationSavings"), value: `€${(stats?.moneySaved || 0).toFixed(2)}`, icon: TrendingDown },
-    { title: t("dashboard.moneySaved"), value: `€${(stats?.moneySaved || 0).toFixed(2)}`, icon: TrendingDown },
+    { title: t("dashboard.optimisationSavings"), value: `€${(optimizationStats?.moneySaved || 0).toFixed(2)}`, icon: TrendingDown },
+    {
+      title: t("dashboard.efficiency"),
+      value: optimizationStats?.efficiencyPct != null ? `${optimizationStats.efficiencyPct}%` : "—",
+      icon: Zap,
+    },
   ];
 
   return (
