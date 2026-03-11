@@ -56,8 +56,12 @@ export type Database = {
           cost_eur: number | null
           created_at: string
           id: string
+          model_recommended: string | null
           model_used: string | null
+          optimization_savings_eur: number | null
+          optimized_content: string | null
           role: string
+          task_type: string | null
         }
         Insert: {
           content: string
@@ -65,8 +69,12 @@ export type Database = {
           cost_eur?: number | null
           created_at?: string
           id?: string
+          model_recommended?: string | null
           model_used?: string | null
+          optimization_savings_eur?: number | null
+          optimized_content?: string | null
           role: string
+          task_type?: string | null
         }
         Update: {
           content?: string
@@ -74,8 +82,12 @@ export type Database = {
           cost_eur?: number | null
           created_at?: string
           id?: string
+          model_recommended?: string | null
           model_used?: string | null
+          optimization_savings_eur?: number | null
+          optimized_content?: string | null
           role?: string
+          task_type?: string | null
         }
         Relationships: [
           {
