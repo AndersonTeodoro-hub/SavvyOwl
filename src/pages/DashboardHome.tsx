@@ -101,7 +101,7 @@ export default function DashboardHome() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardContent className="p-6 flex items-center justify-between">
           <div>
