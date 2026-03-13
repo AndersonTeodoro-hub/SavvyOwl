@@ -37,14 +37,6 @@ export default function Register() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    });
-    if (error) toast.error(error.message);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-[hsl(var(--surface-1))] to-background px-4 relative">
       <div className="absolute top-4 right-4">
@@ -89,17 +81,7 @@ export default function Register() {
               {loading ? t("auth.creatingAccount") : t("auth.createAccountBtn")}
             </Button>
           </form>
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[hsl(var(--surface-2))] px-2 text-muted-foreground">{t("common.or")}</span>
-            </div>
-          </div>
-          <Button variant="outline" className="w-full border-border hover:bg-secondary/50" onClick={handleGoogleSignup}>
-            {t("auth.continueGoogle")}
-          </Button>
+          <p className="text-xs text-muted-foreground text-center mt-4">Google login coming soon</p>
           <p className="text-center text-sm text-muted-foreground mt-6">
             {t("auth.hasAccount")}{" "}
             <Link to="/login" className="text-primary hover:underline">
