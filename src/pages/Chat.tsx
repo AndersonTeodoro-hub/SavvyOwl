@@ -227,7 +227,7 @@ export default function Chat() {
                         <div className="mt-2 bg-accent/5 border border-border/50 rounded-lg p-3 space-y-2 text-xs">
                           {msg.model_recommended && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Modelo usado</span>
+                              <span className="text-muted-foreground">{t("chat.modelUsed")}</span>
                               <span className="text-foreground font-medium">{msg.model_recommended.split("/").pop()}</span>
                             </div>
                           )}
