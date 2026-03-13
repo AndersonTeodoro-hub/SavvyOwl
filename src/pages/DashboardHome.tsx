@@ -101,16 +101,16 @@ export default function DashboardHome() {
   ];
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       <Card className="bg-[hsl(var(--surface-2))] border-border">
-        <CardContent className="p-6 flex items-center justify-between">
+        <CardContent className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground text-tracking-tight">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground text-tracking-tight">
               {getGreeting()}, {profile?.full_name || "there"} 👋
             </h1>
             <p className="text-muted-foreground mt-1">{t("dashboard.activityOverview")}</p>
           </div>
-          <Button onClick={() => navigate("/dashboard/chat")} className="glow-primary">
+          <Button onClick={() => navigate("/dashboard/chat")} className="glow-primary w-full md:w-auto min-h-[44px]">
             <MessageSquare className="mr-2 h-4 w-4" />
             {t("dashboard.newChat")}
           </Button>

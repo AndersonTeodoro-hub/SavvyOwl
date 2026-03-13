@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock } from "lucide-react";
+import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock, Menu } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Drawer, DrawerTrigger, DrawerContent } from "@/components/ui/drawer";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,17 +16,28 @@ import { useTranslation } from "react-i18next";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
 
+type ExtendedMessage = ChatMessage & {
+  model_used?: string;
+  cost_eur?: number;
+  optimized_content?: string | null;
+  model_recommended?: string | null;
+  task_type?: string | null;
+  optimization_savings_eur?: number | null;
+};
+
 export default function Chat() {
   const { user, profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [conversationId, setConversationId] = useState<string | null>(searchParams.get("id"));
-  const [messages, setMessages] = useState<(ChatMessage & { model_used?: string; cost_eur?: number; optimized_content?: string | null; model_recommended?: string | null; task_type?: string | null; optimization_savings_eur?: number | null })[]>([]);
+  const [messages, setMessages] = useState<ExtendedMessage[]>([]);
   const [input, setInput] = useState(searchParams.get("prompt") || "");
   const [mode, setMode] = useState<Mode>("quick");
   const [isLoading, setIsLoading] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const sentFirstMessage = useRef(false);
 
   const modeLabels: Record<Mode, { label: string; icon: typeof Zap; desc: string }> = {
     quick: { label: t("chat.quick"), icon: Zap, desc: t("chat.quickDesc") },
@@ -104,10 +116,16 @@ export default function Chat() {
         await supabase.from("conversations").update({ title }).eq("id", convId);
       }
 
-      const userMsg: ChatMessage & { model_used?: string; cost_eur?: number } = { role: "user", content: text };
+      const userMsg: ExtendedMessage = { role: "user", content: text };
       setMessages((prev) => [...prev, userMsg]);
 
       await supabase.from("messages").insert({ conversation_id: convId, role: "user", content: text });
+
+      // Trigger install prompt after first message
+      if (!sentFirstMessage.current) {
+        sentFirstMessage.current = true;
+        window.dispatchEvent(new CustomEvent("install-prompt-trigger"));
+      }
 
       let assistantSoFar = "";
       const allMessages = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }));
@@ -144,13 +162,47 @@ export default function Chat() {
     }
   };
 
-  const startNewChat = () => { setConversationId(null); setMessages([]); setInput(""); setSearchParams({}, { replace: true }); };
-  const selectConversation = (id: string) => { setConversationId(id); setSearchParams({ id }, { replace: true }); };
+  const startNewChat = () => { setConversationId(null); setMessages([]); setInput(""); setSearchParams({}, { replace: true }); setDrawerOpen(false); };
+  const selectConversation = (id: string) => { setConversationId(id); setSearchParams({ id }, { replace: true }); setDrawerOpen(false); };
+
+  const ConversationList = () => (
+    <div className="space-y-1 p-2">
+      {conversations?.map((c) => (
+        <button
+          key={c.id}
+          onClick={() => selectConversation(c.id)}
+          className={`w-full text-left p-2.5 rounded-lg text-sm transition-all duration-200 truncate min-h-[44px] ${
+            conversationId === c.id
+              ? "bg-primary/10 text-primary border border-primary/20"
+              : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground border border-transparent"
+          }`}
+        >
+          <MessageSquare className="h-3 w-3 inline mr-2" />
+          {c.title}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)]">
-      {/* Conversation sidebar */}
-      <div className="w-64 border-r border-border bg-[hsl(var(--surface-1))] flex flex-col shrink-0 hidden md:flex">
+    <div className="flex h-[calc(100vh-3.5rem-4rem)] md:h-[calc(100vh-3.5rem)]">
+      {/* Mobile conversation drawer trigger */}
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent className="max-h-[80vh]">
+          <div className="p-3">
+            <Button onClick={startNewChat} className="w-full glow-primary" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              {t("chat.newChat")}
+            </Button>
+          </div>
+          <ScrollArea className="flex-1">
+            <ConversationList />
+          </ScrollArea>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Desktop conversation sidebar */}
+      <div className="w-64 border-r border-border bg-[hsl(var(--surface-1))] flex-col shrink-0 hidden md:flex">
         <div className="p-3">
           <Button onClick={startNewChat} className="w-full glow-primary" size="sm">
             <Plus className="mr-2 h-4 w-4" />
@@ -158,26 +210,22 @@ export default function Chat() {
           </Button>
         </div>
         <ScrollArea className="flex-1">
-          <div className="space-y-1 p-2">
-            {conversations?.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => selectConversation(c.id)}
-                className={`w-full text-left p-2.5 rounded-lg text-sm transition-all duration-200 truncate ${
-                  conversationId === c.id
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground border border-transparent"
-                }`}
-              >
-                <MessageSquare className="h-3 w-3 inline mr-2" />
-                {c.title}
-              </button>
-            ))}
-          </div>
+          <ConversationList />
         </ScrollArea>
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b border-border bg-[hsl(var(--surface-1))]/50">
+          <Button variant="ghost" size="icon" className="min-h-[44px] min-w-[44px]" onClick={() => setDrawerOpen(true)}>
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Button onClick={startNewChat} size="sm" variant="ghost" className="min-h-[44px]">
+            <Plus className="mr-1 h-4 w-4" />
+            {t("chat.newChat")}
+          </Button>
+        </div>
+
         {mode === "creator" && (
           <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-sm text-primary flex items-center gap-2">
             <Pen className="h-4 w-4" />
@@ -186,7 +234,7 @@ export default function Chat() {
         )}
 
         <ScrollArea className="flex-1 p-4">
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-3xl mx-auto md:max-w-3xl space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-[50vh] text-center">
                 <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 glow-primary">
@@ -199,7 +247,7 @@ export default function Chat() {
 
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                <div className={`max-w-full md:max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === "user"
                     ? "bg-border text-foreground rounded-br-md"
                     : "bg-[hsl(var(--surface-2))] border-l-2 border-primary text-foreground rounded-bl-md"
@@ -278,10 +326,10 @@ export default function Chat() {
         </ScrollArea>
 
         {/* Input bar */}
-        <div className="border-t border-border p-4 bg-background">
-          <div className="max-w-3xl mx-auto flex gap-3 items-end">
-            {/* Mode selector as pills */}
-            <div className="flex bg-[hsl(var(--surface-1))] rounded-xl p-1 border border-border">
+        <div className="border-t border-border p-3 md:p-4 bg-background">
+          <div className="max-w-3xl mx-auto space-y-2 md:space-y-0 md:flex md:gap-3 md:items-end">
+            {/* Mode selector - horizontally scrollable on mobile */}
+            <div className="flex bg-[hsl(var(--surface-1))] rounded-xl p-1 border border-border overflow-x-auto shrink-0">
               {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
                 const isOpusLocked = key === "opus" && profile?.plan !== "pro";
                 return (
@@ -294,7 +342,7 @@ export default function Chat() {
                       }
                       setMode(key);
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap min-h-[44px] md:min-h-0 ${
                       isOpusLocked
                         ? "text-muted-foreground/40 cursor-not-allowed"
                         : mode === key
@@ -308,19 +356,21 @@ export default function Chat() {
                 );
               })}
             </div>
-            <div className="flex-1 relative">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder={t("chat.typeMessage")}
-                className="bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30 pr-12"
-                disabled={isLoading}
-              />
+            <div className="flex gap-2 md:gap-3 flex-1">
+              <div className="flex-1 relative">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                  placeholder={t("chat.typeMessage")}
+                  className="bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30 pr-12 min-h-[44px]"
+                  disabled={isLoading}
+                />
+              </div>
+              <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} size="icon" className="glow-primary shrink-0 min-h-[44px] min-w-[44px]">
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
-            <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} size="icon" className="glow-primary shrink-0">
-              <Send className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

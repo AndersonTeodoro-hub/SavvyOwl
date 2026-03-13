@@ -4,7 +4,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Check, ArrowDown } from "lucide-react";
+import { Check, ArrowDown, Menu as MenuIcon, X } from "lucide-react";
 
 const FONT_DISPLAY = "'Cormorant Garamond', Georgia, serif";
 const FONT_BODY = "'Libre Franklin', sans-serif";
@@ -26,6 +26,7 @@ const fadeInView = {
 export default function Landing() {
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ── Scroll listener for navbar ──
   useEffect(() => {
@@ -93,14 +94,16 @@ export default function Landing() {
           </div>
 
           <div className="flex items-center gap-2">
-            <LanguageSelector />
-            <ThemeToggle />
-            <Link to="/login" className="text-[#f5f0e8]/60 hover:text-[#f5f0e8] text-xs px-3 py-2 transition-colors">
+            <div className="hidden md:flex items-center gap-2">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
+            <Link to="/login" className="text-[#f5f0e8]/60 hover:text-[#f5f0e8] text-xs px-3 py-2 transition-colors hidden md:inline">
               {t("landing.nav.login")}
             </Link>
             <Link
               to="/register"
-              className="text-xs px-4 py-2 transition-all hover:scale-[1.02]"
+              className="text-xs px-4 py-2 transition-all hover:scale-[1.02] hidden md:inline-block"
               style={{
                 border: `1px solid ${gold}`,
                 color: gold,
@@ -117,8 +120,42 @@ export default function Landing() {
             >
               {t("landing.nav.cta")}
             </Link>
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-[#f5f0e8]/60"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#1a1814]/95 backdrop-blur-xl border-t border-[#f5f0e8]/10 px-4 py-6 space-y-4">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
+              {t("landing.nav.product")}
+            </a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
+              {t("landing.nav.pricing")}
+            </a>
+            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center">
+              {t("landing.nav.login")}
+            </Link>
+            <Link
+              to="/register"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-center text-xs px-4 py-3 min-h-[44px]"
+              style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}
+            >
+              {t("landing.nav.cta")}
+            </Link>
+            <div className="flex items-center gap-2 pt-2">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ═══════ 2. HERO (dark) ═══════ */}
