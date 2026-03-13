@@ -21,7 +21,7 @@ export function LanguageSelector() {
 
   const handleChange = async (code: string) => {
     if (code === "auto") {
-      localStorage.setItem("promptos-language", "auto");
+      localStorage.setItem("savvyowl-language", "auto");
       // Re-detect from browser
       const detected = navigator.language?.split("-")[0];
       const supported = ["en", "pt", "fr", "es"];
