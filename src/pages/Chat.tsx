@@ -6,14 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown } from "lucide-react";
+import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
-type Mode = "quick" | "deep" | "creator";
+type Mode = "quick" | "deep" | "creator" | "opus";
 
 export default function Chat() {
   const { user, profile } = useAuth();
@@ -31,6 +31,7 @@ export default function Chat() {
     quick: { label: t("chat.quick"), icon: Zap, desc: t("chat.quickDesc") },
     deep: { label: t("chat.deepThink"), icon: Brain, desc: t("chat.deepThinkDesc") },
     creator: { label: t("chat.contentCreator"), icon: Pen, desc: t("chat.contentCreatorDesc") },
+    opus: { label: "Opus", icon: Sparkles, desc: "Claude Opus — maximum power (Pro only)" },
   };
 
   const { data: conversations } = useQuery({
@@ -281,20 +282,31 @@ export default function Chat() {
           <div className="max-w-3xl mx-auto flex gap-3 items-end">
             {/* Mode selector as pills */}
             <div className="flex bg-[hsl(var(--surface-1))] rounded-xl p-1 border border-border">
-              {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => (
-                <button
-                  key={key}
-                  onClick={() => setMode(key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    mode === key
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <val.icon className="h-3 w-3" />
-                  {val.label}
-                </button>
-              ))}
+              {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
+                const isOpusLocked = key === "opus" && profile?.plan !== "pro";
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      if (isOpusLocked) {
+                        toast.error("Upgrade to Pro to use Claude Opus");
+                        return;
+                      }
+                      setMode(key);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      isOpusLocked
+                        ? "text-muted-foreground/40 cursor-not-allowed"
+                        : mode === key
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
+                    {val.label}
+                  </button>
+                );
+              })}
             </div>
             <div className="flex-1 relative">
               <Input
