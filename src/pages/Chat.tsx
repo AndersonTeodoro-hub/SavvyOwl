@@ -122,8 +122,11 @@ export default function Chat() {
         });
       };
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
       await streamChat({
-        messages: allMessages, mode, conversationId: convId,
+        messages: allMessages, mode, conversationId: convId, accessToken,
         onDelta: upsertAssistant,
         onDone: async (meta) => {
           await supabase.from("messages").insert({ conversation_id: convId!, role: "assistant", content: assistantSoFar, model_used: meta.model, cost_eur: meta.cost_eur });
