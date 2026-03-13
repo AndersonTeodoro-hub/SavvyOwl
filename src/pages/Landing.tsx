@@ -78,13 +78,13 @@ export default function Landing() {
               className="h-9 w-9 rounded-full flex items-center justify-center"
               style={{ border: `1.5px solid ${gold}` }}
             >
-              <span style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold, fontSize: 18 }}>P</span>
+              <span style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold, fontSize: 18 }}>S</span>
             </div>
             <span
               className="text-[#f5f0e8] text-xs font-medium hidden sm:inline"
               style={{ letterSpacing: "4px" }}
             >
-              PROMPTOS
+              SAVVYOWL
             </span>
           </div>
 
@@ -279,7 +279,7 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ═══════ 5. WHY PROMPTOS (dark) ═══════ */}
+      {/* ═══════ 5. WHY SAVVYOWL (dark) ═══════ */}
       <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-4xl mx-auto"

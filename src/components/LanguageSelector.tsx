@@ -16,19 +16,19 @@ export function LanguageSelector() {
   const { i18n: i18nInstance } = useTranslation();
   const { user } = useAuth();
 
-  const currentLang = localStorage.getItem("promptos-language") || "auto";
+  const currentLang = localStorage.getItem("savvyowl-language") || "auto";
   const currentDisplay = supportedLanguages.find((l) => l.code === currentLang) || supportedLanguages[0];
 
   const handleChange = async (code: string) => {
     if (code === "auto") {
-      localStorage.setItem("promptos-language", "auto");
+      localStorage.setItem("savvyowl-language", "auto");
       // Re-detect from browser
       const detected = navigator.language?.split("-")[0];
       const supported = ["en", "pt", "fr", "es"];
       const lang = supported.includes(detected) ? detected : "en";
       i18nInstance.changeLanguage(lang);
     } else {
-      localStorage.setItem("promptos-language", code);
+      localStorage.setItem("savvyowl-language", code);
       i18nInstance.changeLanguage(code);
     }
 
