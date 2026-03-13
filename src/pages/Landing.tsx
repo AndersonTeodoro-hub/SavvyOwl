@@ -26,6 +26,7 @@ const fadeInView = {
 export default function Landing() {
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ── Scroll listener for navbar ──
   useEffect(() => {
