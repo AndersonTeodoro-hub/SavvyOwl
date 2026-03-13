@@ -238,7 +238,7 @@ export default function Chat() {
                             </div>
                           )}
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">Poupança estimada</span>
+                            <span className="text-muted-foreground">{t("chat.estimatedSavings")}</span>
                             <span className="text-foreground font-medium">
                               {msg.optimization_savings_eur ? `€${msg.optimization_savings_eur.toFixed(4)}` : "—"}
                             </span>
