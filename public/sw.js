@@ -1,4 +1,4 @@
-const CACHE_NAME = 'savvyowl-v1';
+const CACHE_NAME = 'savvyowl-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
