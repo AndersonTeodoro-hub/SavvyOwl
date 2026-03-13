@@ -217,7 +217,7 @@ export default function Chat() {
                     <Collapsible className="mt-2">
                       <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-full group">
                         <Sparkles className="h-3 w-3 text-primary" />
-                        <span>Optimizado pelo PromptOS</span>
+                        <span>{t("chat.optimizedBy")}</span>
                         {msg.model_recommended && (
                           <span className="text-muted-foreground/70">• {msg.model_recommended.split("/").pop()}</span>
                         )}
