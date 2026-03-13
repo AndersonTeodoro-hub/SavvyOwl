@@ -13,7 +13,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
-type Mode = "quick" | "deep" | "creator";
+type Mode = "quick" | "deep" | "creator" | "opus";
 
 export default function Chat() {
   const { user, profile } = useAuth();
