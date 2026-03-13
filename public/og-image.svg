@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <radialGradient id="glow" cx="350" cy="315" r="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3A86FF" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#3A86FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Dark background -->
+  <rect width="1200" height="630" fill="#080B14"/>
+  <!-- Blue glow behind logo -->
+  <circle cx="350" cy="300" r="250" fill="url(#glow)"/>
+  <!-- Owl logo -->
+  <g transform="translate(260,180) scale(0.55)">
+    <path d="M256 440C168 440 96 368 96 268C96 184 132 128 178 92C206 72 230 62 256 62C282 62 306 72 334 92C380 128 416 184 416 268C416 368 344 440 256 440Z" fill="#F0F6FF"/>
+    <polygon points="152,168 188,112 206,184" fill="#F0F6FF"/>
+    <polygon points="360,168 324,112 306,184" fill="#F0F6FF"/>
+    <circle cx="200" cy="256" r="48" fill="#3A86FF"/>
+    <circle cx="200" cy="256" r="18" fill="#080B14"/>
+    <circle cx="312" cy="256" r="48" fill="#3A86FF"/>
+    <circle cx="312" cy="256" r="18" fill="#080B14"/>
+    <path d="M306 240L314 240L310 252L318 252L304 272L308 258L302 258Z" fill="#F0F6FF"/>
+    <polygon points="246,320 256,344 266,320" fill="#3A86FF" opacity="0.6"/>
+  </g>
+  <!-- SavvyOwl text -->
+  <text x="530" y="300" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#F0F6FF" letter-spacing="2">SavvyOwl</text>
+  <!-- Tagline -->
+  <text x="530" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="400" fill="#8B9DB7" letter-spacing="1">The smart way to use AI</text>
+</svg>

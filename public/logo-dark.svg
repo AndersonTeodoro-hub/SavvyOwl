@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Dark background -->
+  <rect width="512" height="512" rx="64" fill="#080B14"/>
+  <!-- Owl head shape -->
+  <path d="M256 440C168 440 96 368 96 268C96 184 132 128 178 92C206 72 230 62 256 62C282 62 306 72 334 92C380 128 416 184 416 268C416 368 344 440 256 440Z" fill="#F0F6FF"/>
+  <!-- Left ear -->
+  <polygon points="152,168 188,112 206,184" fill="#F0F6FF"/>
+  <!-- Right ear -->
+  <polygon points="360,168 324,112 306,184" fill="#F0F6FF"/>
+  <!-- Left eye circle (solid blue) -->
+  <circle cx="200" cy="256" r="48" fill="#3A86FF"/>
+  <!-- Left eye pupil -->
+  <circle cx="200" cy="256" r="18" fill="#080B14"/>
+  <!-- Right eye circle -->
+  <circle cx="312" cy="256" r="48" fill="#3A86FF"/>
+  <!-- Right eye pupil -->
+  <circle cx="312" cy="256" r="18" fill="#080B14"/>
+  <!-- Lightning bolt in right eye -->
+  <path d="M306 240L314 240L310 252L318 252L304 272L308 258L302 258Z" fill="#F0F6FF"/>
+  <!-- Beak -->
+  <polygon points="246,320 256,344 266,320" fill="#3A86FF" opacity="0.6"/>
+</svg>
