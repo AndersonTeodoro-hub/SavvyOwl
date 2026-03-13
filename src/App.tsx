@@ -9,6 +9,7 @@ import { ThemeProvider } from "next-themes";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { InstallPrompt } from "./components/InstallPrompt";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
 import Chat from "./pages/Chat";
