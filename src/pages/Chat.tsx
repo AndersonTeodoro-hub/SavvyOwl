@@ -233,7 +233,7 @@ export default function Chat() {
                           )}
                           {msg.task_type && (
                             <div className="flex justify-between">
-                              <span className="text-muted-foreground">Tipo de tarefa</span>
+                              <span className="text-muted-foreground">{t("chat.taskType")}</span>
                               <span className="text-foreground font-medium">{msg.task_type}</span>
                             </div>
                           )}
