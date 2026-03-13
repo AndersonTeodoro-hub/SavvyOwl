@@ -28,8 +28,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Skip non-GET and OAuth routes
-  if (request.method !== 'GET' || request.url.includes('/~oauth')) return;
+  // Skip non-GET, OAuth routes, and auth callbacks
+  if (request.method !== 'GET' || request.url.includes('/~oauth') || request.url.includes('/auth/callback')) return;
 
   // Navigation requests: network-first
   if (request.mode === 'navigate') {
