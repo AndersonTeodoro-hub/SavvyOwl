@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { lovable } from "@/integrations/lovable/index";
 
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -119,13 +120,10 @@ export default function Register() {
             variant="outline"
             className="w-full"
             onClick={async () => {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                  redirectTo: planParam === 'pro'
-                    ? 'https://savvyowl.app/register?plan=pro'
-                    : 'https://savvyowl.app/dashboard',
-                },
+              const { error } = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: planParam === 'pro'
+                  ? "https://savvyowl.app/register?plan=pro"
+                  : "https://savvyowl.app/dashboard",
               });
               if (error) toast.error(error.message);
             }}
