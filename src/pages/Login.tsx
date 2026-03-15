@@ -76,9 +76,8 @@ export default function Login() {
             variant="outline"
             className="w-full"
             onClick={async () => {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: 'https://savvyowl.app/dashboard' },
+              const { error } = await lovable.auth.signInWithOAuth("google", {
+                redirect_uri: "https://savvyowl.app/dashboard",
               });
               if (error) toast.error(error.message);
             }}
