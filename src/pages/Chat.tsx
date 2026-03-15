@@ -415,10 +415,10 @@ export default function Chat() {
                   }}
                   className={`flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all duration-200 whitespace-nowrap border ${
                     isOpusLocked
-                      ? "text-muted-foreground/40 cursor-not-allowed border-transparent"
+                      ? "text-muted-foreground/40 cursor-not-allowed border-transparent bg-transparent"
                       : mode === key
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "text-muted-foreground hover:text-foreground border-border hover:border-muted-foreground/30"
+                        : "bg-[rgba(245,240,232,0.05)] text-muted-foreground hover:text-foreground border-transparent hover:border-muted-foreground/30"
                   }`}
                 >
                   {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
