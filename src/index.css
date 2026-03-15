@@ -7,23 +7,23 @@
 @layer base {
   :root {
     /* Premium Warm Dark — default */
-    --background: 30 14% 10%;
+    --background: 30 13% 11%;
     --foreground: 36 33% 94%;
 
-    --card: 30 12% 14%;
+    --card: 24 14% 15%;
     --card-foreground: 36 33% 94%;
 
-    --popover: 30 12% 14%;
+    --popover: 24 14% 15%;
     --popover-foreground: 36 33% 94%;
 
     --primary: 38 40% 60%;
     --primary-foreground: 30 14% 10%;
 
-    --secondary: 30 10% 16%;
+    --secondary: 24 14% 15%;
     --secondary-foreground: 36 33% 94%;
 
-    --muted: 30 10% 16%;
-    --muted-foreground: 36 15% 50%;
+    --muted: 24 14% 15%;
+    --muted-foreground: 36 15% 44%;
 
     --accent: 38 40% 60%;
     --accent-foreground: 30 14% 10%;
@@ -31,24 +31,24 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 36 33% 94%;
 
-    --border: 36 10% 12%;
-    --input: 36 10% 12%;
+    --border: 36 8% 14%;
+    --input: 36 8% 14%;
     --ring: 38 40% 60%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 30 14% 9%;
+    --sidebar-background: 30 12% 9%;
     --sidebar-foreground: 36 33% 94%;
     --sidebar-primary: 38 40% 60%;
     --sidebar-primary-foreground: 30 14% 10%;
-    --sidebar-accent: 30 10% 16%;
+    --sidebar-accent: 24 14% 15%;
     --sidebar-accent-foreground: 36 33% 94%;
-    --sidebar-border: 36 10% 12%;
+    --sidebar-border: 36 8% 14%;
     --sidebar-ring: 38 40% 60%;
 
     /* Surface tokens */
-    --surface-1: 30 12% 14%;
-    --surface-2: 30 10% 16%;
+    --surface-1: 30 12% 9%;
+    --surface-2: 30 14% 10%;
   }
 
   .light {
