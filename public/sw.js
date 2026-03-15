@@ -1,12 +1,13 @@
-const CACHE_NAME = 'savvyowl-v2';
+const CACHE_NAME = 'savvyowl-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/logo.svg',
+  '/favicon.svg',
+  '/favicon-32x32.png',
+  '/apple-touch-icon.png',
   '/logo-192.png',
   '/logo-512.png',
-  '/favicon.svg',
 ];
 
 self.addEventListener('install', (event) => {
