@@ -512,12 +512,14 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <div
-                className="block text-center text-xs py-3 pointer-events-none"
-                style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px", opacity: 0.5, cursor: "not-allowed" }}
+              <button
+                onClick={handleProClick}
+                disabled={proLoading}
+                className="block w-full text-center text-xs py-3 transition-all hover:scale-[1.02] cursor-pointer"
+                style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px", opacity: proLoading ? 0.6 : 1 }}
               >
-                {t("landing.pricing.pro_cta")}
-              </div>
+                {proLoading ? "..." : t("landing.pricing.pro_cta")}
+              </button>
             </div>
           </div>
         </motion.div>
