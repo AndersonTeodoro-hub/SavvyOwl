@@ -130,8 +130,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Use Supabase Admin API to create or sign in user
-      const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      // Use project URL derived from request origin for all backend API calls.
+      const supabaseAdmin = createClient(projectUrl, SUPABASE_SERVICE_ROLE_KEY, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
 
@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
       }
 
       // Verify the OTP to get actual session tokens
-      const verifyRes = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
+      const verifyRes = await fetch(`${projectUrl}/auth/v1/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
