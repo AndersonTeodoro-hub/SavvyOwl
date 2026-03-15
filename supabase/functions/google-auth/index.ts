@@ -30,8 +30,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Always derive project URL from current request origin to avoid stale/mismatched env values.
-    const projectUrl = new URL(req.url).origin;
+    const projectUrl = Deno.env.get("SUPABASE_URL")!;
 
     // The callback URL is this same function with action=callback
     const callbackUrl = `${projectUrl}/functions/v1/google-auth?action=callback`;
