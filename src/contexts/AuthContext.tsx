@@ -69,6 +69,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Detect tokens in URL hash from Google OAuth redirect
+    const handleHashTokens = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        if (accessToken && refreshToken) {
+          // Clear hash immediately
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (error) {
+            console.error("Error setting session from OAuth:", error);
+          }
+        }
+      }
+    };
+
+    handleHashTokens();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
