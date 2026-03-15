@@ -314,7 +314,7 @@ export default function Chat() {
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-full md:max-w-[80%] rounded-2xl px-4 py-3 ${
                   msg.role === "user"
-                    ? "bg-border text-foreground rounded-br-md"
+                    ? "bg-card text-foreground rounded-br-md"
                     : "bg-[hsl(var(--surface-2))] border-l-2 border-primary text-foreground rounded-bl-md"
                 }`}>
                   {msg.role === "user" && msg.image_url && (
@@ -399,7 +399,7 @@ export default function Chat() {
         </ScrollArea>
 
         {/* Bottom: mode pills + input */}
-        <div className="border-t border-border bg-background shrink-0">
+        <div className="border-t border-[rgba(245,240,232,0.06)] bg-[hsl(var(--surface-1))] shrink-0">
           <div className="flex gap-1.5 px-3 md:px-4 pt-3 pb-1 overflow-x-auto">
             {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
               const isOpusLocked = key === "opus" && profile?.plan !== "pro";
@@ -415,10 +415,10 @@ export default function Chat() {
                   }}
                   className={`flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all duration-200 whitespace-nowrap border ${
                     isOpusLocked
-                      ? "text-muted-foreground/40 cursor-not-allowed border-transparent"
+                      ? "text-muted-foreground/40 cursor-not-allowed border-transparent bg-transparent"
                       : mode === key
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "text-muted-foreground hover:text-foreground border-border hover:border-muted-foreground/30"
+                        : "bg-[rgba(245,240,232,0.05)] text-muted-foreground hover:text-foreground border-transparent hover:border-muted-foreground/30"
                   }`}
                 >
                   {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
@@ -471,7 +471,7 @@ export default function Chat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={t("chat.typeMessage")}
-              className="flex-1 min-h-[48px] text-[15px] px-4 py-3 bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30"
+              className="flex-1 min-h-[48px] text-[15px] px-4 py-3 bg-[hsl(var(--surface-2))] border-[rgba(245,240,232,0.06)] focus-visible:border-primary focus-visible:ring-primary/30"
               disabled={isLoading}
             />
             <Button
