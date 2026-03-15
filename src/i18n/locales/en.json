@@ -26,95 +26,89 @@
       "cta": "Get Started"
     },
     "hero": {
-      "badge": "PROMPT OPTIMISATION ENGINE",
-      "h1a": "Spend less on AI.",
-      "h1b": "Get better results.",
-      "subtitle": "SavvyOwl automatically optimises your prompts and routes each task to the most efficient model. Text only. Real savings.",
-      "cta": "Try SavvyOwl free →"
+      "badge": "YOUR AI. SMARTER.",
+      "h1a": "Write what you need.",
+      "h1b": "AI does the rest.",
+      "subtitle": "SavvyOwl automatically improves what you write, picks the best AI for the task, and shows you exactly what you spent. Create better content, faster and cheaper.",
+      "cta": "Try it free →"
     },
-    "optimize": {
-      "badge": "SMART OPTIMISATION",
-      "title_a": "Your prompt,",
-      "title_b": "before and after.",
-      "subtitle": "See how SavvyOwl transforms a messy prompt into a precise instruction.",
-      "prompt_before": "Hi, I'd like you to write for me a marketing copy-style text for me to post on my Instagram talking about how my followers can use artificial intelligence to create content for their social media in a more efficient and cheaper way, with a motivational and inspiring tone if possible",
-      "prompt_after": "Instagram copy: how to use AI to create social media content — efficient, affordable. Tone: motivational. Format: post. Audience: content creators.",
-      "stat1_label": "ORIGINAL TOKENS",
-      "stat1_value": "87",
-      "stat2_label": "OPTIMISED TOKENS",
-      "stat2_value": "31",
-      "stat3_label": "REDUCTION",
-      "stat3_value": "64%",
-      "stat4_label": "SAVINGS",
-      "stat4_value": "€0.009"
+    "demo": {
+      "badge": "SEE THE DIFFERENCE",
+      "title_a": "You write like this.",
+      "title_b": "SavvyOwl improves it.",
+      "subtitle": "Before sending to the AI, SavvyOwl cleans up what you wrote — removes the fluff, improves the instruction, and the result comes out better. You don't do anything. It happens automatically.",
+      "before_text": "Hi, I'd like you to write for me a marketing copy-style text for me to post on my Instagram talking about how my followers can use artificial intelligence to create content for their social media in a more efficient and cheaper way, with a motivational and inspiring tone if possible",
+      "after_text": "Instagram copy: how to use AI to create social media content — efficient, affordable. Tone: motivational. Format: post.",
+      "stat1_label": "BEFORE",
+      "stat1_value": "87 words",
+      "stat2_label": "AFTER",
+      "stat2_value": "24 words",
+      "stat3_label": "SHORTER",
+      "stat3_value": "72%",
+      "stat4_label": "RESULT",
+      "stat4_value": "Better"
     },
     "howItWorks": {
       "badge": "HOW IT WORKS",
       "title_a": "Three steps.",
-      "title_b": "Zero waste.",
-      "step1_title": "Write your prompt",
-      "step1_desc": "Type what you need in natural language. No special formatting required.",
-      "step2_title": "SavvyOwl optimises",
-      "step2_desc": "The engine analyses your prompt, removes redundancies, improves context and reformulates for maximum efficiency.",
-      "step3_title": "Best model executes",
-      "step3_desc": "Your optimised prompt is automatically routed to Gemini Flash or Gemini Pro — whichever fits the task best."
+      "title_b": "No complications.",
+      "step1_title": "Write what you need",
+      "step1_desc": "Ask for anything in normal language. 'Write me an Instagram caption', 'draft an email to a client', 'give me ideas for Reels'. No special formatting, no technical commands.",
+      "step2_title": "SavvyOwl improves and sends",
+      "step2_desc": "What you wrote is automatically improved — clearer, more direct — and sent to the AI that will give the best result for that type of task.",
+      "step3_title": "You get it and see the cost",
+      "step3_desc": "The answer arrives in seconds. You see exactly how much it cost. If you liked it, save it to reuse later. No surprises on your bill."
     },
-    "why": {
-      "badge": "WHY SAVVYOWL",
-      "title_a": "Concrete results.",
+    "benefits": {
+      "badge": "WHAT YOU GET",
+      "title_a": "Real results.",
       "title_b": "Not promises.",
-      "card1_title": "Up to 64% fewer tokens",
-      "card1_desc": "Every prompt is analysed and compressed before sending. You pay for what matters, not for filler words.",
-      "card2_title": "Automatic model routing",
-      "card2_desc": "Simple tasks go to Gemini Flash (fast, cheap). Complex tasks go to Gemini Pro (precise, powerful). No manual selection.",
-      "card3_title": "Real-time cost tracking",
-      "card3_desc": "See exactly what you spend per prompt, per day, per month. Set budgets. No surprises."
+      "card1_title": "Better answers",
+      "card1_desc": "What you write is improved before it reaches the AI. The instruction becomes clearer, and the answer comes out better. You'll just notice the result is better than usual.",
+      "card2_title": "The right AI for each task",
+      "card2_desc": "Not every AI is good at everything. SavvyOwl knows which one is best for what you asked — quick copy, long text, analysis — and sends it automatically.",
+      "card3_title": "You always know what you spend",
+      "card3_desc": "You see the cost of each request, per day, per month. Set a budget. If you're getting close to the limit, SavvyOwl warns you. Zero surprises."
     },
-    "models": {
-      "badge": "AVAILABLE MODELS",
-      "title_a": "Two models.",
-      "title_b": "One smart choice.",
-      "subtitle": "SavvyOwl automatically selects the best model for each task.",
-      "flash_desc": "Fast and affordable. Ideal for simple tasks: summaries, classifications, quick copy, translations.",
-      "pro_desc": "Precise and powerful. Best for complex reasoning, long-form content, strategy, and nuanced writing.",
-      "coming_soon": "More models coming soon."
+    "ais": {
+      "badge": "AVAILABLE AIS",
+      "title_a": "Three AIs.",
+      "title_b": "And what's next.",
+      "subtitle": "Three AIs available today — for quick tasks, complex writing and strategy. And this is just the beginning.",
+      "flash_desc": "Fast and affordable. Ideal for everyday tasks: post ideas, captions, emails, summaries, translations. Answers in seconds.",
+      "pro_desc": "Powerful and precise. For when you need more: long articles, content strategy, detailed analysis, writing that requires nuance.",
+      "claude_desc": "Deep intelligence. Excellent for long, well-structured texts, complex reasoning, creative writing and strategic analysis with context.",
+      "coming_soon": "Coming soon: ChatGPT · DALL·E · Midjourney · ElevenLabs · and more. One interface for every AI you use."
     },
-    "features": {
-      "badge": "THE PRODUCT",
-      "f1_label": "PROMPT OPTIMISATION",
-      "f1_title_a": "Fewer tokens.",
-      "f1_title_b": "Better results.",
-      "f1_desc": "Before sending, SavvyOwl analyses your prompt, removes redundancies, improves context and reformulates for maximum effectiveness. Save tokens and money without losing quality.",
-      "f2_label": "SMART ROUTING",
-      "f2_title_a": "The right model.",
-      "f2_title_b": "Always.",
-      "f2_desc": "Each prompt is classified by task type, complexity and language — and automatically routed to the best-performing model between Gemini Flash and Gemini Pro.",
-      "f3_label": "COST ANALYTICS",
-      "f3_title_a": "Know exactly",
-      "f3_title_b": "what you spend.",
-      "f3_desc": "Real-time dashboard. Cost per prompt, per model, per day. See how much you saved. Set limits. No surprises.",
-      "f4_label": "PROMPT LIBRARY",
-      "f4_title_a": "Your best prompts.",
-      "f4_title_b": "Saved.",
-      "f4_desc": "Save what works. Organise by category. Reuse with one click. Your knowledge compounds."
+    "audience": {
+      "badge": "WHO IT'S FOR",
+      "title_a": "Built for those who",
+      "title_b": "create every day.",
+      "card1_title": "Content Creators",
+      "card1_desc": "Captions, scripts, Reels ideas, post copy — ask in normal language and get answers you can use directly. No time wasted rephrasing.",
+      "card2_title": "Influencers",
+      "card2_desc": "Quick replies to brands, content calendars, Stories copy. SavvyOwl helps you keep the pace without hiring an assistant.",
+      "card3_title": "Agencies & Freelancers",
+      "card3_desc": "Multiple clients, multiple projects, one budget. See how much you spend per client, control costs, deliver faster."
     },
     "pricing": {
       "badge": "PRICING",
       "title_a": "Simple.",
-      "title_b": "Transparent.",
+      "title_b": "No surprises.",
       "free_label": "ESSENTIAL",
       "month": "mo",
-      "free_features": ["5 prompts/day", "Gemini Flash & Pro", "Basic analytics", "Basic optimisation"],
-      "free_cta": "START FREE",
+      "free_features": ["5 requests per day", "Gemini Flash, Gemini Pro & Claude", "Conversation history", "Automatic improvement of your texts"],
+      "free_cta": "GET STARTED",
       "pro_label": "PROFESSIONAL",
       "popular": "POPULAR",
-      "pro_features": ["Unlimited prompts", "Advanced optimisation", "Full analytics", "Unlimited library", "Priority support"],
+      "pro_features": ["Unlimited requests", "All AIs (when available)", "Full history", "Advanced improvement", "Saved instructions library", "Full cost control", "Priority support"],
       "pro_cta": "COMING SOON"
     },
     "cta_final": {
-      "title_a": "Ready to create",
-      "title_b": "with intelligence?",
-      "cta": "Start free →"
+      "title_a": "Try it.",
+      "title_b": "It's free to start.",
+      "subtitle": "Create your account in 30 seconds. No credit card required.",
+      "cta": "Create free account →"
     },
     "footer": {
       "text": "SavvyOwl · Lisbon, 2026"

@@ -28,14 +28,13 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // ── Scroll listener for navbar ──
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  // ── Optimize demo loop ──
+  // Demo loop
   const [optPhase, setOptPhase] = useState<0 | 1 | 2>(0);
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
@@ -120,7 +119,6 @@ export default function Landing() {
             >
               {t("landing.nav.cta")}
             </Link>
-            {/* Mobile hamburger */}
             <button
               className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-[#f5f0e8]/60"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -130,7 +128,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1a1814]/95 backdrop-blur-xl border-t border-[#f5f0e8]/10 px-4 py-6 space-y-4">
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
@@ -170,7 +167,7 @@ export default function Landing() {
 
           <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible"
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-6"
-            style={{ fontFamily: FONT_DISPLAY, maxWidth: 680, margin: "0 auto", letterSpacing: "-0.02em" }}
+            style={{ fontFamily: FONT_DISPLAY, maxWidth: 720, margin: "0 auto", letterSpacing: "-0.02em" }}
           >
             {t("landing.hero.h1a")}
             <br />
@@ -200,19 +197,19 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ═══════ 3. OPTIMIZE DEMO (dark) ═══════ */}
+      {/* ═══════ 3. BEFORE & AFTER (dark) ═══════ */}
       <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center"
         >
           <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-            {t("landing.optimize.badge")}
+            {t("landing.demo.badge")}
           </div>
           <h2 className="text-3xl md:text-4xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-            {t("landing.optimize.title_a")}{" "}
-            <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.optimize.title_b")}</span>
+            {t("landing.demo.title_a")}{" "}
+            <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.demo.title_b")}</span>
           </h2>
-          <p className="text-[#f5f0e8]/40 text-sm mb-12" style={{ fontWeight: 300 }}>{t("landing.optimize.subtitle")}</p>
+          <p className="text-[#f5f0e8]/40 text-sm mb-12" style={{ fontWeight: 300 }}>{t("landing.demo.subtitle")}</p>
 
           {/* Demo */}
           <div className="text-left space-y-6">
@@ -226,7 +223,7 @@ export default function Landing() {
               }}
             >
               <p className="text-sm leading-relaxed" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>
-                {t("landing.optimize.prompt_before")}
+                {t("landing.demo.before_text")}
               </p>
             </div>
 
@@ -245,7 +242,7 @@ export default function Landing() {
                 style={{ border: `1px solid ${gold}`, backgroundColor: "#221f1a" }}
               >
                 <p className="text-sm leading-relaxed" style={{ fontFamily: FONT_BODY, fontWeight: 400 }}>
-                  {t("landing.optimize.prompt_after")}
+                  {t("landing.demo.after_text")}
                 </p>
               </motion.div>
             )}
@@ -260,10 +257,10 @@ export default function Landing() {
               style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}
             >
               {[
-                { label: t("landing.optimize.stat1_label"), value: t("landing.optimize.stat1_value"), accent: false },
-                { label: t("landing.optimize.stat2_label"), value: t("landing.optimize.stat2_value"), accent: false },
-                { label: t("landing.optimize.stat3_label"), value: t("landing.optimize.stat3_value"), accent: true },
-                { label: t("landing.optimize.stat4_label"), value: t("landing.optimize.stat4_value"), accent: true },
+                { label: t("landing.demo.stat1_label"), value: t("landing.demo.stat1_value"), accent: false },
+                { label: t("landing.demo.stat2_label"), value: t("landing.demo.stat2_value"), accent: false },
+                { label: t("landing.demo.stat3_label"), value: t("landing.demo.stat3_value"), accent: true },
+                { label: t("landing.demo.stat4_label"), value: t("landing.demo.stat4_value"), accent: true },
               ].map((s) => (
                 <div key={s.label} className="bg-[#221f1a] p-4 text-center">
                   <p className="text-[10px] text-[#f5f0e8]/40 mb-1" style={{ letterSpacing: "2px" }}>{s.label}</p>
@@ -311,18 +308,18 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ═══════ 5. WHY SAVVYOWL (dark) ═══════ */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+      {/* ═══════ 5. WHAT YOU GET (dark) ═══════ */}
+      <section id="features" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
           <div className="text-center mb-12">
             <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-              {t("landing.why.badge")}
+              {t("landing.benefits.badge")}
             </div>
             <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-              {t("landing.why.title_a")}{" "}
-              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.why.title_b")}</span>
+              {t("landing.benefits.title_a")}{" "}
+              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.benefits.title_b")}</span>
             </h2>
           </div>
 
@@ -335,10 +332,10 @@ export default function Landing() {
               <div key={c.key} className="bg-[#221f1a] p-8">
                 <span className="text-lg mb-4 block" style={{ color: gold }}>{c.marker}</span>
                 <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#f5f0e8" }}>
-                  {t(`landing.why.${c.key}_title`)}
+                  {t(`landing.benefits.${c.key}_title`)}
                 </h3>
                 <p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                  {t(`landing.why.${c.key}_desc`)}
+                  {t(`landing.benefits.${c.key}_desc`)}
                 </p>
               </div>
             ))}
@@ -349,80 +346,92 @@ export default function Landing() {
       {/* Gold divider */}
       <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
 
-      {/* ═══════ 6. FEATURES (dark) ═══════ */}
-      <section id="features" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+      {/* ═══════ 6. AVAILABLE AIs (light) ═══════ */}
+      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
-          className="max-w-3xl mx-auto"
+          className="max-w-4xl mx-auto"
         >
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-              {t("landing.features.badge")}
+              {t("landing.ais.badge")}
+            </div>
+            <h2 className="text-3xl md:text-4xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
+              {t("landing.ais.title_a")}{" "}
+              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.ais.title_b")}</span>
+            </h2>
+            <p className="text-[#1a1814]/45 text-sm" style={{ fontWeight: 300 }}>{t("landing.ais.subtitle")}</p>
+          </div>
+
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
+            <div className="bg-[#ece5d9] p-8">
+              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Flash</p>
+              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                {t("landing.ais.flash_desc")}
+              </p>
+            </div>
+            <div className="bg-[#ece5d9] p-8">
+              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Pro</p>
+              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                {t("landing.ais.pro_desc")}
+              </p>
+            </div>
+            <div className="bg-[#ece5d9] p-8">
+              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Claude</p>
+              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                {t("landing.ais.claude_desc")}
+              </p>
             </div>
           </div>
 
-          <div className="space-y-0">
-            {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="grid grid-cols-[48px_1fr] md:grid-cols-[64px_1fr] gap-4 py-8" style={{ borderTop: "1px solid rgba(245,240,232,0.07)" }}>
-                <span className="text-2xl md:text-3xl" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold }}>
-                  0{n}
-                </span>
-                <div>
-                  <p className="text-[10px] text-[#f5f0e8]/30 mb-2" style={{ letterSpacing: "3px" }}>
-                    {t(`landing.features.f${n}_label`)}
-                  </p>
-                  <h3 className="text-xl md:text-2xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-                    {t(`landing.features.f${n}_title_a`)}{" "}
-                    <span style={{ color: gold, fontStyle: "italic" }}>{t(`landing.features.f${n}_title_b`)}</span>
-                  </h3>
-                  <p className="text-sm text-[#f5f0e8]/40 leading-relaxed" style={{ fontWeight: 300 }}>
-                    {t(`landing.features.f${n}_desc`)}
-                  </p>
-                </div>
+          {/* Coming soon box */}
+          <div className="mt-6 p-5 text-center" style={{ border: `1px solid ${gold}`, opacity: 0.6 }}>
+            <p className="text-sm text-[#1a1814]/60 leading-relaxed" style={{ fontWeight: 300 }}>
+              {t("landing.ais.coming_soon")}
+            </p>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ═══════ 7. WHO IT'S FOR (dark) ═══════ */}
+      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
+          className="max-w-4xl mx-auto"
+        >
+          <div className="text-center mb-12">
+            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
+              {t("landing.audience.badge")}
+            </div>
+            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
+              {t("landing.audience.title_a")}{" "}
+              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.audience.title_b")}</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
+            {[
+              { marker: "◆", key: "card1" },
+              { marker: "◇", key: "card2" },
+              { marker: "○", key: "card3" },
+            ].map((c) => (
+              <div key={c.key} className="bg-[#221f1a] p-8">
+                <span className="text-lg mb-4 block" style={{ color: gold }}>{c.marker}</span>
+                <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#f5f0e8" }}>
+                  {t(`landing.audience.${c.key}_title`)}
+                </h3>
+                <p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                  {t(`landing.audience.${c.key}_desc`)}
+                </p>
               </div>
             ))}
           </div>
         </motion.div>
       </section>
 
-      {/* ═══════ 7. MODELS (light) ═══════ */}
-      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
-          className="max-w-3xl mx-auto"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-              {t("landing.models.badge")}
-            </div>
-            <h2 className="text-3xl md:text-4xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-              {t("landing.models.title_a")}{" "}
-              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.models.title_b")}</span>
-            </h2>
-            <p className="text-[#1a1814]/45 text-sm" style={{ fontWeight: 300 }}>{t("landing.models.subtitle")}</p>
-          </div>
-
-          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Flash</p>
-              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                {t("landing.models.flash_desc")}
-              </p>
-            </div>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Pro</p>
-              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                {t("landing.models.pro_desc")}
-              </p>
-            </div>
-          </div>
-
-          <p className="text-center text-xs text-[#1a1814]/30 mt-6" style={{ letterSpacing: "1px" }}>
-            {t("landing.models.coming_soon")}
-          </p>
-        </motion.div>
-      </section>
+      {/* Gold divider */}
+      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
 
       {/* ═══════ 8. PRICING (light) ═══════ */}
-      <section id="pricing" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4" style={{ borderTop: "1px solid rgba(26,24,20,0.08)" }}>
+      <section id="pricing" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
@@ -437,7 +446,7 @@ export default function Landing() {
           </div>
 
           <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
-            {/* Free */}
+            {/* Essencial */}
             <div className="bg-[#ece5d9] p-8">
               <p className="text-[10px] text-[#1a1814]/40 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.free_label")}</p>
               <p className="text-5xl mb-6" style={{ fontFamily: FONT_DISPLAY }}>€9<span className="text-lg text-[#1a1814]/40">/{t("landing.pricing.month")}</span></p>
@@ -474,8 +483,8 @@ export default function Landing() {
                 ))}
               </ul>
               <div
-                className="block text-center text-xs py-3 cursor-default opacity-60"
-                style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}
+                className="block text-center text-xs py-3 pointer-events-none"
+                style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px", opacity: 0.5, cursor: "not-allowed" }}
               >
                 {t("landing.pricing.pro_cta")}
               </div>
@@ -488,10 +497,13 @@ export default function Landing() {
       <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <div className="max-w-2xl mx-auto text-center">
           <div className="flex justify-center mb-12"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-          <h2 className="text-3xl md:text-4xl mb-8" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
+          <h2 className="text-3xl md:text-4xl mb-4" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
             {t("landing.cta_final.title_a")}{" "}
             <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.cta_final.title_b")}</span>
           </h2>
+          <p className="text-[#f5f0e8]/40 text-sm mb-10" style={{ fontWeight: 300 }}>
+            {t("landing.cta_final.subtitle")}
+          </p>
           <Link
             to="/register"
             className="inline-block text-xs px-6 py-3 transition-all hover:scale-[1.03]"
