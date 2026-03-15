@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 import { useTranslation } from "react-i18next";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 
