@@ -1,28 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
   <defs>
-    <radialGradient id="glow" cx="350" cy="315" r="250" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3A86FF" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#3A86FF" stop-opacity="0"/>
+    <radialGradient id="glow" cx="600" cy="240" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#c9a96e" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#c9a96e" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Dark background -->
-  <rect width="1200" height="630" fill="#080B14"/>
-  <!-- Blue glow behind logo -->
-  <circle cx="350" cy="300" r="250" fill="url(#glow)"/>
-  <!-- Owl logo -->
-  <g transform="translate(260,180) scale(0.55)">
-    <path d="M256 440C168 440 96 368 96 268C96 184 132 128 178 92C206 72 230 62 256 62C282 62 306 72 334 92C380 128 416 184 416 268C416 368 344 440 256 440Z" fill="#F0F6FF"/>
-    <polygon points="152,168 188,112 206,184" fill="#F0F6FF"/>
-    <polygon points="360,168 324,112 306,184" fill="#F0F6FF"/>
-    <circle cx="200" cy="256" r="48" fill="#3A86FF"/>
-    <circle cx="200" cy="256" r="18" fill="#080B14"/>
-    <circle cx="312" cy="256" r="48" fill="#3A86FF"/>
-    <circle cx="312" cy="256" r="18" fill="#080B14"/>
-    <path d="M306 240L314 240L310 252L318 252L304 272L308 258L302 258Z" fill="#F0F6FF"/>
-    <polygon points="246,320 256,344 266,320" fill="#3A86FF" opacity="0.6"/>
+  <!-- Warm dark background -->
+  <rect width="1200" height="630" fill="#1a1814"/>
+  <!-- Gold glow behind logo -->
+  <circle cx="600" cy="240" r="200" fill="url(#glow)"/>
+  <!-- Owl logo centered -->
+  <g transform="translate(510,80) scale(0.55)">
+    <polygon points="188,185 204,148 220,185" fill="#F0F6FF" stroke="#c9a96e" stroke-width="2"/>
+    <polygon points="292,185 308,148 324,185" fill="#F0F6FF" stroke="#c9a96e" stroke-width="2"/>
+    <ellipse cx="256" cy="300" rx="95" ry="105" fill="#272320" stroke="#c9a96e" stroke-width="2.5"/>
+    <ellipse cx="256" cy="258" rx="75" ry="72" fill="#1a1814" stroke="#c9a96e" stroke-width="2"/>
+    <circle cx="224" cy="248" r="24" fill="#1a1814" stroke="#c9a96e" stroke-width="3"/>
+    <circle cx="224" cy="248" r="14" fill="#c9a96e"/>
+    <circle cx="224" cy="248" r="7" fill="#1a1814"/>
+    <circle cx="229" cy="243" r="3.5" fill="#FFFFFF" opacity="0.95"/>
+    <circle cx="288" cy="248" r="24" fill="#1a1814" stroke="#c9a96e" stroke-width="3"/>
+    <circle cx="288" cy="248" r="14" fill="#272320"/>
+    <polygon points="291,235 284,251 290,251 283,263 294,246 287,246 293,235" fill="#c9a96e"/>
+    <circle cx="293" cy="241" r="3.5" fill="#FFFFFF" opacity="0.95"/>
+    <polygon points="256,276 245,292 267,292" fill="#c9a96e"/>
+    <path d="M162,285 Q138,335 155,378 Q180,350 222,336" fill="#272320" stroke="#c9a96e" stroke-width="1.5" fill-opacity="0.95"/>
+    <path d="M350,285 Q374,335 357,378 Q332,350 290,336" fill="#272320" stroke="#c9a96e" stroke-width="1.5" fill-opacity="0.95"/>
+    <path d="M234,318 Q256,327 278,318" stroke="#c9a96e" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M230,336 Q256,346 282,336" stroke="#c9a96e" stroke-width="1" fill="none" opacity="0.4"/>
+    <path d="M232,354 Q256,363 280,354" stroke="#c9a96e" stroke-width="1" fill="none" opacity="0.4"/>
+    <line x1="232" y1="400" x2="214" y2="424" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="232" y1="400" x2="228" y2="426" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="232" y1="400" x2="242" y2="426" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="280" y1="400" x2="270" y2="426" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="280" y1="400" x2="280" y2="426" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="280" y1="400" x2="298" y2="424" stroke="#c9a96e" stroke-width="3" stroke-linecap="round"/>
   </g>
   <!-- SavvyOwl text -->
-  <text x="530" y="300" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#F0F6FF" letter-spacing="2">SavvyOwl</text>
+  <text x="600" y="460" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#f5f0e8" letter-spacing="3" text-anchor="middle">SavvyOwl</text>
   <!-- Tagline -->
-  <text x="530" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="400" fill="#8B9DB7" letter-spacing="1">The smart way to use AI</text>
+  <text x="600" y="510" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400" fill="#c9a96e" letter-spacing="2" text-anchor="middle">The smart way to use AI</text>
 </svg>
