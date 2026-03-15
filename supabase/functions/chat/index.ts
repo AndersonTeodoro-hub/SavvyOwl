@@ -24,7 +24,7 @@ interface ModelConfig {
 const MODELS: Record<string, ModelConfig> = {
   quick: {
     provider: "google",
-    modelId: "google/gemini-2.0-flash",
+    modelId: "google/gemini-2.5-flash",
     displayName: "Gemini Flash",
     costInput: 0.0001,
     costOutput: 0.0004,
