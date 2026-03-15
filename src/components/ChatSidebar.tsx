@@ -295,15 +295,15 @@ export function ChatSidebar({
                       {c.title}
                     </span>
                   </button>
-                  <div className="flex items-center gap-0.5 pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center pr-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
-                          className="p-1 rounded hover:bg-secondary/80 text-muted-foreground hover:text-foreground"
+                          className="p-2 min-w-[32px] min-h-[32px] rounded flex items-center justify-center hover:bg-secondary/80 text-muted-foreground hover:text-foreground"
                           title={t("chat.moveToProject")}
                           onClick={(e) => { e.stopPropagation(); setMoveTarget(c.id); }}
                         >
-                          <ArrowRightLeft className="h-3 w-3" />
+                          <ArrowRightLeft className="h-3.5 w-3.5" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
@@ -318,11 +318,11 @@ export function ChatSidebar({
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <button
-                      className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
+                      className="p-2 min-w-[32px] min-h-[32px] rounded flex items-center justify-center hover:bg-destructive/20 text-muted-foreground hover:text-destructive"
                       title={t("chat.deleteConversation")}
                       onClick={(e) => { e.stopPropagation(); setDeleteTarget(c.id); }}
                     >
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
