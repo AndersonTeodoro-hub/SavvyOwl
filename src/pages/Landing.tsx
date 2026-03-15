@@ -1,10 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Check, ArrowDown, Menu as MenuIcon, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const FONT_DISPLAY = "'Cormorant Garamond', Georgia, serif";
 const FONT_BODY = "'Libre Franklin', sans-serif";
@@ -25,8 +28,35 @@ const fadeInView = {
 
 export default function Landing() {
   const { t } = useTranslation();
+  const { user, session } = useAuth();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [proLoading, setProLoading] = useState(false);
+
+  const handleProClick = async () => {
+    if (!user || !session) {
+      navigate("/register?plan=pro");
+      return;
+    }
+    // Logged in — go directly to Stripe checkout
+    setProLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+        body: { action: "create-checkout", plan: "pro" },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error creating checkout session");
+    } finally {
+      setProLoading(false);
+    }
+  };
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -482,12 +512,14 @@ export default function Landing() {
                   </li>
                 ))}
               </ul>
-              <div
-                className="block text-center text-xs py-3 pointer-events-none"
-                style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px", opacity: 0.5, cursor: "not-allowed" }}
+              <button
+                onClick={handleProClick}
+                disabled={proLoading}
+                className="block w-full text-center text-xs py-3 transition-all hover:scale-[1.02] cursor-pointer"
+                style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px", opacity: proLoading ? 0.6 : 1 }}
               >
-                {t("landing.pricing.pro_cta")}
-              </div>
+                {proLoading ? "..." : t("landing.pricing.pro_cta")}
+              </button>
             </div>
           </div>
         </motion.div>
