@@ -21,7 +21,6 @@ Deno.serve(async (req) => {
 
     const GOOGLE_CLIENT_ID = Deno.env.get("GOOGLE_CLIENT_ID");
     const GOOGLE_CLIENT_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
@@ -31,8 +30,11 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Always derive project URL from current request origin to avoid stale/mismatched env values.
+    const projectUrl = new URL(req.url).origin;
+
     // The callback URL is this same function with action=callback
-    const callbackUrl = `${SUPABASE_URL}/functions/v1/google-auth?action=callback`;
+    const callbackUrl = `${projectUrl}/functions/v1/google-auth?action=callback`;
 
     if (action === "login") {
       // Step 1: Redirect to Google consent screen
