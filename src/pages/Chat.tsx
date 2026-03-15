@@ -439,96 +439,93 @@ export default function Chat() {
           </div>
         </ScrollArea>
 
-        {/* Image preview */}
-        {pendingImage && (
-          <div className="border-t border-border px-3 md:px-4 pt-2 bg-background">
-            <div className="max-w-3xl mx-auto relative inline-block">
-              <img
-                src={pendingImage.preview}
-                alt="Preview"
-                className="max-w-[200px] max-h-[120px] border border-border object-cover"
-              />
-              <button
-                onClick={removePendingImage}
-                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80 transition-opacity"
-                aria-label={t("chat.removeImage")}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
+        {/* Bottom section: mode pills + input bar */}
+        <div className="border-t border-border bg-background">
+          {/* Mode selector pills */}
+          <div className="flex gap-1.5 px-3 md:px-4 pt-3 pb-1 overflow-x-auto">
+            {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
+              const isOpusLocked = key === "opus" && profile?.plan !== "pro";
+              return (
+                <button
+                  key={key}
+                  onClick={() => {
+                    if (isOpusLocked) {
+                      toast.error("Upgrade to Pro to use Claude Opus");
+                      return;
+                    }
+                    setMode(key);
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all duration-200 whitespace-nowrap border ${
+                    isOpusLocked
+                      ? "text-muted-foreground/40 cursor-not-allowed border-transparent"
+                      : mode === key
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "text-muted-foreground hover:text-foreground border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
+                  {val.label}
+                </button>
+              );
+            })}
           </div>
-        )}
 
-        {/* Input bar */}
-        <div className="border-t border-border p-3 md:p-4 bg-background">
-          <div className="max-w-3xl mx-auto space-y-2 md:space-y-0 md:flex md:gap-3 md:items-end">
-            {/* Mode selector */}
-            <div className="flex bg-[hsl(var(--surface-1))] rounded-xl p-1 border border-border overflow-x-auto shrink-0">
-              {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
-                const isOpusLocked = key === "opus" && profile?.plan !== "pro";
-                return (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      if (isOpusLocked) {
-                        toast.error("Upgrade to Pro to use Claude Opus");
-                        return;
-                      }
-                      setMode(key);
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap min-h-[44px] md:min-h-0 ${
-                      isOpusLocked
-                        ? "text-muted-foreground/40 cursor-not-allowed"
-                        : mode === key
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
-                    {val.label}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex gap-2 md:gap-3 flex-1">
-              {/* Image upload button */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                capture="environment"
-                className="hidden"
-                onChange={handleImageSelect}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-primary"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-                title={t("chat.imageUpload")}
-              >
-                <ImagePlus className="h-5 w-5" />
-              </Button>
-              <div className="flex-1 relative">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                  placeholder={t("chat.typeMessage")}
-                  className="bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30 pr-12 min-h-[44px]"
-                  disabled={isLoading}
+          {/* Image preview */}
+          {pendingImage && (
+            <div className="px-3 md:px-4 pt-2">
+              <div className="relative inline-block">
+                <img
+                  src={pendingImage.preview}
+                  alt="Preview"
+                  className="max-w-[200px] max-h-[120px] border border-border object-cover rounded-lg"
                 />
+                <button
+                  onClick={removePendingImage}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:opacity-80 transition-opacity"
+                  aria-label={t("chat.removeImage")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               </div>
-              <Button
-                onClick={() => handleSend()}
-                disabled={isLoading || (!input.trim() && !pendingImage)}
-                size="icon"
-                className="glow-primary shrink-0 min-h-[44px] min-w-[44px]"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
             </div>
+          )}
+
+          {/* Input row */}
+          <div className="flex items-end gap-2 px-3 md:px-4 py-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              capture="environment"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-primary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              title={t("chat.imageUpload")}
+            >
+              <ImagePlus className="h-5 w-5" />
+            </Button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+              placeholder={t("chat.typeMessage")}
+              className="flex-1 min-h-[48px] text-[15px] px-4 py-3 bg-[hsl(var(--surface-2))] border-border focus-visible:border-primary focus-visible:ring-primary/30"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={() => handleSend()}
+              disabled={isLoading || (!input.trim() && !pendingImage)}
+              size="icon"
+              className="glow-primary shrink-0 min-h-[44px] min-w-[44px]"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
