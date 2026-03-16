@@ -471,7 +471,7 @@ export default function Chat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={t("chat.typeMessage")}
-              className="flex-1 min-h-[48px] text-[15px] px-4 py-3 bg-[hsl(var(--surface-2))] border-[rgba(245,240,232,0.06)] focus-visible:border-primary focus-visible:ring-primary/30"
+              className="flex-1 min-h-[48px] text-[15px] px-4 py-3 bg-secondary border-border focus-visible:border-primary focus-visible:ring-primary/30"
               disabled={isLoading}
             />
             <Button
