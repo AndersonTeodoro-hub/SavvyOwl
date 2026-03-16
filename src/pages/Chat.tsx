@@ -418,7 +418,7 @@ export default function Chat() {
                       ? "text-muted-foreground/40 cursor-not-allowed border-transparent bg-transparent"
                       : mode === key
                         ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-[rgba(245,240,232,0.05)] text-muted-foreground hover:text-foreground border-transparent hover:border-muted-foreground/30"
+                        : "bg-secondary/50 text-muted-foreground hover:text-foreground border-transparent hover:border-muted-foreground/30"
                   }`}
                 >
                   {isOpusLocked ? <Lock className="h-3 w-3" /> : <val.icon className="h-3 w-3" />}
