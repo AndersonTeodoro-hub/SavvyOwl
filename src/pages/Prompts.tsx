@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, BookOpen, Play } from "lucide-react";
+import { Plus, BookOpen, Play, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -125,6 +125,31 @@ export default function Prompts() {
     toast.success(t("prompts.startersLoaded"));
   };
 
+  const refreshStarters = async () => {
+    // Delete old starters and insert fresh translated ones
+    await supabase.from("prompts").delete().eq("user_id", user!.id).eq("is_starter", true);
+    const starters = getStarterPrompts(t);
+    for (const sp of starters) {
+      await supabase.from("prompts").insert({ user_id: user!.id, ...sp, is_starter: true });
+    }
+    queryClient.invalidateQueries({ queryKey: ["prompts"] });
+    toast.success(t("prompts.startersUpdated"));
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: "SavvyOwl",
+      text: t("share.text"),
+      url: "https://savvyowl.app",
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch {}
+    } else {
+      await navigator.clipboard.writeText("https://savvyowl.app");
+      toast.success(t("share.copied"));
+    }
+  };
+
   const resetForm = () => { setEditTitle(""); setEditCategory("Content"); setEditContent(""); setEditId(null); };
 
   const openEdit = (p: any) => { setEditId(p.id); setEditTitle(p.title); setEditCategory(p.category); setEditContent(p.content); setShowCreate(true); };
@@ -140,15 +165,23 @@ export default function Prompts() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground text-tracking-tight">{t("prompts.title")}</h1>
           <p className="text-muted-foreground">{t("prompts.subtitle")}</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowCreate(true); }} className="glow-primary">
-          <Plus className="mr-2 h-4 w-4" />
-          {t("prompts.newPrompt")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {prompts && prompts.length > 0 && (
+            <Button variant="outline" size="sm" onClick={refreshStarters} className="text-xs">
+              <RefreshCw className="mr-1.5 h-3 w-3" />
+              {t("prompts.refreshStarters")}
+            </Button>
+          )}
+          <Button onClick={() => { resetForm(); setShowCreate(true); }} className="glow-primary">
+            <Plus className="mr-2 h-4 w-4" />
+            {t("prompts.newPrompt")}
+          </Button>
+        </div>
       </div>
 
       {prompts && prompts.length === 0 && (

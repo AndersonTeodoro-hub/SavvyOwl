@@ -252,7 +252,9 @@
       "stories_content": "Cria uma sequência de 5 Stories para Instagram sobre {tema}.\n\nObjetivo: {objetivo}\nTom: casual, próximo\n\nPara cada Story:\n- Tipo (texto, foto, vídeo, enquete, quiz, caixa de perguntas)\n- Descrição visual\n- Texto sobreposto\n- Elemento interativo (sticker, enquete, slider)\n\nO Story 5 tem de incluir CTA para o link na bio ou DM.",
       "ideas_title": "💡 10 Ideias de Conteúdo",
       "ideas_content": "Dá-me 10 ideias de conteúdo para {plataforma} no nicho de {nicho}.\n\nPara cada ideia:\n- Formato (Reels, carrossel, post, Stories)\n- Hook / primeira linha\n- Ângulo único\n- Tipo de engagement esperado (saves, shares, comentários)\n\nFoca em conteúdo que gera saves e shares. Mistura conteúdo educativo, entretenimento e relatable."
-    }
+    },
+    "refreshStarters": "Atualizar prompts",
+    "startersUpdated": "Prompts atualizados!"
   },
   "analytics": {
     "title": "Análises",
@@ -335,5 +337,10 @@
     "title": "404",
     "message": "Oops! Página não encontrada",
     "goHome": "Voltar ao Início"
+  },
+  "share": {
+    "button": "Partilhar SavvyOwl",
+    "text": "Experimenta a SavvyOwl — cria conteúdo para redes sociais 3x mais rápido com IA. Grátis para começar!",
+    "copied": "Link copiado!"
   }
 }

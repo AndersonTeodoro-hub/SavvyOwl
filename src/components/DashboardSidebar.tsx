@@ -1,4 +1,4 @@
-import { Home, MessageSquare, BookOpen, BarChart3, Settings, LogOut } from "lucide-react";
+import { Home, MessageSquare, BookOpen, BarChart3, Settings, LogOut, Share2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +16,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
@@ -87,6 +88,23 @@ export function DashboardSidebar() {
             </div>
           </div>
         )}
+        <Button
+          variant="ghost"
+          size={collapsed ? "icon" : "default"}
+          className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
+          onClick={async () => {
+            const shareData = { title: "SavvyOwl", text: t("share.text"), url: "https://savvyowl.app" };
+            if (navigator.share) {
+              try { await navigator.share(shareData); } catch {}
+            } else {
+              await navigator.clipboard.writeText("https://savvyowl.app");
+              toast.success(t("share.copied"));
+            }
+          }}
+        >
+          <Share2 className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="ml-2">{t("share.button")}</span>}
+        </Button>
         <Button variant="ghost" size={collapsed ? "icon" : "default"} className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50" onClick={signOut}>
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span className="ml-2">{t("nav.signOut")}</span>}

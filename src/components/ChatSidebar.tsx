@@ -43,6 +43,7 @@ import {
   FolderOpen,
   FolderPlus,
   ArrowRightLeft,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -325,6 +326,27 @@ export function ChatSidebar({
             </div>
           </div>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
+          onClick={async () => {
+            const shareData = {
+              title: "SavvyOwl",
+              text: t("share.text"),
+              url: "https://savvyowl.app",
+            };
+            if (navigator.share) {
+              try { await navigator.share(shareData); } catch {}
+            } else {
+              await navigator.clipboard.writeText("https://savvyowl.app");
+              toast.success(t("share.copied"));
+            }
+          }}
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          {t("share.button")}
+        </Button>
         <Button
           variant="ghost"
           size="sm"

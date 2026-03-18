@@ -252,7 +252,9 @@
       "stories_content": "Create a 5-Story Instagram sequence about {topic}.\n\nGoal: {goal}\nTone: casual, relatable\n\nFor each Story:\n- Type (text, photo, video, poll, quiz, question box)\n- Visual description\n- Text overlay\n- Interactive element (sticker, poll, slider)\n\nStory 5 must include CTA to link in bio or DM.",
       "ideas_title": "💡 10 Content Ideas",
       "ideas_content": "Give me 10 content ideas for {platform} in the {niche} niche.\n\nFor each idea:\n- Format (Reels, carousel, post, Stories)\n- Hook / first line\n- Unique angle\n- Expected engagement type (saves, shares, comments)\n\nFocus on content that drives saves and shares. Mix educational, entertaining, and relatable content."
-    }
+    },
+    "refreshStarters": "Refresh prompts",
+    "startersUpdated": "Prompts updated!"
   },
   "analytics": {
     "title": "Analytics",
@@ -335,5 +337,10 @@
     "title": "404",
     "message": "Oops! Page not found",
     "goHome": "Return to Home"
+  },
+  "share": {
+    "button": "Share SavvyOwl",
+    "text": "Try SavvyOwl — create social media content 3x faster with AI. Free to start!",
+    "copied": "Link copied!"
   }
 }
