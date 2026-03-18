@@ -342,24 +342,24 @@ export default function Chat() {
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-3 md:gap-4 py-5 ${i > 0 ? "border-t border-border/40" : ""}`}
+                className={`flex gap-3 py-4 ${i > 0 ? "border-t border-border/30" : ""}`}
               >
                 {/* Avatar */}
                 <div className="shrink-0 mt-0.5">
                   {msg.role === "user" ? (
-                    <div className="h-7 w-7 rounded-full bg-primary/15 flex items-center justify-center">
-                      <span className="text-[11px] font-semibold text-primary">{userInitial}</span>
+                    <div className="h-6 w-6 rounded-full bg-primary/12 flex items-center justify-center">
+                      <span className="text-[10px] font-semibold text-primary">{userInitial}</span>
                     </div>
                   ) : (
-                    <div className="h-7 w-7 rounded-full bg-foreground/8 flex items-center justify-center">
-                      <Bot className="h-3.5 w-3.5 text-foreground/60" />
+                    <div className="h-6 w-6 rounded-full bg-foreground/6 flex items-center justify-center">
+                      <Bot className="h-3 w-3 text-foreground/50" />
                     </div>
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-xs font-semibold text-foreground/60 mb-1.5">
+                  <p className="text-[11px] font-medium text-foreground/40 mb-1">
                     {msg.role === "user" ? (profile?.full_name || "You") : "SavvyOwl"}
                   </p>
 
@@ -372,17 +372,14 @@ export default function Chat() {
                     />
                   )}
 
-                  <div className="chat-prose text-[0.9375rem] text-foreground">
+                  <div className="chat-prose text-sm text-foreground">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
 
                   {msg.role === "assistant" && msg.model_used && (
-                    <div className="mt-3 flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center text-[11px] text-muted-foreground bg-secondary/60 px-2 py-0.5 rounded-full">
+                    <div className="mt-2">
+                      <span className="inline-flex items-center text-[10px] text-muted-foreground/40 px-1.5 py-0.5 rounded">
                         €{(msg.cost_eur || 0).toFixed(4)}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground/50">
-                        {msg.model_used.split("/").pop()}
                       </span>
                     </div>
                   )}
@@ -437,17 +434,17 @@ export default function Chat() {
 
             {/* Thinking indicator */}
             {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-              <div className="flex gap-3 md:gap-4 py-5 border-t border-border/40">
+              <div className="flex gap-3 py-4 border-t border-border/30">
                 <div className="shrink-0 mt-0.5">
-                  <div className="h-7 w-7 rounded-full bg-foreground/8 flex items-center justify-center">
-                    <Bot className="h-3.5 w-3.5 text-foreground/60" />
+                  <div className="h-6 w-6 rounded-full bg-foreground/6 flex items-center justify-center">
+                    <Bot className="h-3 w-3 text-foreground/50" />
                   </div>
                 </div>
-                <div className="flex-1 pt-2">
+                <div className="flex-1 pt-1.5">
                   <div className="flex gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-primary/50 thinking-dot" />
-                    <div className="h-2 w-2 rounded-full bg-primary/50 thinking-dot" />
-                    <div className="h-2 w-2 rounded-full bg-primary/50 thinking-dot" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40 thinking-dot" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40 thinking-dot" />
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary/40 thinking-dot" />
                   </div>
                 </div>
               </div>

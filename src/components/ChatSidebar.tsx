@@ -287,25 +287,23 @@ export function ChatSidebar({
                   }`}
                 >
                   <div
-                    className="flex items-center gap-2 flex-1 min-w-0 px-2.5 py-2"
+                    className="flex items-center gap-2 flex-1 min-w-0 px-2 py-1.5"
                     onClick={() => { onSelectConversation(c.id); onCloseMobile?.(); }}
                   >
                     <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className={`truncate text-sm ${
-                      conversationId === c.id ? "text-primary" : "text-muted-foreground"
+                    <span className={`truncate text-xs ${
+                      conversationId === c.id ? "text-primary font-medium" : "text-muted-foreground"
                     }`}>
                       {c.title}
                     </span>
                   </div>
-                  <div className="flex items-center shrink-0 pr-1">
-                    <button
-                      className="p-1.5 rounded text-muted-foreground/40 hover:bg-destructive/20 hover:text-destructive transition-colors"
-                      title={t("chat.deleteConversation")}
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDeleteTarget(c.id); }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    className="shrink-0 p-1.5 mr-1 rounded text-muted-foreground/50 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                    title={t("chat.deleteConversation")}
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDeleteTarget(c.id); }}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
             </div>
