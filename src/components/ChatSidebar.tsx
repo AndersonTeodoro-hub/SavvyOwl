@@ -280,25 +280,21 @@ export function ChatSidebar({
               {convs.map((c) => (
                 <div
                   key={c.id}
-                  className={`group flex items-center w-full rounded-lg cursor-pointer transition-all duration-150 ${
+                  onClick={() => { onSelectConversation(c.id); onCloseMobile?.(); }}
+                  className={`group relative flex items-center w-full rounded-lg cursor-pointer transition-all duration-150 px-2 py-1.5 ${
                     conversationId === c.id
                       ? "bg-primary/10"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  <div
-                    className="flex items-center gap-2 flex-1 min-w-0 px-2 py-1.5"
-                    onClick={() => { onSelectConversation(c.id); onCloseMobile?.(); }}
-                  >
-                    <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className={`truncate text-xs ${
-                      conversationId === c.id ? "text-primary font-medium" : "text-muted-foreground"
-                    }`}>
-                      {c.title}
-                    </span>
-                  </div>
+                  <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground mr-2" />
+                  <span className={`truncate flex-1 text-xs leading-snug ${
+                    conversationId === c.id ? "text-primary font-medium" : "text-muted-foreground"
+                  }`}>
+                    {c.title}
+                  </span>
                   <button
-                    className="shrink-0 p-1.5 mr-1 rounded text-muted-foreground/50 hover:bg-destructive/20 hover:text-destructive transition-colors"
+                    className="absolute right-1 shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 bg-sidebar-background/80 text-muted-foreground/60 hover:bg-destructive/20 hover:text-destructive transition-all"
                     title={t("chat.deleteConversation")}
                     onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDeleteTarget(c.id); }}
                   >
