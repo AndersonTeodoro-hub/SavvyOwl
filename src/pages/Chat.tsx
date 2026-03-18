@@ -51,7 +51,7 @@ export default function Chat() {
     quick: { label: t("chat.quick"), icon: Zap, desc: t("chat.quickDesc") },
     deep: { label: t("chat.deepThink"), icon: Brain, desc: t("chat.deepThinkDesc") },
     creator: { label: t("chat.contentCreator"), icon: Pen, desc: t("chat.contentCreatorDesc") },
-    opus: { label: "Opus", icon: Sparkles, desc: "Claude Opus — maximum power (Pro only)" },
+    opus: { label: "Opus", icon: Sparkles, desc: t("chat.quickDesc") },
   };
 
   // Auto-resize textarea
@@ -400,10 +400,18 @@ export default function Chat() {
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
 
-                  {msg.role === "assistant" && msg.model_used && (
-                    <div className="mt-2">
-                      <span className="inline-flex items-center text-[10px] text-muted-foreground/40 px-1.5 py-0.5 rounded">
-                        €{(msg.cost_eur || 0).toFixed(4)}
+                  {msg.role === "assistant" && msg.model_used && (msg.cost_eur || 0) > 0 && (
+                    <div className="mt-2 inline-flex items-center gap-2 text-[10px]">
+                      <span className="text-primary font-medium">
+                        SavvyOwl: €{(msg.cost_eur || 0).toFixed(4)}
+                      </span>
+                      <span className="text-muted-foreground/30">·</span>
+                      <span className="text-muted-foreground/40 line-through">
+                        ChatGPT: ~€{((msg.cost_eur || 0) * 8).toFixed(4)}
+                      </span>
+                      <span className="text-muted-foreground/30">·</span>
+                      <span className="text-muted-foreground/40 line-through">
+                        GPT-4o: ~€{((msg.cost_eur || 0) * 12).toFixed(4)}
                       </span>
                     </div>
                   )}
@@ -413,19 +421,10 @@ export default function Chat() {
                       <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors group">
                         <Sparkles className="h-3 w-3 text-primary" />
                         <span>{t("chat.optimizedBy")}</span>
-                        {msg.model_recommended && (
-                          <span className="text-muted-foreground/50">· {msg.model_recommended.split("/").pop()}</span>
-                        )}
                         <ChevronDown className="h-3 w-3 ml-1 transition-transform group-data-[state=open]:rotate-180" />
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="mt-2 bg-secondary/40 border border-border/40 rounded-lg p-3 space-y-2 text-xs">
-                          {msg.model_recommended && (
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">{t("chat.modelUsed")}</span>
-                              <span className="text-foreground font-medium">{msg.model_recommended.split("/").pop()}</span>
-                            </div>
-                          )}
                           {msg.task_type && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">{t("chat.taskType")}</span>
@@ -490,7 +489,7 @@ export default function Chat() {
                     key={key}
                     onClick={() => {
                       if (isOpusLocked) {
-                        toast.error("Upgrade to Pro to use Claude Opus");
+                        toast.error(t("chat.upgradeMode"));
                         return;
                       }
                       setMode(key);

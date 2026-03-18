@@ -81,7 +81,7 @@
       "card1_title": "Better content, faster",
       "card1_desc": "Your request is improved before reaching the AI. Stronger captions, sharper copy, hooks that grab. All on the first try.",
       "card2_title": "The right AI for each post",
-      "card2_desc": "Quick caption? Gemini Flash. Full blog article? Claude. Content strategy? Gemini Pro. SavvyOwl picks automatically.",
+      "card2_desc": "Quick caption? Uses the most efficient AI. Full blog article? Uses the most powerful one. Content strategy? Uses the most analytical. SavvyOwl picks automatically.",
       "card3_title": "Full cost control",
       "card3_desc": "See the cost of every request, per day, per month, per client. Set a budget. No surprises on the bill."
     },
@@ -95,7 +95,7 @@
       "month": "mo",
       "free_features": [
         "5 requests per day",
-        "3 AIs available",
+        "3 AI modes",
         "Conversation history",
         "Automatic prompt improvement"
       ],

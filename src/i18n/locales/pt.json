@@ -81,7 +81,7 @@
       "card1_title": "Conteúdo melhor, mais rápido",
       "card1_desc": "O teu pedido é melhorado antes de chegar à IA. Legendas mais fortes, copies mais diretos, hooks que prendem. Tudo à primeira tentativa.",
       "card2_title": "A IA certa para cada post",
-      "card2_desc": "Uma legenda rápida? Gemini Flash. Artigo de blog completo? Claude. Estratégia de conteúdo? Gemini Pro. A SavvyOwl escolhe automaticamente.",
+      "card2_desc": "Uma legenda rápida? Usa a IA mais eficiente. Artigo de blog completo? Usa a mais poderosa. Estratégia de conteúdo? Usa a mais analítica. A SavvyOwl escolhe automaticamente.",
       "card3_title": "Controlo total de custos",
       "card3_desc": "Vês o custo de cada pedido, por dia, por mês, por cliente. Defines um orçamento. Sem surpresas na fatura."
     },
@@ -95,7 +95,7 @@
       "month": "mês",
       "free_features": [
         "5 pedidos por dia",
-        "3 IAs disponíveis",
+        "3 modos de IA",
         "Histórico de conversas",
         "Melhoria automática de prompts"
       ],
