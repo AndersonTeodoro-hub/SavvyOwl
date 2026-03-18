@@ -30,7 +30,9 @@
       "h1a": "Escribe lo que necesitas.",
       "h1b": "La IA hace el resto.",
       "subtitle": "SavvyOwl mejora automáticamente lo que escribes, elige la mejor IA para la tarea y te muestra exactamente cuánto gastaste. Crea mejor contenido, más rápido y más barato.",
-      "cta": "Prueba gratis →"
+      "cta": "Prueba gratis →",
+      "ctaSecondary": "See how it works ↓",
+      "socialProof": "NO CARD REQUIRED · START IN 30 SECONDS"
     },
     "demo": {
       "badge": "VE LA DIFERENCIA",
@@ -46,7 +48,9 @@
       "stat3_label": "MÁS CORTO",
       "stat3_value": "72%",
       "stat4_label": "RESULTADO",
-      "stat4_value": "Mejor"
+      "stat4_value": "Mejor",
+      "youWrote": "YOU WROTE",
+      "savvySent": "SAVVYOWL SENT"
     },
     "howItWorks": {
       "badge": "CÓMO FUNCIONA",
@@ -97,12 +101,28 @@
       "title_b": "Sin sorpresas.",
       "free_label": "ESENCIAL",
       "month": "mes",
-      "free_features": ["5 peticiones al día", "Gemini Flash, Gemini Pro & Claude", "Historial de conversaciones", "Mejora automática de tus textos"],
+      "free_features": [
+        "5 peticiones al día",
+        "Gemini Flash, Gemini Pro & Claude",
+        "Historial de conversaciones",
+        "Mejora automática de tus textos"
+      ],
       "free_cta": "EMPEZAR",
       "pro_label": "PROFESIONAL",
       "popular": "POPULAR",
-      "pro_features": ["Peticiones ilimitadas", "Todas las IAs (cuando disponibles)", "Historial completo", "Mejora avanzada", "Biblioteca de instrucciones guardadas", "Control total de costes", "Soporte prioritario"],
-      "pro_cta": "EMPEZAR"
+      "pro_features": [
+        "Peticiones ilimitadas",
+        "Todas las IAs (cuando disponibles)",
+        "Historial completo",
+        "Mejora avanzada",
+        "Biblioteca de instrucciones guardadas",
+        "Control total de costes",
+        "Soporte prioritario"
+      ],
+      "pro_cta": "EMPEZAR",
+      "free_price": "€0",
+      "free_subtitle": "Try it with no commitment",
+      "pro_subtitle": "For those who create content every day"
     },
     "cta_final": {
       "title_a": "Pruébalo.",
@@ -112,6 +132,17 @@
     },
     "footer": {
       "text": "SavvyOwl · Lisboa, 2026"
+    },
+    "pain": {
+      "badge": "YOUR DAILY REALITY",
+      "title_a": "Sound",
+      "title_b": "familiar?",
+      "pain1_title": "Hours rewriting prompts",
+      "pain1_desc": "You write a prompt in ChatGPT, the result isn't right. You rewrite it. Try again. 20 minutes wasted on a post that should take 2.",
+      "pain2_title": "Generic, unusable outputs",
+      "pain2_desc": "The AI gives you vague text you can't publish. You edit everything. What's the point of AI if you're doing all the work?",
+      "pain3_title": "No idea what you're spending",
+      "pain3_desc": "You pay for 3 different subscriptions and have no clue if you're spending €10 or €50 a month. Zero visibility."
     }
   },
   "auth": {

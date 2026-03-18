@@ -4,7 +4,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Check, ArrowDown, Menu as MenuIcon, X } from "lucide-react";
+import { Check, ArrowDown, Menu as MenuIcon, X, ArrowRight, Clock, Sparkles, DollarSign, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,7 +39,6 @@ export default function Landing() {
       navigate("/register?plan=pro");
       return;
     }
-    // Logged in — go directly to Stripe checkout
     setProLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("stripe-checkout", {
@@ -64,7 +63,7 @@ export default function Landing() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  // Demo loop
+  // Demo animation
   const [optPhase, setOptPhase] = useState<0 | 1 | 2>(0);
   useEffect(() => {
     const timers: NodeJS.Timeout[] = [];
@@ -82,7 +81,6 @@ export default function Landing() {
 
   return (
     <div className="relative" style={{ fontFamily: FONT_BODY }}>
-
       {/* Grain overlay */}
       <div className="pointer-events-none fixed inset-0 z-[100] opacity-[0.02]">
         <svg width="100%" height="100%">
@@ -93,7 +91,7 @@ export default function Landing() {
         </svg>
       </div>
 
-      {/* ═══════ 1. NAVBAR ═══════ */}
+      {/* ═══════ NAVBAR ═══════ */}
       <nav
         className="fixed top-0 w-full z-50 transition-all duration-300"
         style={{
@@ -105,16 +103,13 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 md:px-8">
           <div className="flex items-center">
             <img src="/logo.svg" alt="SavvyOwl" className="h-[44px] w-auto" style={{ marginRight: "8px" }} />
-            <span
-              className="text-xs font-medium hidden sm:inline"
-              style={{ letterSpacing: "0.15em", color: "#F0F6FF" }}
-            >
+            <span className="text-xs font-medium hidden sm:inline" style={{ letterSpacing: "0.15em", color: "#F0F6FF" }}>
               SAVVYOWL
             </span>
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-[#f5f0e8]/40 hover:text-[#f5f0e8] text-xs transition-colors" style={{ letterSpacing: "2px" }}>
+            <a href="#how" className="text-[#f5f0e8]/40 hover:text-[#f5f0e8] text-xs transition-colors" style={{ letterSpacing: "2px" }}>
               {t("landing.nav.product")}
             </a>
             <a href="#pricing" className="text-[#f5f0e8]/40 hover:text-[#f5f0e8] text-xs transition-colors" style={{ letterSpacing: "2px" }}>
@@ -133,19 +128,9 @@ export default function Landing() {
             <Link
               to="/register"
               className="text-xs px-4 py-2 transition-all hover:scale-[1.02] hidden md:inline-block"
-              style={{
-                border: `1px solid ${gold}`,
-                color: gold,
-                letterSpacing: "1px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = gold;
-                e.currentTarget.style.color = "#1a1814";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = gold;
-              }}
+              style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = gold; e.currentTarget.style.color = "#1a1814"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = gold; }}
             >
               {t("landing.nav.cta")}
             </Link>
@@ -160,7 +145,7 @@ export default function Landing() {
 
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1a1814]/95 backdrop-blur-xl border-t border-[#f5f0e8]/10 px-4 py-6 space-y-4">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
+            <a href="#how" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
               {t("landing.nav.product")}
             </a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>
@@ -185,7 +170,7 @@ export default function Landing() {
         )}
       </nav>
 
-      {/* ═══════ 2. HERO (dark) ═══════ */}
+      {/* ═══════ HERO ═══════ */}
       <section className="min-h-screen flex items-center justify-center bg-[#1a1814] text-[#f5f0e8] pt-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible"
@@ -213,22 +198,73 @@ export default function Landing() {
             {t("landing.hero.subtitle")}
           </motion.p>
 
-          <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
+          <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/register"
-              className="inline-block text-xs px-6 py-3 transition-all hover:scale-[1.03]"
-              style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = gold; e.currentTarget.style.color = "#1a1814"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = gold; }}
+              className="inline-flex items-center gap-2 text-xs px-6 py-3 transition-all hover:scale-[1.03]"
+              style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px" }}
             >
               {t("landing.hero.cta")}
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
+            <a
+              href="#how"
+              className="inline-block text-xs px-6 py-3 text-[#f5f0e8]/40 hover:text-[#f5f0e8] transition-colors"
+              style={{ letterSpacing: "1px" }}
+            >
+              {t("landing.hero.ctaSecondary")}
+            </a>
           </motion.div>
+
+          {/* Social proof */}
+          <motion.p custom={4} variants={fadeUp} initial="hidden" animate="visible"
+            className="mt-12 text-[11px] text-[#f5f0e8]/20" style={{ letterSpacing: "2px" }}
+          >
+            {t("landing.hero.socialProof")}
+          </motion.p>
         </div>
       </section>
 
-      {/* ═══════ 3. BEFORE & AFTER (dark) ═══════ */}
+      {/* ═══════ PAIN POINTS ═══════ */}
       <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
+          className="max-w-4xl mx-auto"
+        >
+          <div className="text-center mb-14">
+            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
+              {t("landing.pain.badge")}
+            </div>
+            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
+              {t("landing.pain.title_a")}{" "}
+              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.pain.title_b")}</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
+            {[
+              { icon: Clock, key: "pain1" },
+              { icon: Sparkles, key: "pain2" },
+              { icon: DollarSign, key: "pain3" },
+            ].map((c) => (
+              <div key={c.key} className="bg-[#221f1a] p-8">
+                <c.icon className="h-5 w-5 mb-4" style={{ color: gold }} />
+                <h3 className="text-lg mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#f5f0e8" }}>
+                  {t(`landing.pain.${c.key}_title`)}
+                </h3>
+                <p className="text-sm text-[#f5f0e8]/40 leading-relaxed" style={{ fontWeight: 300 }}>
+                  {t(`landing.pain.${c.key}_desc`)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Gold divider */}
+      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
+
+      {/* ═══════ DEMO ═══════ */}
+      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-3xl mx-auto text-center"
         >
@@ -239,19 +275,21 @@ export default function Landing() {
             {t("landing.demo.title_a")}{" "}
             <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.demo.title_b")}</span>
           </h2>
-          <p className="text-[#f5f0e8]/40 text-sm mb-12" style={{ fontWeight: 300 }}>{t("landing.demo.subtitle")}</p>
+          <p className="text-[#1a1814]/45 text-sm mb-12" style={{ fontWeight: 300 }}>{t("landing.demo.subtitle")}</p>
 
-          {/* Demo */}
           <div className="text-left space-y-6">
             <div
               className="p-6 transition-all duration-700"
               style={{
-                border: "1px solid rgba(245,240,232,0.07)",
-                backgroundColor: "#221f1a",
+                border: "1px solid rgba(26,24,20,0.1)",
+                backgroundColor: "#ece5d9",
                 opacity: optPhase >= 1 ? 0.35 : 1,
                 textDecoration: optPhase >= 1 ? "line-through" : "none",
               }}
             >
+              <p className="text-[10px] uppercase mb-2 text-[#1a1814]/30" style={{ letterSpacing: "3px" }}>
+                {t("landing.demo.youWrote")}
+              </p>
               <p className="text-sm leading-relaxed" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>
                 {t("landing.demo.before_text")}
               </p>
@@ -269,8 +307,11 @@ export default function Landing() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 className="p-6"
-                style={{ border: `1px solid ${gold}`, backgroundColor: "#221f1a" }}
+                style={{ border: `1px solid ${gold}`, backgroundColor: "#ece5d9" }}
               >
+                <p className="text-[10px] uppercase mb-2" style={{ letterSpacing: "3px", color: gold }}>
+                  {t("landing.demo.savvySent")}
+                </p>
                 <p className="text-sm leading-relaxed" style={{ fontFamily: FONT_BODY, fontWeight: 400 }}>
                   {t("landing.demo.after_text")}
                 </p>
@@ -284,7 +325,7 @@ export default function Landing() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
               className="grid grid-cols-2 md:grid-cols-4 mt-8"
-              style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}
+              style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}
             >
               {[
                 { label: t("landing.demo.stat1_label"), value: t("landing.demo.stat1_value"), accent: false },
@@ -292,9 +333,9 @@ export default function Landing() {
                 { label: t("landing.demo.stat3_label"), value: t("landing.demo.stat3_value"), accent: true },
                 { label: t("landing.demo.stat4_label"), value: t("landing.demo.stat4_value"), accent: true },
               ].map((s) => (
-                <div key={s.label} className="bg-[#221f1a] p-4 text-center">
-                  <p className="text-[10px] text-[#f5f0e8]/40 mb-1" style={{ letterSpacing: "2px" }}>{s.label}</p>
-                  <p className="text-lg" style={{ fontFamily: FONT_DISPLAY, color: s.accent ? gold : "#f5f0e8" }}>{s.value}</p>
+                <div key={s.label} className="bg-[#ece5d9] p-4 text-center">
+                  <p className="text-[10px] text-[#1a1814]/35 mb-1" style={{ letterSpacing: "2px" }}>{s.label}</p>
+                  <p className="text-lg" style={{ fontFamily: FONT_DISPLAY, color: s.accent ? gold : "#1a1814" }}>{s.value}</p>
                 </div>
               ))}
             </motion.div>
@@ -302,11 +343,8 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Gold divider */}
-      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-
-      {/* ═══════ 4. HOW IT WORKS (light) ═══════ */}
-      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
+      {/* ═══════ HOW IT WORKS ═══════ */}
+      <section id="how" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
@@ -320,16 +358,16 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
             {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-[#ece5d9] p-8">
+              <div key={n} className="bg-[#221f1a] p-8">
                 <span className="text-3xl mb-4 block" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold }}>
                   0{n}
                 </span>
                 <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>
                   {t(`landing.howItWorks.step${n}_title`)}
                 </h3>
-                <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                <p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>
                   {t(`landing.howItWorks.step${n}_desc`)}
                 </p>
               </div>
@@ -338,8 +376,11 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ═══════ 5. WHAT YOU GET (dark) ═══════ */}
-      <section id="features" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+      {/* Gold divider */}
+      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
+
+      {/* ═══════ BENEFITS ═══════ */}
+      <section id="features" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-4xl mx-auto"
         >
@@ -353,18 +394,18 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
             {[
               { marker: "◆", key: "card1" },
               { marker: "◇", key: "card2" },
               { marker: "○", key: "card3" },
             ].map((c) => (
-              <div key={c.key} className="bg-[#221f1a] p-8">
+              <div key={c.key} className="bg-[#ece5d9] p-8">
                 <span className="text-lg mb-4 block" style={{ color: gold }}>{c.marker}</span>
-                <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#f5f0e8" }}>
+                <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#1a1814" }}>
                   {t(`landing.benefits.${c.key}_title`)}
                 </h3>
-                <p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>
+                <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
                   {t(`landing.benefits.${c.key}_desc`)}
                 </p>
               </div>
@@ -373,95 +414,8 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* Gold divider */}
-      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-
-      {/* ═══════ 6. AVAILABLE AIs (light) ═══════ */}
-      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-              {t("landing.ais.badge")}
-            </div>
-            <h2 className="text-3xl md:text-4xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-              {t("landing.ais.title_a")}{" "}
-              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.ais.title_b")}</span>
-            </h2>
-            <p className="text-[#1a1814]/45 text-sm" style={{ fontWeight: 300 }}>{t("landing.ais.subtitle")}</p>
-          </div>
-
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Flash</p>
-              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                {t("landing.ais.flash_desc")}
-              </p>
-            </div>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Gemini Pro</p>
-              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                {t("landing.ais.pro_desc")}
-              </p>
-            </div>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-2xl mb-2" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>Claude</p>
-              <p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                {t("landing.ais.claude_desc")}
-              </p>
-            </div>
-          </div>
-
-          {/* Coming soon box */}
-          <div className="mt-6 p-5 text-center" style={{ border: `1px solid ${gold}`, opacity: 0.6 }}>
-            <p className="text-sm text-[#1a1814]/60 leading-relaxed" style={{ fontWeight: 300 }}>
-              {t("landing.ais.coming_soon")}
-            </p>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ═══════ 7. WHO IT'S FOR (dark) ═══════ */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
-          className="max-w-4xl mx-auto"
-        >
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>
-              {t("landing.audience.badge")}
-            </div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
-              {t("landing.audience.title_a")}{" "}
-              <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.audience.title_b")}</span>
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
-            {[
-              { marker: "◆", key: "card1" },
-              { marker: "◇", key: "card2" },
-              { marker: "○", key: "card3" },
-            ].map((c) => (
-              <div key={c.key} className="bg-[#221f1a] p-8">
-                <span className="text-lg mb-4 block" style={{ color: gold }}>{c.marker}</span>
-                <h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: "#f5f0e8" }}>
-                  {t(`landing.audience.${c.key}_title`)}
-                </h3>
-                <p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>
-                  {t(`landing.audience.${c.key}_desc`)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Gold divider */}
-      <div className="bg-[#1a1814] flex justify-center pb-0"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-
-      {/* ═══════ 8. PRICING (light) ═══════ */}
-      <section id="pricing" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
+      {/* ═══════ PRICING ═══════ */}
+      <section id="pricing" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
         <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
@@ -475,40 +429,46 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: "rgba(26,24,20,0.08)" }}>
-            {/* Essencial */}
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-[10px] text-[#1a1814]/40 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.free_label")}</p>
-              <p className="text-5xl mb-6" style={{ fontFamily: FONT_DISPLAY }}>€9<span className="text-lg text-[#1a1814]/40">/{t("landing.pricing.month")}</span></p>
+          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: "rgba(245,240,232,0.07)" }}>
+            {/* Essential */}
+            <div className="bg-[#221f1a] p-8">
+              <p className="text-[10px] text-[#f5f0e8]/30 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.free_label")}</p>
+              <p className="text-5xl mb-2" style={{ fontFamily: FONT_DISPLAY }}>
+                {t("landing.pricing.free_price")}
+              </p>
+              <p className="text-sm text-[#f5f0e8]/30 mb-6" style={{ fontWeight: 300 }}>{t("landing.pricing.free_subtitle")}</p>
               <ul className="space-y-3 mb-8">
                 {(t("landing.pricing.free_features", { returnObjects: true }) as string[]).map((f: string) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-[#1a1814]/60">
-                    <Check className="h-3.5 w-3.5 text-[#1a1814]/30" />
-                    {f}
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#f5f0e8]/50">
+                    <Check className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#f5f0e8]/20" />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
               <Link
                 to="/register"
                 className="block text-center text-xs py-3 transition-all"
-                style={{ border: "1px solid #1a1814", color: "#1a1814", letterSpacing: "1px" }}
+                style={{ border: "1px solid rgba(245,240,232,0.2)", color: "#f5f0e8", letterSpacing: "1px" }}
               >
                 {t("landing.pricing.free_cta")}
               </Link>
             </div>
 
             {/* Pro */}
-            <div className="bg-[#ece5d9] p-8 relative" style={{ borderTop: `3px solid ${gold}` }}>
+            <div className="bg-[#221f1a] p-8 relative" style={{ borderTop: `3px solid ${gold}` }}>
               <span className="absolute top-3 right-4 text-[9px] px-2 py-0.5" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "2px" }}>
                 {t("landing.pricing.popular")}
               </span>
-              <p className="text-[10px] text-[#1a1814]/40 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.pro_label")}</p>
-              <p className="text-5xl mb-6" style={{ fontFamily: FONT_DISPLAY }}>€19<span className="text-lg text-[#1a1814]/40">/{t("landing.pricing.month")}</span></p>
+              <p className="text-[10px] text-[#f5f0e8]/30 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.pro_label")}</p>
+              <p className="text-5xl mb-2" style={{ fontFamily: FONT_DISPLAY }}>
+                €9<span className="text-lg text-[#f5f0e8]/30">/{t("landing.pricing.month")}</span>
+              </p>
+              <p className="text-sm text-[#f5f0e8]/30 mb-6" style={{ fontWeight: 300 }}>{t("landing.pricing.pro_subtitle")}</p>
               <ul className="space-y-3 mb-8">
                 {(t("landing.pricing.pro_features", { returnObjects: true }) as string[]).map((f: string) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-[#1a1814]/80">
-                    <Check className="h-3.5 w-3.5" style={{ color: gold }} />
-                    {f}
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#f5f0e8]/70">
+                    <Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -525,30 +485,29 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* ═══════ 9. CTA FINAL (dark) ═══════ */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
+      {/* ═══════ CTA FINAL ═══════ */}
+      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
         <div className="max-w-2xl mx-auto text-center">
           <div className="flex justify-center mb-12"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
           <h2 className="text-3xl md:text-4xl mb-4" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>
             {t("landing.cta_final.title_a")}{" "}
             <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.cta_final.title_b")}</span>
           </h2>
-          <p className="text-[#f5f0e8]/40 text-sm mb-10" style={{ fontWeight: 300 }}>
+          <p className="text-[#1a1814]/40 text-sm mb-10" style={{ fontWeight: 300 }}>
             {t("landing.cta_final.subtitle")}
           </p>
           <Link
             to="/register"
-            className="inline-block text-xs px-6 py-3 transition-all hover:scale-[1.03]"
-            style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = gold; e.currentTarget.style.color = "#1a1814"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = gold; }}
+            className="inline-flex items-center gap-2 text-xs px-6 py-3 transition-all hover:scale-[1.03]"
+            style={{ backgroundColor: gold, color: "#1a1814", letterSpacing: "1px" }}
           >
             {t("landing.cta_final.cta")}
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </section>
 
-      {/* ═══════ 10. FOOTER (dark) ═══════ */}
+      {/* ═══════ FOOTER ═══════ */}
       <footer className="bg-[#1a1814] py-8 px-4" style={{ borderTop: "1px solid rgba(245,240,232,0.07)" }}>
         <p className="text-center text-[#f5f0e8]/[0.12] text-[11px]" style={{ letterSpacing: "2px" }}>
           {t("landing.footer.text")}
