@@ -312,6 +312,152 @@ I need:
 5. DIRECTION NOTES: what to adjust if first result isn't perfect
 6. If character-based: CONSISTENCY BLOCK to maintain appearance across generations`,
     },
+    {
+      id: "scene-generator",
+      emoji: "🎞️",
+      label: isPT ? "Gerador de Cenas (Vídeo Longo)" : "Scene Generator (Long Video)",
+      description: isPT ? "Cenas prontas para Veo3, CapCut, vídeos dark, etc." : "Ready scenes for Veo3, CapCut, dark videos, etc.",
+      fields: [
+        { key: "tool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["Veo3", "Sora", "Runway", "Kling", "CapCut AI", "HeyGen"], placeholder: "" },
+        { key: "scenes", label: isPT ? "Nº de cenas" : "Number of scenes", type: "select", options: ["3", "4", "5", "6", "8", "10", "12", "15"], placeholder: "" },
+        { key: "maxDuration", label: isPT ? "Duração máx. por cena" : "Max duration per scene", type: "select", options: ["5s", "8s (Veo3 max)", "10s", "15s", "30s"], placeholder: "" },
+        { key: "videoType", label: isPT ? "Tipo de vídeo" : "Video type", type: "select", options: isPT ? ["Influencer UGC", "Vídeo Dark / Narração", "Review de produto", "Tutorial passo a passo", "Storytelling emocional", "Antes e Depois", "Vlog / Day in my life"] : ["UGC Influencer", "Dark Video / Narration", "Product Review", "Step-by-step Tutorial", "Emotional Storytelling", "Before & After", "Vlog / Day in my life"], placeholder: "" },
+        { key: "objective", label: isPT ? "Objetivo do vídeo" : "Video objective", placeholder: isPT ? "ex: vender um curso de marketing, apresentar produto de skincare, motivar audiência" : "e.g., sell a marketing course, present skincare product, motivate audience" },
+        { key: "character", label: isPT ? "Descrição do personagem (se houver)" : "Character description (if any)", placeholder: isPT ? "ex: mulher brasileira, 28 anos, cabelo longo castanho, estilo casual" : "e.g., Brazilian woman, 28, long brown hair, casual style" },
+        { key: "voiceover", label: isPT ? "Narração / Voz" : "Narration / Voice", type: "select", options: isPT ? ["Com voz off (narração)", "Personagem a falar", "Sem voz (só música + texto)", "Voz off + texto na tela"] : ["Voiceover (narration)", "Character speaking", "No voice (music + text only)", "Voiceover + text on screen"], placeholder: "" },
+        { key: "aspect", label: isPT ? "Proporção" : "Aspect ratio", type: "select", options: ["9:16 (Reels/TikTok)", "16:9 (YouTube)", "1:1 (Feed)"], placeholder: "" },
+        { key: "music", label: isPT ? "Estilo de música" : "Music style", placeholder: isPT ? "ex: motivacional épica, lo-fi relaxante, trending TikTok, dramática" : "e.g., epic motivational, lo-fi relaxing, trending TikTok, dramatic" },
+      ],
+      buildPrompt: (v) => isPT
+        ? `Cria um roteiro completo de ${v.scenes} cenas para ${v.tool}, pronto para gerar cena a cena.
+
+BRIEFING DO VÍDEO:
+- Tipo: ${v.videoType}
+- Objetivo: ${v.objective}
+- Nº de cenas: ${v.scenes}
+- Duração máxima por cena: ${v.maxDuration}
+- Proporção: ${v.aspect}
+- Narração: ${v.voiceover}
+- Música: ${v.music}
+${v.character ? `- Personagem: ${v.character}` : ""}
+
+REGRAS OBRIGATÓRIAS:
+1. Cada cena deve usar o MÁXIMO da duração disponível (${v.maxDuration}) — nunca gerar cenas curtas
+2. A CENA 1 é o HOOK — tem de captar atenção imediatamente
+3. A ÚLTIMA CENA é o CTA — chamada para ação clara
+4. Cada cena deve ter CONTINUIDADE com a anterior (transição lógica)
+
+PARA CADA CENA entrega:
+- CENA [N] — Título descritivo
+- PROMPT ${v.tool}: prompt completo e pronto a colar na ferramenta, incluindo descrição detalhada de: ação/movimento, enquadramento de câmera, iluminação, expressão do personagem, cenário, o que acontece do início ao fim da cena
+- PROMPT NEGATIVO: o que excluir nesta cena
+- NARRAÇÃO/VOZ: texto exacto da fala ou narração (com timing)
+- TEXTO NA TELA: overlays, legendas, títulos (com posição e estilo)
+- MÚSICA: direção sonora para esta cena
+- DURAÇÃO: ${v.maxDuration}
+- TRANSIÇÃO PARA PRÓXIMA CENA: como conectar
+${v.character ? `- CONSISTÊNCIA: manter sempre a mesma aparência — ${v.character}` : ""}
+
+NO FINAL inclui:
+- BLOCO DE CONSISTÊNCIA do personagem (se aplicável) para usar em todas as cenas
+- SEQUÊNCIA DE MONTAGEM: ordem das cenas e como montar o vídeo final
+- DICAS DE PÓS-PRODUÇÃO: como juntar as cenas no CapCut/editor
+- DURAÇÃO TOTAL ESTIMADA do vídeo final`
+        : `Create a complete script of ${v.scenes} scenes for ${v.tool}, ready to generate scene by scene.
+
+VIDEO BRIEF:
+- Type: ${v.videoType}
+- Objective: ${v.objective}
+- Number of scenes: ${v.scenes}
+- Max duration per scene: ${v.maxDuration}
+- Aspect ratio: ${v.aspect}
+- Narration: ${v.voiceover}
+- Music: ${v.music}
+${v.character ? `- Character: ${v.character}` : ""}
+
+MANDATORY RULES:
+1. Each scene must use the MAXIMUM available duration (${v.maxDuration}) — never generate short scenes
+2. SCENE 1 is the HOOK — must grab attention immediately
+3. LAST SCENE is the CTA — clear call to action
+4. Each scene must have CONTINUITY with the previous one (logical transition)
+
+FOR EACH SCENE deliver:
+- SCENE [N] — Descriptive title
+- ${v.tool} PROMPT: complete prompt ready to paste, including detailed description of: action/movement, camera framing, lighting, character expression, setting, what happens from start to end
+- NEGATIVE PROMPT: what to exclude in this scene
+- NARRATION/VOICE: exact speech or narration text (with timing)
+- TEXT ON SCREEN: overlays, captions, titles (with position and style)
+- MUSIC: sound direction for this scene
+- DURATION: ${v.maxDuration}
+- TRANSITION TO NEXT SCENE: how to connect
+${v.character ? `- CONSISTENCY: always maintain same appearance — ${v.character}` : ""}
+
+AT THE END include:
+- CHARACTER CONSISTENCY BLOCK (if applicable) to use across all scenes
+- EDITING SEQUENCE: scene order and how to assemble the final video
+- POST-PRODUCTION TIPS: how to join scenes in CapCut/editor
+- ESTIMATED TOTAL DURATION of final video`,
+    },
+    {
+      id: "dark-video",
+      emoji: "🌑",
+      label: isPT ? "Vídeo Dark / Narração" : "Dark Video / Narration",
+      description: isPT ? "Vídeos longos com narração e texto impactante" : "Long videos with narration and impactful text",
+      fields: [
+        { key: "topic", label: isPT ? "Tema" : "Topic", placeholder: isPT ? "ex: Os 7 hábitos que destroem a tua vida, Segredos que ninguém te conta" : "e.g., 7 habits destroying your life, Secrets nobody tells you" },
+        { key: "duration", label: isPT ? "Duração total" : "Total duration", type: "select", options: ["30s", "1min", "2min", "3min", "5min", "10min"], placeholder: "" },
+        { key: "platform", label: isPT ? "Plataforma" : "Platform", type: "select", options: ["YouTube", "YouTube Shorts", "TikTok", "Instagram Reels"], placeholder: "" },
+        { key: "style", label: isPT ? "Estilo visual" : "Visual style", type: "select", options: isPT ? ["Dark motivacional", "Storytelling misterioso", "Factos chocantes", "Educativo dramático", "Conspiração / Curiosidade"] : ["Dark motivational", "Mysterious storytelling", "Shocking facts", "Dramatic educational", "Conspiracy / Curiosity"], placeholder: "" },
+        { key: "voiceStyle", label: isPT ? "Estilo de voz" : "Voice style", type: "select", options: isPT ? ["Grave e impactante", "Calmo e misterioso", "Urgente e rápido", "Narrador documentário"] : ["Deep and impactful", "Calm and mysterious", "Urgent and fast", "Documentary narrator"], placeholder: "" },
+      ],
+      buildPrompt: (v) => isPT
+        ? `Cria o roteiro completo de um vídeo dark / narração para ${v.platform}.
+
+Tema: ${v.topic}
+Duração total: ${v.duration}
+Estilo visual: ${v.style}
+Estilo de voz: ${v.voiceStyle}
+
+ESTRUTURA DO VÍDEO:
+Para cada secção entrega:
+- NARRAÇÃO: texto exacto (com pausas marcadas com "...")
+- TEXTO NA TELA: frases de impacto que aparecem com efeito
+- VISUAL DE FUNDO: descrição do que aparece (stock footage, IA, gráficos)
+- EFEITO SONORO: música ambiente, sound effects
+- TIMING: duração de cada secção
+
+REGRAS:
+1. Hook nos primeiros 3 segundos — frase que cria curiosidade ou choque
+2. Manter tensão ao longo do vídeo — cada secção revela algo novo
+3. Texto na tela deve ser CURTO e IMPACTANTE (máx. 5-7 palavras por vez)
+4. Narração com pausas estratégicas para criar drama
+5. CTA no final que gera engagement (comentário, like, seguir)
+6. Sugerir música/som ambiente específico para cada momento
+7. Incluir sugestões de prompts para gerar os visuais de fundo em IA`
+        : `Create the complete script for a dark / narration video for ${v.platform}.
+
+Topic: ${v.topic}
+Total duration: ${v.duration}
+Visual style: ${v.style}
+Voice style: ${v.voiceStyle}
+
+VIDEO STRUCTURE:
+For each section deliver:
+- NARRATION: exact text (with pauses marked as "...")
+- TEXT ON SCREEN: impact phrases with effect
+- BACKGROUND VISUAL: what appears (stock footage, AI, graphics)
+- SOUND EFFECT: ambient music, sound effects
+- TIMING: duration per section
+
+RULES:
+1. Hook in first 3 seconds — curiosity or shock
+2. Maintain tension — each section reveals something new
+3. On-screen text must be SHORT and IMPACTFUL (max 5-7 words)
+4. Narration with strategic pauses for drama
+5. CTA at end driving engagement
+6. Suggest specific music/sound for each moment
+7. Include prompts to generate background visuals with AI`,
+    },
   ];
 
   const handleSubmitTemplate = () => {
@@ -325,7 +471,7 @@ I need:
   // Template selection view
   if (!activeTemplate) {
     return (
-      <div className="grid grid-cols-2 gap-2 w-full max-w-lg">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 w-full max-w-2xl">
         {templates.map((tpl) => (
           <button
             key={tpl.id}
@@ -350,7 +496,7 @@ I need:
 
   // Template form view
   return (
-    <div className="w-full max-w-lg">
+    <div className="w-full max-w-2xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">{activeTemplate.emoji}</span>
