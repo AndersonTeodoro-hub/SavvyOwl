@@ -159,8 +159,8 @@
   },
   "chat": {
     "newChat": "New Chat",
-    "startConversation": "Start a conversation",
-    "startConversationDesc": "Choose a mode and write what you need. SavvyOwl optimizes and sends it to the best AI.",
+    "startConversation": "What will you create today?",
+    "startConversationDesc": "Pick a shortcut below or write what you need.",
     "typeMessage": "Write what you need...",
     "quick": "Owl Flash",
     "quickDesc": "Fast and efficient",

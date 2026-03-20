@@ -93,7 +93,7 @@ export function ChatSidebar({
   const [moveTarget, setMoveTarget] = useState<string | null>(null);
 
   const navItems = [
-    { title: t("nav.dashboard"), url: "/dashboard", icon: Home },
+    { title: t("nav.dashboard"), url: "/dashboard/home", icon: Home },
     { title: t("nav.chat"), url: "/dashboard/chat", icon: MessageSquare },
     { title: t("nav.promptLibrary"), url: "/dashboard/prompts", icon: BookOpen },
     { title: t("nav.analytics"), url: "/dashboard/analytics", icon: BarChart3 },
@@ -234,8 +234,8 @@ export function ChatSidebar({
       <nav className="px-2 pb-2 space-y-0.5 shrink-0">
         {navItems.map((item) => {
           const isActive =
-            item.url === "/dashboard"
-              ? location.pathname === "/dashboard"
+            item.url === "/dashboard/home"
+              ? location.pathname === "/dashboard/home"
               : location.pathname.startsWith(item.url);
           return (
             <button

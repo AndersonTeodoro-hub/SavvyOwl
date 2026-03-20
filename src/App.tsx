@@ -17,6 +17,7 @@ import Prompts from "./pages/Prompts";
 import Analytics from "./pages/Analytics";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardHome />} />
+              <Route index element={<Navigate to="/dashboard/chat" replace />} />
+              <Route path="home" element={<DashboardHome />} />
               <Route path="chat" element={<Chat />} />
               <Route path="prompts" element={<Prompts />} />
               <Route path="analytics" element={<Analytics />} />

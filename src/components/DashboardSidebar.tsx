@@ -26,7 +26,7 @@ export function DashboardSidebar() {
   const { t } = useTranslation();
 
   const items = [
-    { title: t("nav.dashboard"), url: "/dashboard", icon: Home },
+    { title: t("nav.dashboard"), url: "/dashboard/home", icon: Home },
     { title: t("nav.chat"), url: "/dashboard/chat", icon: MessageSquare },
     { title: t("nav.promptLibrary"), url: "/dashboard/prompts", icon: BookOpen },
     { title: t("nav.analytics"), url: "/dashboard/analytics", icon: BarChart3 },
@@ -44,7 +44,7 @@ export function DashboardSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                const isActive = item.url === "/dashboard"
+                const isActive = item.url === "/dashboard/home"
                   ? location.pathname === "/dashboard"
                   : location.pathname.startsWith(item.url);
                 return (
@@ -52,7 +52,7 @@ export function DashboardSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={item.url}
-                        end={item.url === "/dashboard"}
+                        end={item.url === "/dashboard/home"}
                         className={`relative rounded-lg transition-all duration-200 ${
                           isActive
                             ? "bg-primary/10 text-primary font-medium"
