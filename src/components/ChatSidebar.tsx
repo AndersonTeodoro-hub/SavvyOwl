@@ -256,11 +256,10 @@ export function ChatSidebar({
       </nav>
 
       {/* Separator */}
-      {!collapsed && <div className="border-t border-sidebar-border mx-3" />}
+      <div className={`border-t border-sidebar-border mx-3 ${collapsed ? "hidden" : ""}`} />
 
-      {/* Projects filter — hidden when collapsed */}
-      {!collapsed && (
-        <div className="px-3 py-2 flex items-center gap-1 shrink-0">
+      {/* Projects filter */}
+      <div className={`px-3 py-2 flex items-center gap-1 shrink-0 ${collapsed ? "hidden" : ""}`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex-1 justify-start text-xs text-muted-foreground h-8">
@@ -296,11 +295,9 @@ export function ChatSidebar({
           <FolderPlus className="h-3.5 w-3.5" />
         </Button>
       </div>
-      )}
 
-      {/* Conversation history — hidden when collapsed */}
-      {!collapsed && (
-      <ScrollArea className="flex-1 min-h-0">
+      {/* Conversation history */}
+      <ScrollArea className={`flex-1 min-h-0 ${collapsed ? "hidden" : ""}`}>
         <div className="px-2 pb-2">
           {Object.entries(grouped).map(([label, convs]) => (
             <div key={label} className="mb-3">
@@ -373,7 +370,6 @@ export function ChatSidebar({
           )}
         </div>
       </ScrollArea>
-      )}
 
       {/* Spacer when collapsed */}
       {collapsed && <div className="flex-1" />}
