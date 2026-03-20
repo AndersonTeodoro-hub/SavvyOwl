@@ -5,7 +5,7 @@ import { streamChat, ChatMessage, ChatImage } from "@/lib/chat-stream";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock, Menu, ImagePlus, X, Bot, Copy, Check } from "lucide-react";
+import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock, Menu, ImagePlus, X, Bot, Copy, Check, PanelLeftClose } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ReactMarkdown from "react-markdown";
@@ -292,24 +292,29 @@ export default function Chat() {
     }
   };
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   const userInitial = (profile?.full_name || "U").charAt(0).toUpperCase();
 
   return (
     <div className="flex h-full w-full">
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex w-[260px] shrink-0 h-full">
-        <ChatSidebar
-          conversationId={conversationId}
-          onSelectConversation={selectConversation}
-          onNewChat={startNewChat}
-        />
-      </div>
+      {/* Desktop sidebar — toggleable */}
+      {sidebarOpen && (
+        <div className="hidden md:flex w-[260px] shrink-0 h-full">
+          <ChatSidebar
+            conversationId={conversationId}
+            onSelectConversation={selectConversation}
+            onNewChat={startNewChat}
+          />
+        </div>
+      )}
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0 h-full bg-background">
         {/* Header */}
         <header className="h-12 flex items-center justify-between border-b border-border px-3 md:px-4 bg-background shrink-0">
           <div className="flex items-center gap-2">
+            {/* Mobile menu */}
             <div className="md:hidden">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
@@ -327,13 +332,15 @@ export default function Chat() {
                 </SheetContent>
               </Sheet>
             </div>
-            <button
-              onClick={startNewChat}
-              className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-secondary"
+            {/* Desktop sidebar toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <Plus className="h-3.5 w-3.5" />
-              {t("chat.newChat")}
-            </button>
+              <PanelLeftClose className={`h-4 w-4 transition-transform ${!sidebarOpen ? "rotate-180" : ""}`} />
+            </Button>
           </div>
           <div className="flex items-center gap-1.5">
             <ThemeToggle />

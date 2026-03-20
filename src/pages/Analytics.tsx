@@ -96,7 +96,7 @@ export default function Analytics() {
       const modeData = Object.entries(modeMap)
         .filter(([, v]) => v > 0)
         .map(([name, value]) => ({
-          name: name === "quick" ? "Quick ⚡" : name === "deep" ? "Deep Think 🧠" : "ContentCreator ✍️",
+          name: name === "quick" ? "Owl Flash ⚡" : name === "deep" ? "Owl Pro 🧠" : "Owl Creator ✍️",
           value,
         }));
 
@@ -246,19 +246,20 @@ export default function Analytics() {
                 <TableRow className="border-border">
                   <TableHead>{t("analytics.date")}</TableHead>
                   <TableHead>{t("analytics.mode")}</TableHead>
-                  <TableHead>{t("analytics.model")}</TableHead>
                   <TableHead className="text-right">{t("analytics.cost")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.recent.map((r, i) => (
-                  <TableRow key={i} className="border-border">
-                    <TableCell className="text-muted-foreground">{r.date}</TableCell>
-                    <TableCell className="capitalize">{r.mode}</TableCell>
-                    <TableCell className="text-muted-foreground">{r.model}</TableCell>
-                    <TableCell className="text-right">{r.cost}</TableCell>
-                  </TableRow>
-                ))}
+                {data.recent.map((r, i) => {
+                  const modeNames: Record<string, string> = { quick: "Owl Flash", deep: "Owl Pro", creator: "Owl Creator", opus: "Owl 2.0" };
+                  return (
+                    <TableRow key={i} className="border-border">
+                      <TableCell className="text-muted-foreground">{r.date}</TableCell>
+                      <TableCell>{modeNames[r.mode] || r.mode}</TableCell>
+                      <TableCell className="text-right">{r.cost}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (
