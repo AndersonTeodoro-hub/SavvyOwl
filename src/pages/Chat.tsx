@@ -5,7 +5,7 @@ import { streamChat, ChatMessage, ChatImage } from "@/lib/chat-stream";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock, Menu, ImagePlus, X, Bot, Copy, Check, PanelLeftClose } from "lucide-react";
+import { Send, Plus, MessageSquare, Zap, Brain, Pen, Sparkles, ChevronDown, Lock, Menu, ImagePlus, X, Bot, Copy, Check } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ReactMarkdown from "react-markdown";
@@ -292,22 +292,22 @@ export default function Chat() {
     }
   };
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const userInitial = (profile?.full_name || "U").charAt(0).toUpperCase();
 
   return (
     <div className="flex h-full w-full">
-      {/* Desktop sidebar — toggleable */}
-      {sidebarOpen && (
-        <div className="hidden md:flex w-[260px] shrink-0 h-full">
-          <ChatSidebar
-            conversationId={conversationId}
-            onSelectConversation={selectConversation}
-            onNewChat={startNewChat}
-          />
-        </div>
-      )}
+      {/* Desktop sidebar — always visible, collapsible */}
+      <div className={`hidden md:flex shrink-0 h-full transition-all duration-200 ${sidebarCollapsed ? "w-[60px]" : "w-[260px]"}`}>
+        <ChatSidebar
+          conversationId={conversationId}
+          onSelectConversation={selectConversation}
+          onNewChat={startNewChat}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      </div>
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col min-w-0 h-full bg-background">
@@ -332,15 +332,6 @@ export default function Chat() {
                 </SheetContent>
               </Sheet>
             </div>
-            {/* Desktop sidebar toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hidden md:flex h-8 w-8 text-muted-foreground hover:text-foreground"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <PanelLeftClose className={`h-4 w-4 transition-transform ${!sidebarOpen ? "rotate-180" : ""}`} />
-            </Button>
           </div>
           <div className="flex items-center gap-1.5">
             <ThemeToggle />

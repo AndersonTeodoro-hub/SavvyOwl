@@ -45,6 +45,7 @@ import {
   ArrowRightLeft,
   Share2,
   MoreHorizontal,
+  PanelLeftClose,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -67,6 +68,8 @@ type ChatSidebarProps = {
   onSelectConversation: (id: string) => void;
   onNewChat: () => void;
   onCloseMobile?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 };
 
 export function ChatSidebar({
@@ -74,6 +77,8 @@ export function ChatSidebar({
   onSelectConversation,
   onNewChat,
   onCloseMobile,
+  collapsed = false,
+  onToggleCollapse,
 }: ChatSidebarProps) {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -186,21 +191,42 @@ export function ChatSidebar({
 
   return (
     <div className="h-full flex flex-col bg-sidebar-background border-r border-sidebar-border overflow-hidden">
-      {/* Logo */}
-      <div className="h-14 flex items-center gap-2 px-4 border-b border-sidebar-border shrink-0">
-        <img src="/logo.svg" alt="SavvyOwl" className="h-7 w-7 shrink-0" />
-        <span className="text-lg font-bold text-foreground tracking-tight">SavvyOwl</span>
+      {/* Logo + Toggle */}
+      <div className="h-14 flex items-center justify-between px-3 border-b border-sidebar-border shrink-0">
+        {!collapsed ? (
+          <>
+            <div className="flex items-center gap-2">
+              <img src="/logo.svg" alt="SavvyOwl" className="h-7 w-7 shrink-0" />
+              <span className="text-lg font-bold text-foreground tracking-tight">SavvyOwl</span>
+            </div>
+            {onToggleCollapse && (
+              <button onClick={onToggleCollapse} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="w-full flex justify-center">
+            {onToggleCollapse ? (
+              <button onClick={onToggleCollapse} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <PanelLeftClose className="h-4 w-4 rotate-180" />
+              </button>
+            ) : (
+              <img src="/logo.svg" alt="SavvyOwl" className="h-7 w-7" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* New Chat */}
       <div className="p-3 shrink-0">
         <Button
           onClick={() => { onNewChat(); onCloseMobile?.(); }}
-          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold gap-1.5 overflow-hidden"
+          className={`w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-1.5 overflow-hidden ${collapsed ? "px-0 justify-center" : "text-xs"}`}
           size="sm"
         >
           <Plus className="h-4 w-4 shrink-0" />
-          <span className="truncate">{t("chat.newChat")}</span>
+          {!collapsed && <span className="truncate">{t("chat.newChat")}</span>}
         </Button>
       </div>
 
@@ -215,24 +241,26 @@ export function ChatSidebar({
             <button
               key={item.url}
               onClick={() => handleNav(item.url)}
-              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+              className={`w-full flex items-center ${collapsed ? "justify-center" : "gap-2"} px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                 isActive
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
               }`}
+              title={collapsed ? item.title : undefined}
             >
               <item.icon className="h-4 w-4 shrink-0" />
-              <span>{item.title}</span>
+              {!collapsed && <span>{item.title}</span>}
             </button>
           );
         })}
       </nav>
 
       {/* Separator */}
-      <div className="border-t border-sidebar-border mx-3" />
+      {!collapsed && <div className="border-t border-sidebar-border mx-3" />}
 
-      {/* Projects filter */}
-      <div className="px-3 py-2 flex items-center gap-1 shrink-0">
+      {/* Projects filter — hidden when collapsed */}
+      {!collapsed && (
+        <div className="px-3 py-2 flex items-center gap-1 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="flex-1 justify-start text-xs text-muted-foreground h-8">
@@ -268,8 +296,10 @@ export function ChatSidebar({
           <FolderPlus className="h-3.5 w-3.5" />
         </Button>
       </div>
+      )}
 
-      {/* Conversation history */}
+      {/* Conversation history — hidden when collapsed */}
+      {!collapsed && (
       <ScrollArea className="flex-1 min-h-0">
         <div className="px-2 pb-2">
           {Object.entries(grouped).map(([label, convs]) => (
@@ -339,10 +369,14 @@ export function ChatSidebar({
           )}
         </div>
       </ScrollArea>
+      )}
+
+      {/* Spacer when collapsed */}
+      {collapsed && <div className="flex-1" />}
 
       {/* User footer */}
-      <div className="border-t border-sidebar-border p-3 shrink-0">
-        {profile && (
+      <div className="border-t border-sidebar-border p-2 shrink-0">
+        {!collapsed && profile && (
           <div className="flex items-center gap-2 px-1 mb-2">
             <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary shrink-0">
               {(profile.full_name || "U").charAt(0).toUpperCase()}
@@ -355,10 +389,17 @@ export function ChatSidebar({
             </div>
           </div>
         )}
+        {collapsed && profile && (
+          <div className="flex justify-center mb-2">
+            <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
+              {(profile.full_name || "U").charAt(0).toUpperCase()}
+            </div>
+          </div>
+        )}
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-primary hover:text-primary hover:bg-primary/10"
+          className={`w-full text-primary hover:text-primary hover:bg-primary/10 ${collapsed ? "justify-center px-0" : "justify-start"}`}
           onClick={async () => {
             const shareData = {
               title: "SavvyOwl",
@@ -372,18 +413,20 @@ export function ChatSidebar({
               toast.success(t("share.copied"));
             }
           }}
+          title={collapsed ? t("share.button") : undefined}
         >
-          <Share2 className="h-4 w-4 mr-2" />
-          {t("share.button")}
+          <Share2 className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="ml-2">{t("share.button")}</span>}
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          className={`w-full text-muted-foreground hover:text-foreground hover:bg-secondary/50 ${collapsed ? "justify-center px-0" : "justify-start"}`}
           onClick={signOut}
+          title={collapsed ? t("nav.signOut") : undefined}
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          {t("nav.signOut")}
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span className="ml-2">{t("nav.signOut")}</span>}
         </Button>
       </div>
 
