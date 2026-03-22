@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ─── MODEL REGISTRY ───────────────────────────────────────────────────────────
+// --- MODEL REGISTRY -----------------------------------------------------------
 
 type Provider = "anthropic" | "google";
 
@@ -72,7 +72,7 @@ const PLAN_RANK: Record<string, number> = {
   pro: 2,
 };
 
-// ─── SYSTEM PROMPTS ───────────────────────────────────────────────────────────
+// --- SYSTEM PROMPTS -----------------------------------------------------------
 
 const BASE_SYSTEM_PROMPT = `You are SavvyOwl AI -- a specialist assistant for social media managers and content creators.
 
@@ -150,10 +150,10 @@ EXPERTISE YOU APPLY:
   * Video editing: CapCut, Premiere, DaVinci
   * Design: Canva, Figma
   * Audio/Voice: ElevenLabs, Murf
-  * The typical creator workflow: generate image → animate with video tool → edit in CapCut → post
+  * The typical creator workflow: generate image -> animate with video tool -> edit in CapCut -> post
 - UGC production: smartphone framing, authentic aesthetic, natural lighting, relatable energy, vertical 9:16
 - Copywriting: PAS, AIDA, BAB, Hook-Story-Offer, Before-After-Bridge
-- Content funnels: TOFU → MOFU → BOFU
+- Content funnels: TOFU -> MOFU -> BOFU
 - Platform-specific formatting and best practices
 
 AI PROMPT GENERATION -- YOUR SIGNATURE SKILL:
@@ -202,7 +202,7 @@ RUNWAY (Video):
 
 HEYGEN (Video):
 - Best for talking head / avatar videos
-- Upload a character image → it animates and lip-syncs to audio
+- Upload a character image -> it animates and lip-syncs to audio
 - Ideal for: influencer content, presentations, tutorials
 
 KLING (Video):
@@ -210,16 +210,16 @@ KLING (Video):
 - Prompts in English
 
 REAL CREATOR WORKFLOW:
-Step 1: Generate character image (Nano Banana/Midjourney) → Step 2: Use image as reference in video tool (Veo3/HeyGen) → Step 3: Join scenes in CapCut → Step 4: Add captions, music, effects
+Step 1: Generate character image (Nano Banana/Midjourney) -> Step 2: Use image as reference in video tool (Veo3/HeyGen) -> Step 3: Join scenes in CapCut -> Step 4: Add captions, music, effects
 
 OUTPUT FORMAT RULES:
 - Prompts for image/video tools: ALWAYS in English (this is non-negotiable)
 - Speech/narration/dialogue: in the language the user specifies
 - Text on screen: in the user's chosen language
 - Every prompt: ready to copy-paste directly into the tool, no prefixes, no explanations mixed in
-- CRITICAL: When delivering prompts for tools (Nano Banana, Veo3, Midjourney, etc.), ALWAYS wrap each prompt inside a markdown code block (triple backticks ```). This enables the copy button in the UI. Never put a prompt as plain text -- it MUST be in a code block.
+- CRITICAL: When delivering prompts for tools (Nano Banana, Veo3, Midjourney, etc.), ALWAYS wrap each prompt inside a markdown code block (using triple backtick characters). This enables the copy button in the UI. Never put a prompt as plain text -- it MUST be in a code block.
 - CONCISE delivery: the user wants to execute, not read explanations
-- When doing viral video modeling: follow the EXACT structure the user requests. If they ask for Analysis → Image → Scenes → Assembly, deliver ONLY that, in that order, nothing more.
+- When doing viral video modeling: follow the EXACT structure the user requests. If they ask for Analysis then Image then Scenes then Assembly, deliver ONLY that, in that order, nothing more.
 
 CONTENT CREATION:
 - Hooks: Always A/B test -- provide 2-3 hook options
@@ -236,13 +236,13 @@ When the user asks to model viral content or find trending formats:
 - Adapt each viral format specifically to the user's niche, product, and audience
 - Include complete production plan with the user's available tools
 - Always suggest the MOST AFFORDABLE path to produce each video
-- Rank formats by: ease of production × viral potential × relevance to user's niche
+- Rank formats by: ease of production x viral potential x relevance to user's niche
 
 LANGUAGE: Always match the user's language. PT-BR or PT-PT detected automatically. Never switch languages.
 
 QUALITY GATE: Before every response, verify: "Is every prompt variation self-contained? Are there any placeholders? Did I start with filler? Would this response make someone choose SavvyOwl over using ChatGPT directly?" If any answer is wrong, fix it before responding.`;
 
-// ─── ANTHROPIC STREAMING ─────────────────────────────────────────────────────
+// --- ANTHROPIC STREAMING -----------------------------------------------------
 
 async function streamAnthropic(
   apiKey: string,
@@ -292,7 +292,7 @@ async function streamAnthropic(
   return response;
 }
 
-// ─── GOOGLE STREAMING (via Lovable Gateway) ───────────────────────────────────
+// --- GOOGLE STREAMING (via Lovable Gateway) -----------------------------------
 
 async function streamGoogle(
   apiKey: string,
@@ -336,7 +336,7 @@ async function streamGoogle(
   return response;
 }
 
-// ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
+// --- MAIN HANDLER -------------------------------------------------------------
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -363,11 +363,11 @@ serve(async (req) => {
     const { data: { user } } = await anonClient.auth.getUser();
     const { messages, mode, conversationId, image } = await req.json();
 
-    // ── Validate mode ──
+    // -- Validate mode --
     const modeKey = (mode || "quick") as keyof typeof MODELS;
     const modelConfig = MODELS[modeKey] || MODELS.quick;
 
-    // ── Get user plan ──
+    // -- Get user plan --
     let userPlan = "free";
     if (user) {
       const { data: profile } = await supabaseAdmin
@@ -413,7 +413,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Upload image to Storage if present ──
+    // -- Upload image to Storage if present --
     let imageUrl: string | null = null;
     if (image && user) {
       try {
@@ -464,10 +464,10 @@ serve(async (req) => {
       }
     }
 
-    // ── Build system prompt ──
+    // -- Build system prompt --
     const systemPrompt = modeKey === "creator" ? CREATOR_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
 
-    // ── Stream from correct provider ──
+    // -- Stream from correct provider --
     let providerResponse: Response;
 
     if (modelConfig.provider === "anthropic") {
@@ -539,7 +539,7 @@ serve(async (req) => {
       }
     }
 
-    // ── Transform + stream to client ──
+    // -- Transform + stream to client --
     const encoder = new TextEncoder();
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
@@ -584,7 +584,7 @@ serve(async (req) => {
       await writer.close();
     };
 
-    // ── Handle Anthropic stream ──
+    // -- Handle Anthropic stream --
     if (modelConfig.provider === "anthropic") {
       const decoder = new TextDecoder();
       let fullContent = "";
@@ -636,7 +636,7 @@ serve(async (req) => {
       })();
 
     } else {
-      // ── Handle Google/OpenAI stream ──
+      // -- Handle Google/OpenAI stream --
       const decoder = new TextDecoder();
       let fullContent = "";
       let tokensInput = 0;
