@@ -41,70 +41,92 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const handleViralVideoSelect = (vid: any) => {
     const v = fieldValues;
     const prompt = isPT
-      ? `Quero modelar este vídeo viral para o meu contexto.
+      ? `Modela este vídeo viral para eu recriar com as minhas ferramentas.
 
-VÍDEO ORIGINAL:
-- Título: "${vid.title}"
-- Canal: ${vid.channel}
-- Views: ${formatNumber(vid.views)}
-- Likes: ${formatNumber(vid.likes)}
-- Duração: ${vid.duration}
-- Link: ${vid.url}
+VÍDEO ORIGINAL: "${vid.title}" | ${vid.channel} | ${formatNumber(vid.views)} views | ${vid.duration} | ${vid.url}
 
-O MEU CONTEXTO:
-- Nicho: ${v.niche}
-- Plataforma: ${v.platform}
-- Público-alvo: ${v.audience}
-${v.brand ? `- Produto/Marca: ${v.brand}` : ""}
-- Ferramentas: ${v.tools}
+MEU CONTEXTO: Nicho: ${v.niche} | Público: ${v.audience} | ${v.brand ? `Marca: ${v.brand} |` : ""} Idioma do vídeo: ${v.videoLang}
+Ferramentas: ${v.imageTool} (imagem) + ${v.videoTool} (vídeo) + CapCut (edição)
 
-PRECISO DE:
-1. ANÁLISE do vídeo original: porque viralizou, que técnicas usa, que emoções provoca
-2. ROTEIRO COMPLETO modelado/adaptado ao meu contexto — cena a cena com:
-   - VISUAL: o que aparece
-   - ÁUDIO/NARRAÇÃO: texto exato da fala
-   - TEXTO NA TELA: overlays e legendas
-   - DURAÇÃO: timing de cada parte
-   - TRANSIÇÃO: como conectar as partes
-3. HOOK adaptado (primeiros 1-3 segundos)
-4. CTA adaptado ao meu objetivo
-5. HASHTAGS específicas para o meu nicho
-6. MELHOR HORÁRIO para publicar
-7. COMO PRODUZIR com ${v.tools}: passo a passo técnico
-8. FERRAMENTAS MAIS ECONÓMICAS para cada etapa
-9. O QUE MUDAR para não parecer cópia mas manter a essência que viralizou`
-      : `I want to model this viral video for my context.
+ENTREGA O SEGUINTE NESTA ORDEM EXATA:
 
-ORIGINAL VIDEO:
-- Title: "${vid.title}"
-- Channel: ${vid.channel}
-- Views: ${formatNumber(vid.views)}
-- Likes: ${formatNumber(vid.likes)}
-- Duration: ${vid.duration}
-- Link: ${vid.url}
+## 1. ANÁLISE (máximo 4 linhas)
+Porque viralizou, que técnica usa, que emoção provoca. Breve e direto.
 
-MY CONTEXT:
-- Niche: ${v.niche}
-- Platform: ${v.platform}
-- Target audience: ${v.audience}
-${v.brand ? `- Product/Brand: ${v.brand}` : ""}
-- Tools: ${v.tools}
+## 2. IMAGEM DO PERSONAGEM (${v.imageTool})
+- Descrição visual breve (2 linhas): como deve ser o personagem adaptado ao meu nicho
+- **PROMPT ${v.imageTool}:** (pronto a colar, em inglês, bloco único)
+- **NEGATIVE PROMPT:** (pronto a colar)
+- **BLOCO DE CONSISTÊNCIA:** (para reutilizar nas próximas gerações)
 
-I NEED:
-1. ANALYSIS of original video: why it went viral, techniques used, emotions triggered
-2. COMPLETE SCRIPT modeled/adapted to my context — scene by scene with:
-   - VISUAL: what appears
-   - AUDIO/NARRATION: exact speech text
-   - TEXT ON SCREEN: overlays and captions
-   - DURATION: timing per section
-   - TRANSITION: how to connect parts
-3. Adapted HOOK (first 1-3 seconds)
-4. Adapted CTA for my goal
-5. Specific HASHTAGS for my niche
-6. BEST TIME to post
-7. HOW TO PRODUCE with ${v.tools}: technical step-by-step
-8. MOST AFFORDABLE TOOLS per step
-9. WHAT TO CHANGE so it doesn't look like a copy but keeps the viral essence`;
+## 3. RESUMO DO VÍDEO ADAPTADO (máximo 5 linhas)
+O que o vídeo vai mostrar, qual a mensagem, qual o objetivo. Breve.
+
+## 4. CENAS PARA ${v.videoTool}
+Calcula quantas cenas de 8 segundos são necessárias para recriar o conceito do vídeo original.
+Para CADA cena entrega:
+
+**CENA [N] — [título curto]**
+- **PROMPT ${v.videoTool}:** (EM INGLÊS, pronto a colar na ferramenta. Inclui: ação, movimento de câmera, iluminação, expressão, cenário. Maximiza os 8 segundos. O prompt deve começar diretamente com a descrição visual sem prefixos.)
+- **FALA (${v.videoLang}):** texto exato que o personagem diz nesta cena (no idioma escolhido)
+- **TEXTO NA TELA:** overlay curto e impactante (máx 5 palavras)
+
+REGRAS DOS PROMPTS ${v.videoTool}:
+- Prompts SEMPRE em inglês (é a língua que dá melhores resultados em ${v.videoTool})
+- A fala/narração no idioma: ${v.videoLang}
+- Cada cena usa o MÁXIMO dos 8 segundos
+- Cena 1 = HOOK (captar atenção imediatamente)
+- Última cena = CTA
+- Manter consistência visual do personagem em todas as cenas
+- Não usar placeholders — tudo pronto a copiar e colar
+
+## 5. MONTAGEM (3 linhas)
+Como juntar as cenas no CapCut: ordem, transições, música sugerida.
+
+IMPORTANTE: Sê conciso. Sem explicações desnecessárias. O criador quer copiar e executar, não ler um relatório.`
+      : `Model this viral video for me to recreate with my tools.
+
+ORIGINAL VIDEO: "${vid.title}" | ${vid.channel} | ${formatNumber(vid.views)} views | ${vid.duration} | ${vid.url}
+
+MY CONTEXT: Niche: ${v.niche} | Audience: ${v.audience} | ${v.brand ? `Brand: ${v.brand} |` : ""} Video language: ${v.videoLang}
+Tools: ${v.imageTool} (image) + ${v.videoTool} (video) + CapCut (editing)
+
+DELIVER THE FOLLOWING IN THIS EXACT ORDER:
+
+## 1. ANALYSIS (max 4 lines)
+Why it went viral, technique used, emotion triggered. Brief and direct.
+
+## 2. CHARACTER IMAGE (${v.imageTool})
+- Brief visual description (2 lines): how the character should look adapted to my niche
+- **${v.imageTool} PROMPT:** (ready to paste, in English, single block)
+- **NEGATIVE PROMPT:** (ready to paste)
+- **CONSISTENCY BLOCK:** (to reuse in future generations)
+
+## 3. ADAPTED VIDEO SUMMARY (max 5 lines)
+What the video shows, message, objective. Brief.
+
+## 4. SCENES FOR ${v.videoTool}
+Calculate how many 8-second scenes are needed to recreate the original video concept.
+For EACH scene deliver:
+
+**SCENE [N] — [short title]**
+- **${v.videoTool} PROMPT:** (IN ENGLISH, ready to paste. Include: action, camera movement, lighting, expression, setting. Maximize 8 seconds. Prompt starts directly with visual description, no prefixes.)
+- **SPEECH (${v.videoLang}):** exact text the character says in this scene (in chosen language)
+- **TEXT ON SCREEN:** short impactful overlay (max 5 words)
+
+${v.videoTool} PROMPT RULES:
+- Prompts ALWAYS in English (best results)
+- Speech/narration in: ${v.videoLang}
+- Each scene uses MAXIMUM 8 seconds
+- Scene 1 = HOOK (grab attention immediately)
+- Last scene = CTA
+- Maintain character visual consistency across all scenes
+- No placeholders — everything ready to copy and paste
+
+## 5. ASSEMBLY (3 lines)
+How to join scenes in CapCut: order, transitions, suggested music.
+
+IMPORTANT: Be concise. No unnecessary explanations. The creator wants to copy and execute, not read a report.`;
 
     onSend(prompt);
     resetViralFlow();
@@ -547,7 +569,9 @@ RULES:
         { key: "platform", label: isPT ? "Plataforma" : "Platform", type: "select", options: ["TikTok", "Instagram Reels", "YouTube Shorts", "YouTube"], placeholder: "" },
         { key: "audience", label: isPT ? "Teu público-alvo" : "Your target audience", placeholder: isPT ? "ex: mulheres 25-40 interessadas em skincare" : "e.g., women 25-40 interested in skincare" },
         { key: "brand", label: isPT ? "Teu produto/marca (opcional)" : "Your product/brand (optional)", placeholder: isPT ? "ex: curso online de marketing, loja de roupa, app de meditação" : "e.g., online marketing course, clothing store, meditation app" },
-        { key: "tools", label: isPT ? "Ferramentas que usas" : "Tools you use", type: "select", options: isPT ? ["CapCut + Canva", "CapCut + IA (Veo3, Nano Banana)", "Só telemóvel", "Suite Adobe", "Tenho todas"] : ["CapCut + Canva", "CapCut + AI (Veo3, Nano Banana)", "Phone only", "Adobe Suite", "I have everything"], placeholder: "" },
+        { key: "imageTool", label: isPT ? "Ferramenta de imagem" : "Image tool", type: "select", options: ["Nano Banana", "Midjourney", "Leonardo AI", "DALL-E", "Flux"], placeholder: "" },
+        { key: "videoTool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["Veo3", "Sora", "Runway", "Kling", "HeyGen"], placeholder: "" },
+        { key: "videoLang", label: isPT ? "Idioma do vídeo" : "Video language", type: "select", options: isPT ? ["Português (BR)", "Português (PT)", "Inglês", "Espanhol"] : ["Portuguese (BR)", "Portuguese (PT)", "English", "Spanish"], placeholder: "" },
       ],
       buildPrompt: (v) => isPT
         ? `Quero modelar vídeos virais do nicho de ${v.niche} no ${v.platform}.
