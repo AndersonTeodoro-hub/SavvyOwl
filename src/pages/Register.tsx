@@ -22,6 +22,14 @@ export default function Register() {
   const { t } = useTranslation();
   const { user, session } = useAuth();
   const planParam = searchParams.get("plan");
+  const refParam = searchParams.get("ref");
+
+  // Save referral code if present
+  useEffect(() => {
+    if (refParam) {
+      localStorage.setItem("savvyowl_referral", refParam);
+    }
+  }, [refParam]);
 
   // If user is already logged in and came with ?plan=pro, redirect to checkout
   useEffect(() => {
@@ -47,11 +55,12 @@ export default function Register() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    const referralCode = localStorage.getItem("savvyowl_referral") || refParam || "";
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, referred_by: referralCode },
         emailRedirectTo: planParam === "pro"
           ? `${window.location.origin}/register?plan=pro`
           : `${window.location.origin}/dashboard`,
@@ -61,6 +70,7 @@ export default function Register() {
     if (error) {
       toast.error(error.message);
     } else {
+      localStorage.removeItem("savvyowl_referral");
       toast.success(t("auth.checkEmail"));
       navigate("/login");
     }

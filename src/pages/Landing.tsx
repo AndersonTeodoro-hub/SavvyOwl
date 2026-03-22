@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -30,9 +30,16 @@ export default function Landing() {
   const { t } = useTranslation();
   const { user, session } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [proLoading, setProLoading] = useState(false);
+
+  // Capture referral code from URL
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) localStorage.setItem("savvyowl_referral", ref);
+  }, [searchParams]);
 
   const handleProClick = async () => {
     if (!user || !session) {

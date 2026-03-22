@@ -195,6 +195,44 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Referral Program */}
+      <Card className="bg-[hsl(var(--surface-2))] border-border">
+        <CardHeader>
+          <CardTitle className="text-tracking-tight">{t("settings.referral") || "Programa de Referencia"}</CardTitle>
+          <CardDescription>
+            {t("settings.referralDesc") || "Convida amigos para a SavvyOwl. A cada 20 registos com o teu link, ganhas 1 mes gratis!"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm text-muted-foreground mb-1 block">{t("settings.yourLink") || "O teu link de convite"}</label>
+            <div className="flex gap-2">
+              <Input
+                value={`https://savvyowl.app/register?ref=${user?.id?.slice(0, 8) || ""}`}
+                readOnly
+                className="bg-[hsl(var(--surface-1))] border-border text-xs"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://savvyowl.app/register?ref=${user?.id?.slice(0, 8) || ""}`);
+                  toast.success(t("settings.linkCopied") || "Link copiado!");
+                }}
+              >
+                {t("settings.copy") || "Copiar"}
+              </Button>
+            </div>
+          </div>
+          <div className="bg-primary/5 rounded-lg p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground/70 mb-1">{t("settings.howItWorks") || "Como funciona:"}</p>
+            <p>1. {t("settings.ref1") || "Partilha o teu link com amigos e colegas"}</p>
+            <p>2. {t("settings.ref2") || "Cada pessoa que se regista conta como 1 ponto"}</p>
+            <p>3. {t("settings.ref3") || "Ao chegar a 20 pontos, ganhas 1 mes de Starter gratis!"}</p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* API Keys - Generate images/videos inside SavvyOwl */}
       <Card className="bg-[hsl(var(--surface-2))] border-border">
         <CardHeader>
