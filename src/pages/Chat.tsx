@@ -16,6 +16,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { StructuredTemplates } from "@/components/StructuredTemplates";
+import { GenerateImageButton } from "@/components/GenerateImageButton";
+import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
 
@@ -294,6 +296,7 @@ export default function Chat() {
   };
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const googleApiKey = useGoogleApiKey();
 
   const userInitial = (profile?.full_name || "U").charAt(0).toUpperCase();
 
@@ -407,6 +410,9 @@ export default function Chat() {
                                 <Copy className="h-3 w-3" />
                               </button>
                               <pre>{children}</pre>
+                              {googleApiKey && text.length > 30 && (
+                                <GenerateImageButton prompt={text} />
+                              )}
                             </div>
                           );
                         },
