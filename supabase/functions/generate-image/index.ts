@@ -74,14 +74,13 @@ serve(async (req) => {
       console.log(`[NANO-BANANA] Free tier: ${usedImages}/${FREE_IMAGE_LIMIT} used for user ${user.id}`);
     }
 
-    const modelId = "gemini-2.5-flash-preview-native-audio";
     console.log(`[NANO-BANANA] Generating with ${usingFreeCredits ? "SavvyOwl key (free)" : "user key"}`);
 
-    // Call Gemini API - try latest model first, fallback to older
+    // Try models in order: newest first, fallback to older
     const models = [
-      "gemini-2.5-flash-preview-native-audio",
-      "gemini-2.0-flash-exp-image-generation",
-      "gemini-2.0-flash-exp",
+      "gemini-2.5-flash-image",
+      "gemini-3.1-flash-image-preview",
+      "gemini-3-pro-image-preview",
     ];
 
     let response = null;
@@ -96,7 +95,7 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
-            responseModalities: ["IMAGE", "TEXT"],
+            responseModalities: ["TEXT", "IMAGE"],
           },
         }),
       });
