@@ -524,64 +524,86 @@ AT THE END include:
 - ESTIMATED TOTAL DURATION of final video`,
     },
     {
-      id: "dark-video",
+      id: "dark-channel",
       emoji: "🌑",
-      label: isPT ? "Vídeo Dark / Narração" : "Dark Video / Narration",
-      description: isPT ? "Vídeos longos com narração e texto impactante" : "Long videos with narration and impactful text",
+      label: isPT ? "Canal Dark (Pipeline Pro)" : "Dark Channel (Pro Pipeline)",
+      description: isPT ? "Pipeline: Titulo -> Roteiro -> Cenas VEO3" : "Pipeline: Title -> Script -> VEO3 Scenes",
       fields: [
-        { key: "topic", label: isPT ? "Tema" : "Topic", placeholder: isPT ? "ex: Os 7 hábitos que destroem a tua vida, Segredos que ninguém te conta" : "e.g., 7 habits destroying your life, Secrets nobody tells you" },
-        { key: "duration", label: isPT ? "Duração total" : "Total duration", type: "select", options: ["30s", "1min", "2min", "3min", "5min", "10min"], placeholder: "" },
-        { key: "platform", label: isPT ? "Plataforma" : "Platform", type: "select", options: ["YouTube", "YouTube Shorts", "TikTok", "Instagram Reels"], placeholder: "" },
-        { key: "style", label: isPT ? "Estilo visual" : "Visual style", type: "select", options: isPT ? ["Dark motivacional", "Storytelling misterioso", "Factos chocantes", "Educativo dramático", "Conspiração / Curiosidade"] : ["Dark motivational", "Mysterious storytelling", "Shocking facts", "Dramatic educational", "Conspiracy / Curiosity"], placeholder: "" },
-        { key: "voiceStyle", label: isPT ? "Estilo de voz" : "Voice style", type: "select", options: isPT ? ["Grave e impactante", "Calmo e misterioso", "Urgente e rápido", "Narrador documentário"] : ["Deep and impactful", "Calm and mysterious", "Urgent and fast", "Documentary narrator"], placeholder: "" },
+        { key: "step", label: isPT ? "Qual etapa?" : "Which step?", type: "select", options: isPT ? ["1 - Gerar Titulos", "2 - Criar Roteiro", "3 - Gerar Cenas VEO3"] : ["1 - Generate Titles", "2 - Create Script", "3 - Generate VEO3 Scenes"], placeholder: "" },
+        { key: "topic", label: isPT ? "Tema" : "Topic", placeholder: isPT ? "ex: A Peste Negra, O Colapso de Roma" : "e.g., The Black Plague, Fall of Rome" },
+        { key: "words", label: isPT ? "Palavras do roteiro (etapa 2)" : "Script words (step 2)", type: "select", options: ["800", "1200", "1800", "2500", "3500", "5000"], placeholder: "" },
+        { key: "scenes", label: isPT ? "Total de cenas (etapa 3)" : "Total scenes (step 3)", type: "select", options: ["10", "15", "20", "25", "30", "40", "50"], placeholder: "" },
       ],
-      buildPrompt: (v) => isPT
-        ? `Cria o roteiro completo de um vídeo dark / narração para ${v.platform}.
+      buildPrompt: (v) => {
+        const step = v.step?.charAt(0) || "1";
+        if (step === "1") {
+          return isPT
+            ? `Voce agora atua como Designer de Conceitos Narrativos para YouTube focado em historias atemporais com alto poder de retencao. Seu trabalho e desenvolver propostas de videos longos (10-25 min) construidos inteiramente com sequencias cinematograficas geradas por IA. Nao considere gravacoes reais.
 
-Tema: ${v.topic}
-Duração total: ${v.duration}
-Estilo visual: ${v.style}
-Estilo de voz: ${v.voiceStyle}
+Principios: Temas atemporais (civilizacoes antigas, eventos historicos, fenomenos inexplicaveis, exploracoes extremas, tecnologias esquecidas, fraudes historicas, sociedades ocultas). Evite noticias recentes ou figuras publicas modernas. Cada proposta deve permitir divisao em micro-cenas visuais (5-10s cada). Titulos com curiosidade profunda.
 
-ESTRUTURA DO VÍDEO:
-Para cada secção entrega:
-- NARRAÇÃO: texto exacto (com pausas marcadas com "...")
-- TEXTO NA TELA: frases de impacto que aparecem com efeito
-- VISUAL DE FUNDO: descrição do que aparece (stock footage, IA, gráficos)
-- EFEITO SONORO: música ambiente, sound effects
-- TIMING: duração de cada secção
+Crie 12 propostas${v.topic ? " relacionadas ao tema: " + v.topic : ""}. Cada proposta: Nome do video / Gatilho psicologico principal / Direcao visual sugerida / Transformacao prometida ao espectador. Sem listas numeradas. Ao final escreva: Selecione um dos titulos e utilize no proximo comando.`
+            : `You are a Narrative Concept Designer for YouTube, timeless stories with high retention. Develop 12 proposals for long videos (10-25 min) built with AI cinematic sequences.${v.topic ? " Topic: " + v.topic : ""} Each: Video name / Main psychological trigger / Visual direction / Transformation promised. No numbered lists. End with: Select one title for the next command.`;
+        }
+        if (step === "2") {
+          return isPT
+            ? `Palavras do roteiro: ${v.words || "1800"}. Tema: ${v.topic || "[COLE O TITULO ESCOLHIDO]"}
 
-REGRAS:
-1. Hook nos primeiros 3 segundos — frase que cria curiosidade ou choque
-2. Manter tensão ao longo do vídeo — cada secção revela algo novo
-3. Texto na tela deve ser CURTO e IMPACTANTE (máx. 5-7 palavras por vez)
-4. Narração com pausas estratégicas para criar drama
-5. CTA no final que gera engagement (comentário, like, seguir)
-6. Sugerir música/som ambiente específico para cada momento
-7. Incluir sugestões de prompts para gerar os visuais de fundo em IA`
-        : `Create the complete script for a dark / narration video for ${v.platform}.
+Voce e um roteirista de documentarios historicos imersivos, estilo YouTube cinematografico. Escreva o roteiro completo com linguagem rica, fluida e cinematografica.
 
-Topic: ${v.topic}
-Total duration: ${v.duration}
-Visual style: ${v.style}
-Voice style: ${v.voiceStyle}
+ESTRUTURA OBRIGATORIA (nesta ordem exata):
+1. Abertura Impactante (Hook) - Comece no caos. Frases curtas visuais emocionais. Termine com grande pergunta.
+2. Revelacao do Evento - O que aconteceu e por que e extraordinario.
+3. Quebra de Expectativa - Auge antes da queda. Contraste forte.
+4. Contexto do Mundo - Sociedade, economia, comercio. Como o sucesso preparou a catastrofe.
+5. Origem do Evento - Local distante, invisivel, incompreendido. Riqueza sensorial.
+6. Ponto de Contato - Momento exato em que atinge a civilizacao.
+7. Propagacao - Disseminacao progressiva. Velocidade, impotencia.
+8. Reacao Humana - Crencas equivocadas, ciencia limitada.
+9. Colapso Social - Quebra de lacos, abandono, histeria.
+10. Radicalizacao - Extremismo, perseguicoes. Tom serio.
+11. Impacto Rural - Vilas abandonadas, colheitas perdidas.
+12. Recuo - Nao vitoria, esgotamento.
+13. Mundo Pos-Evento - Transformacao permanente.
+14. Fechamento - Paralelos modernos. Pergunta inquietante.
+15. Assinatura - CTA suave.
 
-VIDEO STRUCTURE:
-For each section deliver:
-- NARRATION: exact text (with pauses marked as "...")
-- TEXT ON SCREEN: impact phrases with effect
-- BACKGROUND VISUAL: what appears (stock footage, AI, graphics)
-- SOUND EFFECT: ambient music, sound effects
-- TIMING: duration per section
+REGRAS: Sem listas. Sem emojis. Narrativa cinematografica. Respeitar ${v.words || "1800"} palavras.`
+            : `Script words: ${v.words || "1800"}. Topic: ${v.topic || "[PASTE CHOSEN TITLE]"}
+Immersive historical documentary screenwriter. Write complete script, rich cinematic language.
+Structure: 1.Hook 2.Revelation 3.Expectation break 4.World context 5.Origin 6.Contact point 7.Propagation 8.Human reaction 9.Social collapse 10.Radicalization 11.Rural impact 12.Recession 13.Post-event 14.Reflective closing 15.Signature CTA. No lists, no emojis, cinematic tone. Respect ${v.words || "1800"} words.`;
+        }
+        return isPT
+          ? `Total de cenas: ${v.scenes || "20"}. Roteiro: [COLE O ROTEIRO DA ETAPA 2 AQUI]
 
-RULES:
-1. Hook in first 3 seconds — curiosity or shock
-2. Maintain tension — each section reveals something new
-3. On-screen text must be SHORT and IMPACTFUL (max 5-7 words)
-4. Narration with strategic pauses for drama
-5. CTA at end driving engagement
-6. Suggest specific music/sound for each moment
-7. Include prompts to generate background visuals with AI`,
+Voce e um diretor de cinema historico e storyboarder para documentarios imersivos com VEO 3.
+
+OBJETIVO: Selecionar cenas necessarias, evitar redundancia, progressao emocional, facilitar sincronizacao. Pipeline profissional.
+
+SELECAO: Cada cena = ponto-chave do roteiro, funciona sem narracao, unica acao, 6-8 segundos.
+
+PADRAO VISUAL (OBRIGATORIO): Realismo historico cinematografico. Pessoas comuns imperfeitas. Roupas e arquitetura corretas. Iluminacao natural (velas, ceu nublado). Paleta terrosa dessaturada. Atmosfera densa. ZERO elementos modernos. ZERO texto na imagem.
+
+ANIMACAO VEO 3: Movimento sutil (respiracao, gestos, tecidos, fumaca, chamas). Camera estatica ou push-in lento. Nunca brusco. Uma acao por cena.
+
+FORMATO - Blocos de 5 cenas. Para cada:
+
+Cena X - [Titulo]
+Trecho do roteiro: [copia exata]
+Por que existe: [1 linha]
+
+Prompt VEO 3 (em bloco de codigo):
+\`\`\`
+[Prompt em ingles tecnico cinematografico. Ambiente, personagens, acao, iluminacao, clima, camera, movimento. Sem modernismos. Sem texto na imagem.]
+\`\`\`
+
+Da Cena 2 em diante incluir: "Maintain the same visual style, lighting, realism level, historical accuracy and cinematic tone as previous scenes."
+
+Apos 5 cenas PARE. Aguarde: "Continue com o proximo bloco."`
+          : `Total scenes: ${v.scenes || "20"}. Script: [PASTE STEP 2 SCRIPT HERE]
+Historical cinema director + storyboarder for VEO 3 immersive docs.
+Deliver in blocks of 5. Each scene: Title, script excerpt, why it exists, VEO 3 prompt in code block (English, cinematic, historical realism, no modern elements, no text). From scene 2: add consistency line. After 5 scenes STOP, wait for "Continue."`;
+      },
     },
     {
       id: "viral-modeling",
