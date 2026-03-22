@@ -17,6 +17,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { ChatSidebar } from "@/components/ChatSidebar";
 import { StructuredTemplates } from "@/components/StructuredTemplates";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
+import { GenerateVideoButton } from "@/components/GenerateVideoButton";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
@@ -411,7 +412,10 @@ export default function Chat() {
                               </button>
                               <pre>{children}</pre>
                               {text.length > 30 && (
-                                <GenerateImageButton prompt={text} />
+                                <div className="flex flex-wrap gap-1.5">
+                                  <GenerateImageButton prompt={text} />
+                                  <GenerateVideoButton prompt={text} />
+                                </div>
                               )}
                             </div>
                           );
