@@ -74,24 +74,42 @@ serve(async (req) => {
       console.log(`[NANO-BANANA] Free tier: ${usedImages}/${FREE_IMAGE_LIMIT} used for user ${user.id}`);
     }
 
-    const modelId = "gemini-2.0-flash-exp-image-generation";
+    const modelId = "gemini-2.5-flash-preview-native-audio";
     console.log(`[NANO-BANANA] Generating with ${usingFreeCredits ? "SavvyOwl key (free)" : "user key"}`);
 
-    // Call Gemini API
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${activeKey}`;
+    // Call Gemini API - try latest model first, fallback to older
+    const models = [
+      "gemini-2.5-flash-preview-native-audio",
+      "gemini-2.0-flash-exp-image-generation",
+      "gemini-2.0-flash-exp",
+    ];
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Generate an image: " + prompt }] }],
-        generationConfig: {
-          responseModalities: ["IMAGE", "TEXT"],
-        },
-      }),
-    });
+    let response = null;
+    let usedModel = models[0];
 
-    if (!response.ok) {
+    for (const model of models) {
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
+
+      response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["IMAGE", "TEXT"],
+          },
+        }),
+      });
+
+      if (response.ok) {
+        usedModel = model;
+        console.log(`[NANO-BANANA] Success with model: ${model}`);
+        break;
+      }
+      console.log(`[NANO-BANANA] Model ${model} failed, trying next...`);
+    }
+
+    if (!response || !response.ok) {
       const errText = await response.text();
       console.error("[NANO-BANANA] API error:", errText);
       let userMessage = "Image generation failed";
@@ -144,7 +162,7 @@ serve(async (req) => {
     await adminClient.from("usage_logs").insert({
       user_id: user.id,
       mode: "image_generation",
-      model: modelId,
+      model: usedModel,
       cost_eur: usingFreeCredits ? 0 : 0.04,
     });
 
