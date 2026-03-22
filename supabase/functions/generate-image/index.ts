@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const SAVVYOWL_GOOGLE_KEY = "AIzaSyA_7N4dRvk8mRNeeNVEFJH7VyUO89Wddok";
+const SAVVYOWL_GOOGLE_KEY = Deno.env.get("GOOGLE_API_KEY") || "";
 const FREE_IMAGE_LIMIT = 10;
 
 serve(async (req) => {
