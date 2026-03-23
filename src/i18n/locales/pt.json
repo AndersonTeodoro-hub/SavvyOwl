@@ -23,21 +23,21 @@
       "product": "COMO FUNCIONA",
       "pricing": "PRECOS",
       "login": "Entrar",
-      "cta": "Comecar Gratis"
+      "cta": "Comecar Grátis"
     },
     "hero": {
       "badge": "PARA SOCIAL MEDIA MANAGERS E CRIADORES",
-      "h1a": "Cria conteudo para redes sociais",
-      "h1b": "3x mais rapido.",
-      "subtitle": "Legendas, scripts, imagens IA e videos -- tudo num sitio. 10 templates profissionais, busca de tendencias virais e geracao de conteudo visual com Nano Banana e Veo3.",
-      "cta": "Experimenta gratis",
+      "h1a": "Cria conteúdo para redes sociais",
+      "h1b": "3x mais rápido.",
+      "subtitle": "Legendas, scripts, imagens IA e videos -- tudo num sítio. 10 templates profissionais, busca de tendencias virais e geração de conteúdo visual com Nano Banana e Veo3.",
+      "cta": "Experimenta grátis",
       "ctaSecondary": "Ver como funciona",
       "socialProof": "SEM CARTAO . COMECA EM 30 SEGUNDOS"
     },
     "features": {
       "badge": "O QUE PODES FAZER",
       "title_a": "Tudo o que precisas.",
-      "title_b": "Num so lugar.",
+      "title_b": "Num só lugar.",
       "f1_title": "Modelar Videos Virais",
       "f1_desc": "Busca automatica de videos virais reais do YouTube. Escolhe um, e a SavvyOwl modela-o para o teu nicho com prompts prontos a usar.",
       "f2_title": "Gerar Imagens com IA",
@@ -45,9 +45,9 @@
       "f3_title": "Gerar Videos com Veo3",
       "f3_desc": "Cria videos cinematicos com a tecnologia Veo3 do Google. Prompts profissionais para Reels, TikTok e canais Dark.",
       "f4_title": "Pipeline Canal Dark",
-      "f4_desc": "Fluxo completo: titulo viral, roteiro narrado e cenas Veo3 prontas. Conteudo dark faceless em 3 passos.",
+      "f4_desc": "Fluxo completo: titulo viral, roteiro narrado e cenas Veo3 prontas. Conteúdo dark faceless em 3 passos.",
       "f5_title": "Pipeline Viral Pro",
-      "f5_desc": "Do conceito viral ao video pronto: roteiro com lip-sync, cenas dinamicas e instrucoes de montagem no CapCut.",
+      "f5_desc": "Do conceito viral ao video pronto: roteiro com lip-sync, cenas dinamicas e instruções de montagem no CapCut.",
       "f6_title": "10 Templates Profissionais",
       "f6_desc": "Influencer UGC, copies, scripts de video, calendarios, eBooks, prompts de video IA e muito mais. Campos editaveis para personalizar."
     },
@@ -56,21 +56,21 @@
       "title_a": "Reconheces",
       "title_b": "isto?",
       "pain1_title": "Horas a saltar entre ferramentas",
-      "pain1_desc": "Escreves prompts no ChatGPT, geras imagens noutro sitio, editas videos noutro. Perdes horas a juntar pecas que deviam estar todas num lugar.",
-      "pain2_title": "Prompts que nao funcionam",
-      "pain2_desc": "Copias prompts do YouTube que ja nao funcionam. Gastas tempo a reformular e o resultado ainda fica generico e sem personalidade.",
-      "pain3_title": "Sem pipeline de producao",
-      "pain3_desc": "Crias conteudo avulso sem estrutura. Sem fluxo de titulo para roteiro para video. O teu processo nao escala."
+      "pain1_desc": "Escreves prompts no ChatGPT, geras imagens noutro sítio, editas videos noutro. Perdes horas a juntar pecas que deviam estar todas num lugar.",
+      "pain2_title": "Prompts que não funcionam",
+      "pain2_desc": "Copias prompts do YouTube que já não funcionam. Gastas tempo a reformular e o resultado ainda fica generico e sem personalidade.",
+      "pain3_title": "Sem pipeline de produção",
+      "pain3_desc": "Crias conteúdo avulsó sem estrutura. Sem fluxo de titulo para roteiro para video. O teu processó não escala."
     },
     "demo": {
       "badge": "VE A DIFERENCA",
       "title_a": "De idea a video.",
       "title_b": "Em minutos.",
-      "subtitle": "A SavvyOwl transforma uma idea vaga num pipeline de producao completo: roteiro, imagem e video prontos.",
+      "subtitle": "A SavvyOwl transforma uma idea vaga num pipeline de produção completo: roteiro, imagem e video prontos.",
       "youWrote": "TU ESCREVESTE",
       "savvySent": "A SAVVYOWL ENTREGOU",
       "before_text": "Quero fazer um video dark sobre o Titanic para o meu canal do YouTube, algo cinematico",
-      "after_text": "Titulo viral + Roteiro completo narrado + 5 cenas Veo3 em ingles com estilo cinematico historico + Instrucoes CapCut. Tudo copiavel.",
+      "after_text": "Titulo viral + Roteiro completo narrado + 5 cenas Veo3 em ingles com estilo cinematico histórico + Instrucoes CapCut. Tudo copiavel.",
       "stat1_label": "ANTES",
       "stat1_value": "3 horas",
       "stat2_label": "COM SAVVYOWL",
@@ -83,8 +83,8 @@
     "howItWorks": {
       "badge": "COMO FUNCIONA",
       "title_a": "Tres passos.",
-      "title_b": "Zero complicacoes.",
-      "step1_title": "Escolhe um template ou escreve",
+      "title_b": "Zero complicações.",
+      "step1_title": "Escolhe um templaté ou escreve",
       "step1_desc": "Seleciona um dos 10 templates profissionais ou escreve o que precisas em linguagem normal. Preenche os campos e pronto.",
       "step2_title": "A SavvyOwl cria tudo",
       "step2_desc": "Prompts otimizados, scripts estruturados, prompts de imagem e video -- tudo gerado automaticamente no formato certo para cada ferramenta.",
@@ -93,25 +93,25 @@
     },
     "benefits": {
       "badge": "PORQUE SAVVYOWL",
-      "title_a": "O teu estudio de conteudo.",
+      "title_a": "O teu estúdio de conteúdo.",
       "title_b": "Com IA.",
       "card1_title": "Pipeline completo",
-      "card1_desc": "Da idea ao video publicado. Titulo, roteiro, imagem, video e montagem -- tudo num fluxo continuo sem saltar entre apps.",
+      "card1_desc": "Da idea ao video publicado. Titulo, roteiro, imagem, video e montagem -- tudo num fluxo contínuo sem saltar entre apps.",
       "card2_title": "Prompts de nivel profissional",
       "card2_desc": "Cada prompt e otimizado para a ferramenta de destino: Nano Banana, Veo3, Midjourney, Sora. Em ingles, com detalhes tecnicos.",
       "card3_title": "BYOK -- Controlo total",
-      "card3_desc": "Usa a tua propria API key do Google para gerar imagens e videos. Pagas diretamente ao Google, sem intermediarios. Sem limites da SavvyOwl."
+      "card3_desc": "Usa a tua própria API key do Google para gerar imagens e videos. Pagas diretamente ao Google, sem intermediarios. Sem limites da SavvyOwl."
     },
     "tutorial": {
       "badge": "TUTORIAL RAPIDO",
       "title_a": "Comeca a criar.",
       "title_b": "Em 2 minutos.",
       "step1_title": "1. Cria a tua conta",
-      "step1_desc": "Regista-te com email ou Google. Sem cartao de credito. Acesso imediato ao chat e todos os templates.",
+      "step1_desc": "Regista-te com email ou Google. Sem cartao de crédito. Acessó imediato ao chat e todos os templates.",
       "step2_title": "2. Escolhe um template",
-      "step2_desc": "Tens 10 templates profissionais: desde copies para Instagram ate pipelines completos de video. Preenche os campos e a IA faz o resto.",
+      "step2_desc": "Tens 10 templates profissionais: desde copies para Instagram até pipelines completos de video. Preenche os campos e a IA faz o resto.",
       "step3_title": "3. Gera imagens e videos",
-      "step3_desc": "Adiciona a tua API key do Google nas Definicoes para gerar imagens (Nano Banana) e videos (Veo3) diretamente na SavvyOwl.",
+      "step3_desc": "Adiciona a tua API key do Google nas Definições para gerar imagens (Nano Banana) e videos (Veo3) diretamente na SavvyOwl.",
       "step4_title": "4. Copia e publica",
       "step4_desc": "Todos os prompts vem em blocos copiaveis. As imagens e videos sao descarregaveis. Cola no CapCut, agenda no Buffer e publica."
     },
@@ -120,30 +120,30 @@
       "title_a": "Os teus dados.",
       "title_b": "Protegidos.",
       "s1_title": "Autenticacao segura",
-      "s1_desc": "Login com Google OAuth ou email/password. Sessoes encriptadas. A tua conta e so tua.",
+      "s1_desc": "Login com Google OAuth ou email/password. Sessoes encriptadas. A tua conta e só tua.",
       "s2_title": "API Keys no teu browser",
       "s2_desc": "A tua Google API Key fica guardada apenas no teu browser (localStorage). Nunca e enviada para os nossos servidores nem armazenada na base de dados.",
       "s3_title": "Dados encriptados",
-      "s3_desc": "Todas as comunicacoes usam HTTPS. As conversas sao guardadas na tua conta Supabase com Row Level Security -- so tu acedes.",
-      "s4_title": "Sem acesso aos teus conteudos",
-      "s4_desc": "A SavvyOwl nao armazena nem reutiliza as imagens e videos que geras. Sao criados pela API do Google e entregues diretamente a ti."
+      "s3_desc": "Todas as comunicações usam HTTPS. As conversas sao guardadas na tua conta Supabase com Row Level Security -- só tu acedes.",
+      "s4_title": "Sem acessó aos teus conteúdos",
+      "s4_desc": "A SavvyOwl não armazena nem reutiliza as imagens e videos que geras. Sao criados pela API do Google e entregues diretamente a ti."
     },
     "faq": {
       "badge": "PERGUNTAS FREQUENTES",
-      "title_a": "Tens duvidas?",
+      "title_a": "Tens dúvidas?",
       "title_b": "Temos respostas.",
       "q1": "A SavvyOwl e gratuita?",
-      "a1": "Sim! O plano gratuito inclui 5 pedidos por dia, 3 modos de IA e acesso a todos os templates. Para uso ilimitado, o plano Starter custa 9 euros/mes.",
-      "q2": "Preciso de uma API key para usar?",
+      "a1": "Sim! O plano gratuito inclui 5 pedidos por dia, 3 modos de IA e acessó a todos os templates. Para usó ilimitado, o plano Starter custa 9 euros/mes.",
+      "q2": "Precisó de uma API key para usar?",
       "a2": "Nao! O chat e os templates funcionam sem API key. So precisas de uma Google API Key se quiseres gerar imagens (Nano Banana) ou videos (Veo3) diretamente na app.",
       "q3": "Como funciona o BYOK (Bring Your Own Key)?",
-      "a3": "Vai a Definicoes, cola a tua Google API Key e pronto. A key fica guardada no teu browser. Pagas diretamente ao Google pelos creditos que usas.",
-      "q4": "Que templates estao disponiveis?",
-      "a4": "Temos 10 templates: Influencer UGC, Copy/Legenda Pro, Script de Video, Calendario de Conteudo, eBook/Lead Magnet, Prompt Video IA, Gerador de Cenas, Canal Dark Pipeline, Viral Pipeline Pro e Modelar Video Viral.",
+      "a3": "Vai a Definições, cola a tua Google API Key e pronto. A key fica guardada no teu browser. Pagas diretamente ao Google pelos créditos que usas.",
+      "q4": "Que templates estao disponíveis?",
+      "a4": "Temos 10 templates: Influencer UGC, Copy/Legenda Pro, Script de Video, Calendario de Conteúdo, eBook/Lead Magnet, Prompt Video IA, Gerador de Cenas, Canal Dark Pipeline, Viral Pipeline Pro e Modelar Video Viral.",
       "q5": "Os meus dados estao seguros?",
-      "a5": "Sim. Usamos Supabase com Row Level Security, autenticacao OAuth, HTTPS em todas as comunicacoes. A tua API key nunca sai do teu browser.",
-      "q6": "Posso cancelar a qualquer momento?",
-      "a6": "Sim! Sem compromisso, sem periodo minimo. Cancelas quando quiseres diretamente nas definicoes."
+      "a5": "Sim. Usamos Supabase com Row Level Security, autenticação OAuth, HTTPS em todas as comunicações. A tua API key nunca sai do teu browser.",
+      "q6": "Possó cancelar a qualquer momento?",
+      "a6": "Sim! Sem compromisso, sem periodo minimo. Cancelas quando quiseres diretamente nas definições."
     },
     "pricing": {
       "badge": "PRECOS",
@@ -157,32 +157,32 @@
         "5 pedidos por dia",
         "3 modos de IA (Flash, Pro, Creator)",
         "Todos os 10 templates",
-        "Historico de conversas",
+        "Histórico de conversas",
         "Busca de videos virais"
       ],
       "free_cta": "COMECAR GRATIS",
       "pro_label": "STARTER",
-      "pro_subtitle": "Para quem cria conteudo todos os dias",
+      "pro_subtitle": "Para quem cria conteúdo todos os dias",
       "popular": "POPULAR",
       "pro_features": [
         "Pedidos ilimitados",
         "Todos os modos de IA",
         "Biblioteca de prompts guardados",
-        "Geracao de imagens (BYOK)",
-        "Geracao de videos Veo3 (BYOK)",
+        "Geração de imagens (BYOK)",
+        "Geração de videos Veo3 (BYOK)",
         "Pipelines Canal Dark e Viral Pro",
         "Suporte prioritario"
       ],
       "pro_cta": "COMECAR -- 7 DIAS GRATIS"
     },
     "cta_final": {
-      "title_a": "O teu proximo video",
+      "title_a": "O teu próximo video",
       "title_b": "comeca aqui.",
-      "subtitle": "Cria a tua conta em 30 segundos. Sem cartao de credito. Cancela quando quiseres.",
-      "cta": "Criar conta gratis"
+      "subtitle": "Cria a tua conta em 30 segundos. Sem cartao de crédito. Cancela quando quiseres.",
+      "cta": "Criar conta grátis"
     },
     "footer": {
-      "text": "SavvyOwl . 2026 . Feito para criadores de conteudo"
+      "text": "SavvyOwl . 2026 . Feito para criadores de conteúdo"
     }
   },
   "auth": {
@@ -335,7 +335,7 @@
     "taskType": "Tipo de Tarefa",
     "count": "Contagem",
     "dailySpend": "Gasto Diário",
-    "usageByMode": "Uso por Modo",
+    "usageByMode": "Usó por Modo",
     "recentRequests": "Pedidos Recentes",
     "date": "Data",
     "mode": "Modo",
@@ -357,7 +357,7 @@
     "currentPlan": "Plano atual:",
     "upgradeStarter": "Upgrade para Starter — €9/mês",
     "upgradePro": "Upgrade para Pro — €19/mês",
-    "topPlan": "Estás no nosso melhor plano! 🎉",
+    "topPlan": "Estás no nossó melhor plano! 🎉",
     "manageSubscription": "Gerir Subscrição",
     "monthlyBudget": "Orçamento Mensal",
     "budgetDesc": "Define um limite de gastos. Serás avisado aos 80%.",
@@ -382,7 +382,7 @@
     "howToGetKey": "Como obter a API Key:",
     "step1": "Vai a console.cloud.google.com",
     "step2": "Ativa as APIs: Gemini API",
-    "step3": "Vai a Credentials -> Create API Key",
+    "step3": "Vai a Credentials -> Creaté API Key",
     "apiKeyConnected": "Podes agora gerar imagens e videos diretamente nos templates da SavvyOwl."
   },
   "onboarding": {

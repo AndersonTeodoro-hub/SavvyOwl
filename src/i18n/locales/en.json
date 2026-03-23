@@ -26,10 +26,10 @@
       "cta": "Start Free"
     },
     "hero": {
-      "badge": "FOR SOCIAL MEDIA MANAGERS",
+      "badge": "FOR SOCIAL MEDIA MANAGERS & CREATORS",
       "h1a": "Create social media content",
       "h1b": "3x faster.",
-      "subtitle": "The right AI for every post, automatically optimized. Captions, copy, calendars — all in one place, with full cost control.",
+      "subtitle": "Captions, scripts, AI images and videos — all in one place. 10 professional templates, viral trend search and visual content generation with Nano Banana and Veo3.",
       "cta": "Try it free",
       "ctaSecondary": "See how it works ↓",
       "socialProof": "NO CARD REQUIRED · START IN 30 SECONDS"
@@ -52,16 +52,16 @@
       "subtitle": "Before sending to the AI, SavvyOwl transforms your request into a professional prompt. Better results on the first try.",
       "youWrote": "YOU WROTE",
       "savvySent": "SAVVYOWL SENT",
-      "before_text": "Write me an Instagram caption about the brand's new product, something that grabs attention and that people want to share, with emojis and relevant hashtags to increase reach",
-      "after_text": "Instagram caption: product launch. Tone: enthusiastic, shareable. Include: strong hook in line 1, CTA, 5 niche hashtags. Format: caption with line breaks.",
+      "before_text": "I want to make a dark video about the Titanic for my YouTube channel, something cinematic",
+      "after_text": "Viral title + Complete narrated script + 5 Veo3 scenes in English with cinematic historical style + CapCut instructions. All copyable.",
       "stat1_label": "BEFORE",
-      "stat1_value": "34 words",
-      "stat2_label": "AFTER",
-      "stat2_value": "23 words",
+      "stat1_value": "3 hours",
+      "stat2_label": "WITH SAVVYOWL",
+      "stat2_value": "10 min",
       "stat3_label": "MORE EFFICIENT",
-      "stat3_value": "32%",
+      "stat3_value": "18x",
       "stat4_label": "RESULT",
-      "stat4_value": "Ready to post"
+      "stat4_value": "Complete pipeline"
     },
     "howItWorks": {
       "badge": "HOW IT WORKS",
@@ -95,9 +95,10 @@
       "month": "mo",
       "free_features": [
         "5 requests per day",
-        "3 AI modes",
+        "3 AI modes (Flash, Pro, Creator)",
+        "All 10 templates",
         "Conversation history",
-        "Automatic prompt improvement"
+        "Viral video search"
       ],
       "free_cta": "START FREE",
       "pro_label": "STARTER",
@@ -105,10 +106,11 @@
       "popular": "POPULAR",
       "pro_features": [
         "Unlimited requests",
-        "All available AIs",
-        "Saved prompt library",
-        "Advanced prompt optimization",
-        "Full cost control",
+        "All AI modes",
+        "Saved prompts library",
+        "Image generation (BYOK)",
+        "Veo3 video generation (BYOK)",
+        "Dark Channel & Viral Pro pipelines",
         "Priority support"
       ],
       "pro_cta": "START — 7 DAYS FREE"
@@ -121,6 +123,66 @@
     },
     "footer": {
       "text": "SavvyOwl · Lisbon, 2026"
+    },
+    "features": {
+      "badge": "WHAT YOU CAN DO",
+      "title_a": "Everything you need.",
+      "title_b": "In one place.",
+      "f1_title": "Model Viral Videos",
+      "f1_desc": "Automatic search for real viral YouTube videos. Pick one, and SavvyOwl models it for your niche with ready-to-use prompts.",
+      "f2_title": "Generate AI Images",
+      "f2_desc": "Create professional images with Nano Banana directly in the app. Optimized prompts for thumbnails, posts and UGC.",
+      "f3_title": "Generate Videos with Veo3",
+      "f3_desc": "Create cinematic videos with Google Veo3 technology. Professional prompts for Reels, TikTok and Dark channels.",
+      "f4_title": "Dark Channel Pipeline",
+      "f4_desc": "Complete flow: viral title, narrated script and Veo3 scenes ready to go. Dark faceless content in 3 steps.",
+      "f5_title": "Viral Pipeline Pro",
+      "f5_desc": "From viral concept to finished video: lip-sync script, dynamic scenes and CapCut assembly instructions.",
+      "f6_title": "10 Professional Templates",
+      "f6_desc": "Influencer UGC, copies, video scripts, calendars, eBooks, AI video prompts and more. Editable fields to customize."
+    },
+    "tutorial": {
+      "badge": "QUICK TUTORIAL",
+      "title_a": "Start creating.",
+      "title_b": "In 2 minutes.",
+      "step1_title": "1. Create your account",
+      "step1_desc": "Sign up with email or Google. No credit card. Immediate access to chat and all templates.",
+      "step2_title": "2. Choose a template",
+      "step2_desc": "You have 10 professional templates: from Instagram copies to complete video pipelines. Fill in the fields and AI does the rest.",
+      "step3_title": "3. Generate images and videos",
+      "step3_desc": "Add your Google API key in Settings to generate images (Nano Banana) and videos (Veo3) directly in SavvyOwl.",
+      "step4_title": "4. Copy and publish",
+      "step4_desc": "All prompts come in copyable blocks. Images and videos are downloadable. Paste in CapCut, schedule in Buffer and publish."
+    },
+    "security": {
+      "badge": "SECURITY & PRIVACY",
+      "title_a": "Your data.",
+      "title_b": "Protected.",
+      "s1_title": "Secure authentication",
+      "s1_desc": "Login with Google OAuth or email/password. Encrypted sessions. Your account is yours alone.",
+      "s2_title": "API Keys in your browser",
+      "s2_desc": "Your Google API Key is stored only in your browser (localStorage). It is never sent to our servers or stored in the database.",
+      "s3_title": "Encrypted data",
+      "s3_desc": "All communications use HTTPS. Conversations are stored in your Supabase account with Row Level Security — only you can access them.",
+      "s4_title": "No access to your content",
+      "s4_desc": "SavvyOwl does not store or reuse the images and videos you generate. They are created by the Google API and delivered directly to you."
+    },
+    "faq": {
+      "badge": "FAQ",
+      "title_a": "Questions?",
+      "title_b": "We have answers.",
+      "q1": "Is SavvyOwl free?",
+      "a1": "Yes! The free plan includes 5 requests per day, 3 AI modes and access to all templates. For unlimited use, the Starter plan costs 9 euros/month.",
+      "q2": "Do I need an API key to use it?",
+      "a2": "No! Chat and templates work without an API key. You only need a Google API Key if you want to generate images (Nano Banana) or videos (Veo3) directly in the app.",
+      "q3": "How does BYOK (Bring Your Own Key) work?",
+      "a3": "Go to Settings, paste your Google API Key and you are done. The key is stored in your browser. You pay Google directly for the credits you use.",
+      "q4": "What templates are available?",
+      "a4": "We have 10 templates: Influencer UGC, Copy/Caption Pro, Video Script, Content Calendar, eBook/Lead Magnet, AI Video Prompt, Scene Generator, Dark Channel Pipeline, Viral Pipeline Pro and Model Viral Video.",
+      "q5": "Is my data secure?",
+      "a5": "Yes. We use Supabase with Row Level Security, OAuth authentication, HTTPS on all communications. Your API key never leaves your browser.",
+      "q6": "Can I cancel anytime?",
+      "a6": "Yes! No commitment, no minimum period. Cancel whenever you want directly in settings."
     }
   },
   "auth": {
