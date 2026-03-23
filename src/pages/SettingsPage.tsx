@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, Key, ExternalLink } from "lucide-react";
+import { Eye, EyeOff, Key, ExternalLink, Mic, Loader2 } from "lucide-react";
+import { useElevenLabsKey } from "@/hooks/useElevenLabsKey";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile, signOut } = useAuth();
@@ -302,6 +303,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* ElevenLabs - Voice Generation */}
+      <ElevenLabsSection />
+
       <Card className="bg-[hsl(var(--surface-2))] border-destructive/30">
         <CardHeader>
           <CardTitle className="text-destructive text-tracking-tight">{t("settings.dangerZone")}</CardTitle>
@@ -328,5 +332,134 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ElevenLabsSection() {
+  const { apiKey, voiceId, voiceName, saveApiKey, saveVoice, hasKey } = useElevenLabsKey();
+  const [showKey, setShowKey] = useState(false);
+  const [keyInput, setKeyInput] = useState(apiKey);
+  const [voices, setVoices] = useState<Array<{ voice_id: string; name: string; category: string; preview_url?: string }>>([]);
+  const [loadingVoices, setLoadingVoices] = useState(false);
+  const { t } = useTranslation();
+
+  useEffect(() => { setKeyInput(apiKey); }, [apiKey]);
+
+  const loadVoices = async () => {
+    if (!keyInput) return;
+    setLoadingVoices(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-voice", {
+        body: { action: "list-voices", apiKey: keyInput },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setVoices(data?.voices || []);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load voices");
+    } finally {
+      setLoadingVoices(false);
+    }
+  };
+
+  return (
+    <Card className="bg-[hsl(var(--surface-2))] border-border">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Mic className="h-5 w-5 text-orange-400" />
+          <CardTitle className="text-tracking-tight">ElevenLabs (Narracao de Voz)</CardTitle>
+        </div>
+        <CardDescription>
+          Gera narracoes com voz consistente para os teus videos. A mesma voz em todos os videos do teu canal. A key fica guardada no teu browser.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <label className="text-sm text-muted-foreground mb-1 block">ElevenLabs API Key</label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                type={showKey ? "text" : "password"}
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                placeholder="sk_..."
+                className="bg-[hsl(var(--surface-1))] border-border pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                saveApiKey(keyInput);
+                toast.success("ElevenLabs key guardada!");
+                if (keyInput) loadVoices();
+              }}
+            >
+              Guardar
+            </Button>
+          </div>
+          <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-2">
+            Obter API key no ElevenLabs <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+
+        {hasKey && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm text-muted-foreground">Voz selecionada</label>
+              <Button variant="ghost" size="sm" onClick={loadVoices} disabled={loadingVoices} className="text-xs gap-1">
+                {loadingVoices ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                {loadingVoices ? "Carregando..." : "Carregar vozes"}
+              </Button>
+            </div>
+
+            {voiceId && (
+              <div className="bg-orange-500/5 rounded-lg p-3 text-sm border border-orange-400/20 mb-3">
+                <span className="text-orange-400 font-medium">{voiceName || voiceId}</span>
+                <span className="text-muted-foreground text-xs ml-2">-- Esta voz sera usada em todas as narracoes</span>
+              </div>
+            )}
+
+            {voices.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                {voices.map((v) => (
+                  <button
+                    key={v.voice_id}
+                    onClick={() => {
+                      saveVoice(v.voice_id, v.name);
+                      toast.success(`Voz "${v.name}" selecionada!`);
+                    }}
+                    className={`text-left p-3 rounded-lg border text-sm transition-colors ${
+                      voiceId === v.voice_id
+                        ? "border-orange-400 bg-orange-500/10"
+                        : "border-border bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))]"
+                    }`}
+                  >
+                    <span className="font-medium block">{v.name}</span>
+                    <span className="text-xs text-muted-foreground">{v.category}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground/70 mb-1">Como funciona:</p>
+          <p>1. Cria conta gratis em elevenlabs.io</p>
+          <p>2. Copia a API key e cola aqui</p>
+          <p>3. Seleciona ou clona uma voz</p>
+          <p>4. Nos templates Canal Dark e Viral, clica "Gerar Narracao"</p>
+          <p className="mt-2 text-orange-400">A mesma voz em todos os videos = identidade do teu canal!</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

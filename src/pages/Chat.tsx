@@ -18,6 +18,7 @@ import { ChatSidebar } from "@/components/ChatSidebar";
 import { StructuredTemplates } from "@/components/StructuredTemplates";
 import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { GenerateVideoButton } from "@/components/GenerateVideoButton";
+import { GenerateVoiceButton } from "@/components/GenerateVoiceButton";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
@@ -415,6 +416,7 @@ export default function Chat() {
                                 <div className="flex flex-wrap gap-1.5">
                                   <GenerateImageButton prompt={text} />
                                   <GenerateVideoButton prompt={text} />
+                                  <GenerateVoiceButton text={text} />
                                 </div>
                               )}
                             </div>
