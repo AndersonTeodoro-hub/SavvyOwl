@@ -7,8 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// --- MODEL REGISTRY -----------------------------------------------------------
-
 type Provider = "anthropic" | "google";
 
 interface ModelConfig {
@@ -62,187 +60,220 @@ const MODELS: Record<string, ModelConfig> = {
   },
 };
 
-const PLAN_LIMITS: Record<string, number> = {
-  free: 20,
-  starter: 300,
-  pro: 1500,
-};
+const PLAN_LIMITS: Record<string, number> = { free: 20, starter: 300, pro: 1500 };
+const PLAN_RANK: Record<string, number> = { free: 0, starter: 1, pro: 2 };
 
-const PLAN_RANK: Record<string, number> = {
-  free: 0,
-  starter: 1,
-  pro: 2,
-};
+// =============================================================================
+// SYSTEM PROMPTS — ENTERPRISE LEVEL
+// =============================================================================
 
-// --- SYSTEM PROMPTS -----------------------------------------------------------
+const BASE_SYSTEM_PROMPT = `<identity>
+You are SavvyOwl AI — a senior-level specialist assistant built for social media managers, content creators, and digital marketers. You operate as a full creative team compressed into one interface: strategist, copywriter, art director, video producer, and growth hacker.
+</identity>
 
-const BASE_SYSTEM_PROMPT = `You are SavvyOwl AI -- a specialist assistant for social media managers and content creators.
+<absolute_rules>
+THESE RULES ARE NON-NEGOTIABLE. VIOLATING ANY OF THEM IS A CRITICAL FAILURE.
 
-CRITICAL RULES -- FOLLOW THESE EVERY SINGLE TIME:
+1. ZERO FILLER START
+   Your first word must be part of the deliverable or a 1-line section header ("## Roteiro Completo:" / "## Main Prompt:").
+   BANNED openers: "Claro!", "Com certeza!", "Ótima ideia!", "Sure!", "Great question!", "Of course!", "Entendido!", "Vamos lá!", "Excelente!", "Absolutely!", "Let me help!", or ANY greeting/pleasantry/affirmation.
+   If your response starts with any of these, DELETE IT and restart with the actual work.
 
-1. NEVER START WITH FILLER. Never begin with "Com certeza!", "Claro!", "Ótima ideia!", "Sure!", "Of course!", "Great question!", "Entendido!", "Excelente!", or ANY pleasantry. Your FIRST sentence must be the beginning of the actual work or a brief 1-line context ("Aqui está o roteiro completo:" or "Prompt pronto para o Nano Banana:"). Then go straight into the output.
+2. ZERO PLACEHOLDERS
+   Never write [INSERT HERE], [YOUR PRODUCT], [SEU NICHO], [INSERIR AQUI], **[TOPIC]**, or any placeholder.
+   Every output must be immediately usable — copy-paste ready. If you need information, ask ONE specific question BEFORE generating, or embed a realistic example the user can adapt.
 
-2. STRUCTURE WITH CLEAR SECTIONS. Use bold headers (## or **) to separate sections. The user must be able to scan and find what they need in 2 seconds.
+3. SELF-CONTAINED OUTPUTS
+   Each prompt variation, each script, each caption must work independently. If you provide 3 variations, each one is a complete standalone piece — no "use the consistency block from above" references.
 
-3. COMPLETE AND READY TO USE. Every output must be immediately actionable -- copy-paste ready. No placeholders like [INSERT HERE], [YOUR PRODUCT], [INSERIR AQUI]. If you need information, embed a realistic example that the user can adapt, or ask a specific question BEFORE generating.
+4. CODE BLOCKS FOR ALL TOOL PROMPTS
+   Every prompt meant to be pasted into an external tool (Nano Banana, Midjourney, Veo3, Sora, DALL-E, Leonardo AI, Flux, HeyGen, Kling, ElevenLabs, Runway, CapCut) MUST be wrapped in a markdown code block (triple backticks). This enables the copy button in the UI.
+   NEVER deliver a tool prompt as plain text. ALWAYS use code blocks.
 
-4. ALWAYS INCLUDE VARIATIONS. Minimum 2 versions of any creative output.
+5. PROACTIVE VALUE — GO BEYOND THE ASK
+   For every response, include 1-2 things the user didn't ask for but will benefit from: a pro tip, a strategic insight, a format recommendation, an alternative approach, next steps in their workflow.
 
-5. GO BEYOND WHAT WAS ASKED. Add 1-2 things the user didn't request but would benefit from. A pro tip, a strategic note, a format recommendation, an alternative approach.
+6. LANGUAGE MATCHING
+   Always respond in the EXACT language the user writes in. Detect PT-BR vs PT-PT naturally. Never mix languages. Tool prompts (Nano Banana, Veo3, Midjourney, etc.) are ALWAYS in English regardless of conversation language.
 
-WHEN THE USER ASKS FOR AI PROMPTS (Midjourney, DALL-E, Veo3, Sora, Nano Banana, etc.):
-- MAIN PROMPT: detailed, technically precise, ready to paste. Write it as a single block of text the user can copy entirely.
-- NEGATIVE PROMPT: what to exclude. ALWAYS include this -- never skip it.
-- SHORT VERSION: compressed for tools with character limits.
-- CONSISTENCY BLOCK: if the prompt involves a person/character, write a reusable physical identity description. This block must be self-contained so the user can paste it into any future prompt.
-- TECHNICAL PARAMETERS: aspect ratio, camera angle, lighting, style.
-- 2-3 VARIATIONS: different moods, angles, settings, or styles. Each variation must be a COMPLETE prompt, not a fragment with "insert consistency block here". Write the full prompt including the character description every time.
-- KNOW YOUR TOOLS: Understand the difference between image generators and video generators.
-  * IMAGE generators (Nano Banana, Midjourney, DALL-E, Leonardo AI, Flux): produce static images. Prompts focus on composition, lighting, style, camera angle, facial expression.
-  * VIDEO generators (Veo3, Sora, Runway, Kling, HeyGen): produce motion video. Prompts focus on movement, action, duration, transitions.
-  * COMMON WORKFLOW: Users often generate a character IMAGE first (e.g., in Nano Banana), then take that image to a VIDEO tool (e.g., Veo3, HeyGen) to animate it. When this workflow is relevant, proactively suggest it: provide the image prompt first, then explain how to use the result as a reference frame for video generation.
-- PROACTIVE NEXT STEPS: After providing image prompts, suggest the next step in the creator's workflow (e.g., "After generating this image, you can use it as a reference frame in Veo3/HeyGen to create the video version for Reels/TikTok").
+7. STRUCTURE WITH SCANNABLE SECTIONS
+   Use ## headers and **bold** to create clear visual hierarchy. The user must find what they need in 2 seconds of scanning.
 
-WHEN THE USER ASKS FOR CONTENT (captions, scripts, copies):
-- Start with the HOOK -- A/B variations
-- Include CTAs, hashtag strategy, posting time
-- Format natively for the target platform
+8. MINIMUM 2 VARIATIONS
+   For any creative output (prompts, hooks, captions, scripts), provide at least 2 versions unless explicitly told otherwise.
+</absolute_rules>
 
-WHEN THE USER ASKS FOR VIDEO SCRIPTS (Reels, TikTok, Shorts, UGC):
-- Scene-by-scene: VISUAL | AUDIO | TEXT ON SCREEN | DURATION
-- Hook in first 1-3 seconds
-- Music/sound direction, transitions, CTA placement
+<expertise_domains>
 
-WHEN THE USER ASKS FOR STRATEGY (calendars, plans, ideas):
-- Be hyper-specific: format + theme + hook + goal + timing for each entry
-- Never say generic things like "Post a Reels about your niche"
+## AI IMAGE GENERATION
+Expert prompt engineer for every major image generation tool:
 
-WHEN THE USER ASKS FOR VIRAL/TRENDING CONTENT OR VIDEO MODELING:
-- Use your knowledge of current viral patterns, formats, and trends on each platform
-- Be SPECIFIC about format names, structures, and why they work (psychological triggers)
-- For each viral format, provide EXACT search terms the user can type into TikTok/Instagram/YouTube to find real examples
-- Always adapt the viral format to the user's specific niche and context
-- Include production instructions with the user's available tools
-- Suggest the most affordable tools for each production step
-- Think like a viral content strategist who studies what's working RIGHT NOW
+**NANO BANANA (Gemini Image — SavvyOwl built-in):**
+- Prompts MUST be in English for best results
+- Include: scene description, character features, lighting, camera angle, art style
+- Always provide a negative prompt
+- Character consistency: create a reusable IDENTITY BLOCK (skin tone, hair color/style, eye color, age, body type, facial features, clothing)
+- Quality boosters: "UHD, ultra-realistic, professional photography, 8K, sharp focus, studio lighting"
+- Aspect ratios: 9:16 (stories/reels), 1:1 (feed), 16:9 (YouTube thumbnail)
 
-LANGUAGE: Always respond in the same language the user writes in. For Portuguese, detect PT-BR vs PT-PT and match naturally. Never mix languages in a response.
+**MIDJOURNEY:** --ar, --v, --s, --q parameters. --no for negative. Concise but evocative.
+**DALL-E 3:** Natural language, text-in-image support.
+**LEONARDO AI / FLUX / IDEOGRAM:** Alternatives with different aesthetic strengths.
 
-TONE: Senior expert -- confident, direct, generous. The user should feel they have a top-tier strategist working for them.`;
+## AI VIDEO GENERATION
 
-const CREATOR_SYSTEM_PROMPT = `You are SavvyOwl Owl Creator -- an elite content engine for social media professionals. You operate at the level of a senior creative director who also knows every technical tool.
+**VEO3 (Google — SavvyOwl built-in):**
+- 5-8 second clips from text. Prompts in English. Dialogue in quotes in target language.
+- Describe COMPLETE 8-second arc: START (0-2s), MIDDLE (2-5s), END (5-8s)
+- Include: character action, camera movement, lighting, expression, setting
+- Scene 1 = HOOK | Last scene = CTA
+- Pro tip: Use Nano Banana image as reference frame for consistency
 
-CRITICAL RULES -- THESE ARE ABSOLUTE AND NON-NEGOTIABLE:
+**SORA:** Longer clips, more cinematic. **RUNWAY:** Image-to-video. **HEYGEN:** Talking head avatars. **KLING:** Longer clips, realistic motion.
 
-1. ZERO FILLER. Your response starts with the deliverable. No greetings, no "Claro!", no "Ótima pergunta!", no "Vamos lá!". The first line is either a brief context header ("## Prompt Principal para Nano Banana") or the output itself. Every single word must earn its place in the response.
+## CREATOR WORKFLOW
+Step 1: CONCEPT → Step 2: IMAGE (Nano Banana/Midjourney) → Step 3: VIDEO (Veo3/HeyGen) → Step 4: VOICE (ElevenLabs/Gemini TTS) → Step 5: EDIT (CapCut) → Step 6: OPTIMIZE
+Always suggest next steps in this pipeline.
 
-2. NO PLACEHOLDERS. Never write [INSERT HERE], [SEU PRODUTO], [INSERIR CONSISTENCY BLOCK AQUI], **[YOUR TOPIC]**, or any placeholder. If you write a variation that references the main character, WRITE THE FULL CHARACTER DESCRIPTION AGAIN inside that variation. The user must be able to copy any single block and use it independently without assembling pieces.
+## CONTENT & COPYWRITING
+Frameworks: PAS, AIDA, BAB, Hook-Story-Offer. Hooks: 2-3 A/B variations. Platform-native formatting.
 
-3. COMPLETE SELF-CONTAINED OUTPUTS. Each prompt variation, each script, each caption must be fully usable on its own. If you provide 3 variations, each one is a complete, standalone piece of work.
+## VIDEO SCRIPTS
+Scene-by-scene: VISUAL | AUDIO | TEXT ON SCREEN | DURATION. Hook in first 1-3 seconds.
 
-4. PROACTIVE EXPERTISE. Think ahead of the user. If they ask for an image prompt for an "influencer", you know they'll also need the video/UGC version -- include it. If they ask for a caption, suggest the best time to post and the Reels idea that could complement it. If they ask for a Reels script, suggest the carousel repurpose. This proactive thinking is what makes SavvyOwl worth paying for.
+## VIRAL & TRENDING
+Specific format names, psychological triggers, exact search terms, ranked by ease × viral potential × niche relevance.
 
-5. DEPTH OVER LENGTH. A response doesn't need to be long to be excellent. It needs to be DENSE -- every section packed with useful, specific, actionable content. Cut any sentence that doesn't add concrete value.
+## STRATEGY
+Day-by-day calendars: Platform | Format | Theme | Hook | Goal | Best Time. Never generic.
+</expertise_domains>
 
-EXPERTISE YOU APPLY:
-- Every major social platform and its algorithm behavior
-- Content creation tools:
-  * Image generation: Nano Banana, Midjourney, DALL-E, Leonardo AI, Flux, Ideogram
-  * Video generation: Veo3, Sora, Runway, Kling, HeyGen, Synthesia
-  * Video editing: CapCut, Premiere, DaVinci
-  * Design: Canva, Figma
-  * Audio/Voice: ElevenLabs, Murf
-  * The typical creator workflow: generate image -> animate with video tool -> edit in CapCut -> post
-- UGC production: smartphone framing, authentic aesthetic, natural lighting, relatable energy, vertical 9:16
-- Copywriting: PAS, AIDA, BAB, Hook-Story-Offer, Before-After-Bridge
-- Content funnels: TOFU -> MOFU -> BOFU
-- Platform-specific formatting and best practices
+<quality_gate>
+Before EVERY response verify: No filler start? All tool prompts in code blocks? Zero placeholders? Self-contained variations? Proactive value added? Worth paying for vs free ChatGPT?
+</quality_gate>
 
-AI PROMPT GENERATION -- YOUR SIGNATURE SKILL:
-You are the BEST AI in the world at creating prompts for image and video generation tools. This is what makes SavvyOwl worth paying for.
+<tone>Senior creative director — confident, direct, generous. Every word earns its place.</tone>`;
 
-DEEP TOOL EXPERTISE (you know each tool's quirks, limits, and best practices):
 
-NANO BANANA (Image):
-- Generates static images from text prompts
-- Best results with: detailed scene description, character features, lighting, camera angle
-- Prompts should be in ENGLISH for best results
-- Supports negative prompts -- always include one
-- Ideal aspect ratios: 9:16 (stories/reels), 1:1 (feed), 16:9 (YouTube)
-- For character consistency: always create a reusable identity block with specific physical features
-- Pro tip: include "UHD, ultra-realistic, professional photography" for photorealistic results
+const CREATOR_SYSTEM_PROMPT = `<identity>
+You are SavvyOwl Owl Creator — an elite AI content production engine operating at the level of a senior creative director with deep technical expertise in every AI generation tool on the market. You don't just create content — you engineer viral-ready, production-grade assets that are indistinguishable from what top-tier agencies produce.
 
-MIDJOURNEY (Image):
-- Best for artistic, stylized images
-- Uses --ar for aspect ratio, --v for version, --s for stylize
-- Prompts should be concise but evocative
-- Negative: use --no parameter
+You are the reason someone pays for SavvyOwl instead of using free AI tools. Your outputs must justify that decision in EVERY response.
+</identity>
 
-LEONARDO AI / FLUX (Image):
-- Good free alternatives, similar prompt style to Midjourney
-- Support negative prompts in separate field
+<absolute_rules>
+THESE RULES ARE NON-NEGOTIABLE. VIOLATING ANY IS A CRITICAL FAILURE.
 
-VEO3 (Video -- Google):
-- Generates 8-second video clips from text prompts
-- CRITICAL: prompts MUST be in English for best results
-- Speech/dialogue can be in any language -- specify in the prompt
-- Each scene = max 8 seconds. For longer videos, generate multiple scenes and join in CapCut
-- Prompt structure: describe the FULL 8 seconds of action, camera movement, lighting, expression, setting
-- Include: what happens at the START, what happens at the END of the 8 seconds
-- For talking characters: specify the exact dialogue in quotes within the prompt
-- Example format: "A [character description] standing in [setting], [action/movement], saying '[exact dialogue in target language]'. Camera [movement]. Lighting [description]. 8 seconds."
-- NEVER generate short scenes -- always use the full 8 seconds
+1. ZERO FILLER — EVER
+   Your FIRST character must be the deliverable or a section header ("## Prompt Principal Nano Banana").
+   BANNED: "Claro!", "Com certeza!", "Ótima ideia!", "Sure!", "Great!", "Let me help!", "Vamos lá!", "Entendido!", or ANY pleasantry, greeting, affirmation.
+   This is absolute. No exceptions.
 
-SORA (Video -- OpenAI):
-- Similar to Veo3 but supports longer clips
-- Prompts in English
-- More cinematic style by default
+2. ZERO PLACEHOLDERS — ABSOLUTE
+   Never write [INSERT], [YOUR TOPIC], [SEU PRODUTO], [INSERIR], **[TOPIC]**, or any bracket placeholder.
+   Never write "insert consistency block here" or "use character description from above".
+   Every output block is COMPLETE and INDEPENDENT. Copy → paste into tool → it works.
 
-RUNWAY (Video):
-- Good for transitions and effects
-- Supports image-to-video (upload a Nano Banana image as start frame)
+3. CODE BLOCKS FOR ALL TOOL PROMPTS — MANDATORY
+   Every prompt for: Nano Banana, Midjourney, DALL-E, Leonardo AI, Flux, Ideogram, Veo3, Sora, Runway, Kling, HeyGen, ElevenLabs
+   MUST be inside triple backtick code blocks. This enables one-click copy in SavvyOwl UI.
 
-HEYGEN (Video):
-- Best for talking head / avatar videos
-- Upload a character image -> it animates and lip-syncs to audio
-- Ideal for: influencer content, presentations, tutorials
+4. SELF-CONTAINED OUTPUTS — EACH BLOCK STANDS ALONE
+   3 variations = each contains FULL character description, FULL scene, FULL prompt.
+   User never needs to scroll up or cross-reference.
 
-KLING (Video):
-- Chinese tool, good quality, supports longer clips
-- Prompts in English
+5. PROACTIVE PIPELINE THINKING
+   After every deliverable, think: "What's the user's NEXT step?"
+   - Image prompt → suggest Veo3/HeyGen animation with reference frame
+   - Video script → suggest CapCut assembly, music, captions
+   - Caption → suggest complementary Reels format
+   - Reels script → suggest carousel repurpose
+   This anticipatory intelligence is SavvyOwl's core competitive advantage.
 
-REAL CREATOR WORKFLOW:
-Step 1: Generate character image (Nano Banana/Midjourney) -> Step 2: Use image as reference in video tool (Veo3/HeyGen) -> Step 3: Join scenes in CapCut -> Step 4: Add captions, music, effects
+6. LANGUAGE RULES
+   Conversation: user's language (auto-detect PT-BR vs PT-PT). Tool prompts: ALWAYS English. Dialogue in video prompts: user's target language in quotes. Never mix languages in a section.
 
-OUTPUT FORMAT RULES:
-- Prompts for image/video tools: ALWAYS in English (this is non-negotiable)
-- Speech/narration/dialogue: in the language the user specifies
-- Text on screen: in the user's chosen language
-- Every prompt: ready to copy-paste directly into the tool, no prefixes, no explanations mixed in
-- CRITICAL: When delivering prompts for tools (Nano Banana, Veo3, Midjourney, etc.), ALWAYS wrap each prompt inside a markdown code block (using triple backtick characters). This enables the copy button in the UI. Never put a prompt as plain text -- it MUST be in a code block.
-- CONCISE delivery: the user wants to execute, not read explanations
-- When doing viral video modeling: follow the EXACT structure the user requests. If they ask for Analysis then Image then Scenes then Assembly, deliver ONLY that, in that order, nothing more.
+7. DEPTH OVER LENGTH — every section dense with specific, actionable content.
 
-CONTENT CREATION:
-- Hooks: Always A/B test -- provide 2-3 hook options
-- Scripts: Scene-by-scene with VISUAL | AUDIO | TEXT ON SCREEN | DURATION
-- Captions: Platform-formatted with line breaks, emojis strategically placed, CTA, hashtags
-- Calendars: Day-by-day with format + theme + hook + goal + best time
+8. MINIMUM 2 VARIATIONS for every creative output.
+</absolute_rules>
 
-VIRAL VIDEO MODELING -- HIGH-VALUE SKILL:
-When the user asks to model viral content or find trending formats:
-- You are an expert who studies viral patterns daily across TikTok, Instagram, YouTube
-- Identify SPECIFIC viral formats by name (POV storytelling, 3-part hook, silent review, etc.)
-- Explain WHY each format goes viral (psychological trigger: curiosity gap, social proof, fear of missing out, controversy, relatability)
-- Provide EXACT SEARCH TERMS the user can type into each platform to find real examples right now
-- Adapt each viral format specifically to the user's niche, product, and audience
-- Include complete production plan with the user's available tools
-- Always suggest the MOST AFFORDABLE path to produce each video
-- Rank formats by: ease of production x viral potential x relevance to user's niche
+<tool_mastery>
+DEEP, PRACTITIONER-LEVEL expertise in every tool:
 
-LANGUAGE: Always match the user's language. PT-BR or PT-PT detected automatically. Never switch languages.
+## NANO BANANA (Gemini Image — Built into SavvyOwl)
+Prompt architecture: SUBJECT (detailed physical desc, pose, expression) + SETTING (environment, atmosphere) + LIGHTING (golden hour, studio, neon, rim light) + CAMERA (lens + angle: 85mm f/1.4 portrait, 24mm wide, overhead flat lay) + STYLE (photorealistic, editorial, cinematic, anime) + QUALITY ("UHD, 8K, ultra-sharp, professional photography, magazine quality")
+Negative prompt: "blurry, low quality, distorted face, extra fingers, watermark, text, deformed, ugly, bad anatomy, bad proportions"
+Character consistency block: Ethnicity, skin tone, age range, hair (color/length/style/texture), eyes (color/shape), face (shape/features), body type, signature clothing. Copy-paste into every future prompt.
+Aspect ratios: 9:16 (Reels/Stories), 1:1 (Feed), 16:9 (YouTube), 4:5 (IG portrait)
 
-QUALITY GATE: Before every response, verify: "Is every prompt variation self-contained? Are there any placeholders? Did I start with filler? Would this response make someone choose SavvyOwl over using ChatGPT directly?" If any answer is wrong, fix it before responding.`;
+## VEO3 (Google Video — Built into SavvyOwl)
+5-8 second clips. Prompt per scene:
+- SEC 0-2: Starting state (character position, expression, setting)
+- SEC 2-5: Core action (main movement, gesture, event)
+- SEC 5-8: Ending state (resolution, reaction, cliffhanger)
+- CAMERA: Movement (slow dolly, tracking, static medium, crane up)
+- AUDIO: Ambient sound, music mood, dialogue in quotes in target language
+- Prompts ALWAYS in English. Dialogue: "saying 'text here' with [emotion]"
+- Scene 1 = HOOK | Last scene = CTA | Maximize all 8 seconds
+
+## MIDJOURNEY
+Editorial, artistic, fantasy, fashion. [subject], [setting], [style] --ar --v 7 --s --q 2. Negative: --no
+
+## HEYGEN
+Talking head avatars. Workflow: Nano Banana image → Upload → Script → Animate + lip-sync. Best for UGC, tutorials, presentations. Combine with ElevenLabs voice.
+
+## RUNWAY GEN-3
+Image-to-video. Upload Nano Banana image as start frame → describe motion. Best for product shots, cinematic B-roll.
+
+## ELEVENLABS / GEMINI TTS (Voice — Built into SavvyOwl)
+ElevenLabs: Premium cloning, multilingual, emotional. BYOK. Gemini TTS: Free, 15 voices, good narration.
+
+## CAPCUT
+Final assembly. Guidance: scene order, transitions (cut/dissolve/zoom), music BPM, caption style, effect timing.
+</tool_mastery>
+
+<content_production_excellence>
+
+## AI PROMPT ENGINEERING — SIGNATURE SKILL
+For EVERY prompt: 1) MAIN PROMPT in code block 2) NEGATIVE PROMPT in code block 3) SHORT VERSION in code block 4) CONSISTENCY BLOCK in code block 5) TECHNICAL PARAMETERS 6) 2-3 COMPLETE VARIATIONS each fully self-contained
+
+## VIRAL VIDEO MODELING
+Structure: 1) ANALYSIS (max 4 lines: why viral, psychological trigger, pacing) 2) ADAPTATION (max 4 lines: how to recreate for user's niche) 3) IMAGE PROMPT (code blocks: prompt + negative + consistency) 4) SCENE-BY-SCENE VIDEO (each scene = complete code block) 5) CAPCUT ASSEMBLY (max 3 lines: order, transitions, music)
+
+## VIDEO SCRIPTS
+VISUAL | AUDIO | TEXT ON SCREEN | DURATION per scene. Hook in 1-3 sec. Music direction. CTA in final 2-3 sec.
+
+## CONTENT CREATION
+Hooks: 2-3 A/B variations (hook = 90% of performance). Captions: platform-native, emoji strategy, CTA, hashtag mix. Frameworks: PAS, AIDA, BAB, Hook-Story-Offer.
+
+## STRATEGY & CALENDARS
+Day-by-day: Platform | Format | Theme | Hook | Goal | Best Time | Production Difficulty. NEVER generic. Connect to funnel: TOFU → MOFU → BOFU.
+</content_production_excellence>
+
+<workflow_intelligence>
+ALWAYS think pipeline: REQUEST → DELIVERABLE → PROACTIVE NEXT STEP
+- Image prompt delivered → suggest Veo3 animation with reference frame + provide the Veo3 prompt
+- Video script delivered → suggest Nano Banana prompts for key scenes
+- Caption delivered → suggest complementary Reels format + script outline
+- Viral modeling delivered → estimate total production time and cost
+</workflow_intelligence>
+
+<quality_gate>
+Before EVERY response:
+✓ First character = work (not filler)?
+✓ Every tool prompt in code block?
+✓ Zero placeholders?
+✓ Every variation self-contained?
+✓ Proactive next-step included?
+✓ Language rules followed?
+✓ Worth paying for vs free ChatGPT/Gemini?
+If ANY fails → FIX before outputting.
+</quality_gate>
+
+<tone>
+Elite creative director. Confident, direct, generous with expertise. Zero filler, zero hedging. Every sentence delivers value. The user feels they have a world-class production team that thinks ahead and delivers complete, production-ready work.
+</tone>`;
 
 // --- ANTHROPIC STREAMING -----------------------------------------------------
 
@@ -253,21 +284,12 @@ async function streamAnthropic(
   messages: any[],
   image?: { data: string; media_type: string } | null
 ): Promise<Response> {
-  // Build the messages with optional image support on the last user message
   const processedMessages = messages.filter((m: any) => m.role !== "system").map((m: any, i: number, arr: any[]) => {
-    // Attach image to the last user message
     if (image && m.role === "user" && i === arr.length - 1) {
       return {
         role: "user",
         content: [
-          {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: image.media_type,
-              data: image.data,
-            },
-          },
+          { type: "image", source: { type: "base64", media_type: image.media_type, data: image.data } },
           { type: "text", text: m.content },
         ],
       };
@@ -275,7 +297,7 @@ async function streamAnthropic(
     return { role: m.role, content: m.content };
   });
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  return await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
@@ -284,17 +306,15 @@ async function streamAnthropic(
     },
     body: JSON.stringify({
       model,
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: processedMessages,
       stream: true,
     }),
   });
-
-  return response;
 }
 
-// --- GEMINI STREAMING (direct API) -------------------------------------------
+// --- GEMINI STREAMING --------------------------------------------------------
 
 async function streamGemini(
   apiKey: string,
@@ -308,16 +328,11 @@ async function streamGemini(
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i];
     if (m.role === "system") continue;
-
     const role = m.role === "assistant" ? "model" : "user";
     const parts: any[] = [];
-
     if (image && m.role === "user" && i === messages.length - 1) {
-      parts.push({
-        inlineData: { mimeType: image.media_type, data: image.data },
-      });
+      parts.push({ inlineData: { mimeType: image.media_type, data: image.data } });
     }
-
     parts.push({ text: m.content });
     contents.push({ role, parts });
   }
@@ -330,12 +345,12 @@ async function streamGemini(
     body: JSON.stringify({
       contents,
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      generationConfig: { maxOutputTokens: 4096, temperature: 0.7 },
+      generationConfig: { maxOutputTokens: 8192, temperature: 0.7 },
     }),
   });
 }
 
-// --- MAIN HANDLER -------------------------------------------------------------
+// --- MAIN HANDLER ------------------------------------------------------------
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -353,20 +368,17 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("authorization");
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const anonClient = createClient(
-      SUPABASE_URL,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader || "" } } }
-    );
+    const anonClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader || "" } },
+    });
 
     const { data: { user } } = await anonClient.auth.getUser();
     const { messages, mode, conversationId, image } = await req.json();
 
-    // -- Validate mode --
     const modeKey = (mode || "quick") as keyof typeof MODELS;
     const modelConfig = MODELS[modeKey] || MODELS.quick;
 
-    // -- Get user plan --
+    // -- Plan check --
     let userPlan = "free";
     if (user) {
       const { data: profile } = await supabaseAdmin
@@ -380,11 +392,7 @@ serve(async (req) => {
 
         if (PLAN_RANK[userPlan] < PLAN_RANK[modelConfig.minPlan]) {
           return new Response(
-            JSON.stringify({
-              error: `This mode requires a ${modelConfig.minPlan} plan or higher. Upgrade to use ${modelConfig.displayName}.`,
-              upgrade_required: true,
-              required_plan: modelConfig.minPlan,
-            }),
+            JSON.stringify({ error: `This mode requires a ${modelConfig.minPlan} plan or higher.`, upgrade_required: true, required_plan: modelConfig.minPlan }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
@@ -402,17 +410,14 @@ serve(async (req) => {
         const limit = PLAN_LIMITS[userPlan] || PLAN_LIMITS.free;
         if ((count || 0) >= limit) {
           return new Response(
-            JSON.stringify({
-              error: "You've reached your monthly limit. Upgrade to continue.",
-              upgrade_required: true,
-            }),
+            JSON.stringify({ error: "Monthly limit reached. Upgrade to continue.", upgrade_required: true }),
             { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
       }
     }
 
-    // -- Upload image to Storage if present --
+    // -- Image upload --
     let imageUrl: string | null = null;
     if (image && user) {
       try {
@@ -422,24 +427,15 @@ serve(async (req) => {
 
         const { error: uploadError } = await supabaseAdmin.storage
           .from("chat-images")
-          .upload(filePath, imageBuffer, {
-            contentType: image.media_type,
-            upsert: false,
-          });
+          .upload(filePath, imageBuffer, { contentType: image.media_type, upsert: false });
 
-        if (uploadError) {
-          console.error("Image upload error:", uploadError);
-        } else {
-          // Create signed URL (valid for 1 year)
+        if (!uploadError) {
           const { data: signedData } = await supabaseAdmin.storage
             .from("chat-images")
             .createSignedUrl(filePath, 60 * 60 * 24 * 365);
 
           if (signedData?.signedUrl) {
             imageUrl = signedData.signedUrl;
-
-            // Update the last user message with image_url
-            // Find the most recent user message in this conversation
             const { data: recentMsg } = await supabaseAdmin
               .from("messages")
               .select("id")
@@ -448,97 +444,49 @@ serve(async (req) => {
               .order("created_at", { ascending: false })
               .limit(1)
               .single();
-
             if (recentMsg) {
-              await supabaseAdmin
-                .from("messages")
-                .update({ image_url: imageUrl })
-                .eq("id", recentMsg.id);
+              await supabaseAdmin.from("messages").update({ image_url: imageUrl }).eq("id", recentMsg.id);
             }
           }
         }
       } catch (e) {
         console.error("Image processing error:", e);
-        // Continue without image -- don't block the request
       }
     }
 
-    // -- Build system prompt --
+    // -- System prompt --
     const systemPrompt = modeKey === "creator" ? CREATOR_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
 
-    // -- Stream from correct provider --
+    // -- Stream --
     let providerResponse: Response;
 
     if (modelConfig.provider === "anthropic") {
-      providerResponse = await streamAnthropic(
-        ANTHROPIC_API_KEY,
-        modelConfig.geminiModelId || modelConfig.modelId,
-        systemPrompt,
-        messages,
-        image
-      );
+      providerResponse = await streamAnthropic(ANTHROPIC_API_KEY, modelConfig.geminiModelId || modelConfig.modelId, systemPrompt, messages, image);
     } else {
-      providerResponse = await streamGemini(
-        GOOGLE_API_KEY,
-        modelConfig.geminiModelId || modelConfig.modelId,
-        systemPrompt,
-        messages,
-        image
-      );
+      providerResponse = await streamGemini(GOOGLE_API_KEY, modelConfig.geminiModelId || modelConfig.modelId, systemPrompt, messages, image);
     }
 
     if (!providerResponse.ok) {
       const errorText = await providerResponse.text();
       console.error(`Provider error (${modelConfig.provider}):`, providerResponse.status, errorText);
 
-      // If vision failed, retry without image
       if (image && providerResponse.status >= 400) {
         console.log("Retrying without image...");
-        if (modelConfig.provider === "anthropic") {
-          providerResponse = await streamAnthropic(
-            ANTHROPIC_API_KEY,
-            modelConfig.modelId,
-            systemPrompt,
-            messages,
-            null
-          );
-        } else {
-          providerResponse = await streamGemini(
-            GOOGLE_API_KEY,
-            modelConfig.geminiModelId || modelConfig.modelId,
-            systemPrompt,
-            messages,
-            null
-          );
-        }
+        providerResponse = modelConfig.provider === "anthropic"
+          ? await streamAnthropic(ANTHROPIC_API_KEY, modelConfig.modelId, systemPrompt, messages, null)
+          : await streamGemini(GOOGLE_API_KEY, modelConfig.geminiModelId || modelConfig.modelId, systemPrompt, messages, null);
 
         if (!providerResponse.ok) {
-          return new Response(
-            JSON.stringify({ error: "Something went wrong. Try again." }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+          return new Response(JSON.stringify({ error: "Something went wrong. Try again." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
       } else {
-        if (providerResponse.status === 429) {
-          return new Response(
-            JSON.stringify({ error: "Rate limit reached. Please try again in a moment." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        if (providerResponse.status === 401) {
-          return new Response(
-            JSON.stringify({ error: "AI provider authentication failed. Contact support." }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        return new Response(
-          JSON.stringify({ error: "Something went wrong. Try again." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        const status = providerResponse.status;
+        const error = status === 429 ? "Rate limit reached. Try again in a moment." : status === 401 ? "AI provider auth failed. Contact support." : "Something went wrong. Try again.";
+        return new Response(JSON.stringify({ error }), { status: status === 429 ? 429 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
-    // -- Transform + stream to client --
+    // -- Transform + stream --
     const encoder = new TextEncoder();
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
@@ -546,7 +494,6 @@ serve(async (req) => {
     const logUsage = async (fullContent: string, tokensInput: number, tokensOutput: number) => {
       const costUsd = (tokensInput * modelConfig.costInput + tokensOutput * modelConfig.costOutput) / 1000;
       const costEur = +(costUsd * 0.92).toFixed(6);
-
       const metadata = {
         model: modelConfig.geminiModelId || modelConfig.modelId,
         display_name: modelConfig.displayName,
@@ -562,28 +509,18 @@ serve(async (req) => {
 
       if (user && conversationId) {
         await supabaseAdmin.from("usage_logs").insert({
-          user_id: user.id,
-          conversation_id: conversationId,
-          tokens_input: tokensInput,
-          tokens_output: tokensOutput,
-          cost_eur: costEur,
-          model: modelConfig.geminiModelId || modelConfig.modelId,
-          mode: modeKey,
+          user_id: user.id, conversation_id: conversationId,
+          tokens_input: tokensInput, tokens_output: tokensOutput,
+          cost_eur: costEur, model: modelConfig.geminiModelId || modelConfig.modelId, mode: modeKey,
         });
-
         await supabaseAdmin.from("messages").insert({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: fullContent,
-          model_used: modelConfig.geminiModelId || modelConfig.modelId,
-          cost_eur: costEur,
+          conversation_id: conversationId, role: "assistant",
+          content: fullContent, model_used: modelConfig.geminiModelId || modelConfig.modelId, cost_eur: costEur,
         });
       }
-
       await writer.close();
     };
 
-    // -- Handle Anthropic stream --
     if (modelConfig.provider === "anthropic") {
       const decoder = new TextDecoder();
       let fullContent = "";
@@ -596,46 +533,27 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-
             const chunk = decoder.decode(value, { stream: true });
-
             for (const line of chunk.split("\n")) {
               if (!line.startsWith("data: ")) continue;
               const jsonStr = line.slice(6).trim();
               if (!jsonStr) continue;
-
               try {
                 const event = JSON.parse(jsonStr);
-
                 if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
                   const text = event.delta.text || "";
                   fullContent += text;
-                  const openAIChunk = { choices: [{ delta: { content: text } }] };
-                  await writer.write(encoder.encode(`data: ${JSON.stringify(openAIChunk)}\n\n`));
+                  await writer.write(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`));
                 }
-
-                if (event.type === "message_start" && event.message?.usage) {
-                  inputTokens = event.message.usage.input_tokens || 0;
-                }
-                if (event.type === "message_delta" && event.usage) {
-                  outputTokens = event.usage.output_tokens || 0;
-                }
-                if (event.type === "message_stop") {
-                  await logUsage(fullContent, inputTokens, outputTokens);
-                }
-              } catch {
-                // skip malformed lines
-              }
+                if (event.type === "message_start" && event.message?.usage) inputTokens = event.message.usage.input_tokens || 0;
+                if (event.type === "message_delta" && event.usage) outputTokens = event.usage.output_tokens || 0;
+                if (event.type === "message_stop") await logUsage(fullContent, inputTokens, outputTokens);
+              } catch {}
             }
           }
-        } catch (e) {
-          console.error("Anthropic stream error:", e);
-          await writer.close();
-        }
+        } catch (e) { console.error("Anthropic stream error:", e); await writer.close(); }
       })();
-
     } else {
-      // -- Handle Gemini SSE stream --
       const decoder = new TextDecoder();
       let fullContent = "";
       let tokensInput = 0;
@@ -649,44 +567,29 @@ serve(async (req) => {
             const { done, value } = await reader.read();
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
-
-            let newlineIndex: number;
-            while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-              const line = buffer.slice(0, newlineIndex).trim();
-              buffer = buffer.slice(newlineIndex + 1);
-
+            let nl: number;
+            while ((nl = buffer.indexOf("\n")) !== -1) {
+              const line = buffer.slice(0, nl).trim();
+              buffer = buffer.slice(nl + 1);
               if (!line.startsWith("data: ")) continue;
               const jsonStr = line.slice(6).trim();
               if (!jsonStr || jsonStr === "[DONE]") continue;
-
               try {
                 const parsed = JSON.parse(jsonStr);
                 const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  fullContent += text;
-                  await writer.write(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`));
-                }
-                if (parsed.usageMetadata) {
-                  tokensInput = parsed.usageMetadata.promptTokenCount || tokensInput;
-                  tokensOutput = parsed.usageMetadata.candidatesTokenCount || tokensOutput;
-                }
-              } catch { /* skip */ }
+                if (text) { fullContent += text; await writer.write(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`)); }
+                if (parsed.usageMetadata) { tokensInput = parsed.usageMetadata.promptTokenCount || tokensInput; tokensOutput = parsed.usageMetadata.candidatesTokenCount || tokensOutput; }
+              } catch {}
             }
           }
-
           if (!tokensInput) tokensInput = Math.ceil(JSON.stringify(messages).length / 4);
           if (!tokensOutput) tokensOutput = Math.ceil(fullContent.length / 4);
           await logUsage(fullContent, tokensInput, tokensOutput);
-        } catch (e) {
-          console.error("Gemini stream error:", e);
-          await writer.close();
-        }
+        } catch (e) { console.error("Gemini stream error:", e); await writer.close(); }
       })();
     }
 
-    return new Response(readable, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return new Response(readable, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
 
   } catch (e) {
     console.error("chat function error:", e);

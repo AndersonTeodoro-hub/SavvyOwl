@@ -406,7 +406,7 @@ export default function Chat() {
                             <div className="relative group/code">
                               <button
                                 onClick={() => handleCopyBlock(text)}
-                                className="absolute top-2 right-2 p-1.5 rounded-md bg-secondary/80 text-muted-foreground hover:text-foreground opacity-70 hover:opacity-100 transition-opacity"
+                                className="absolute top-2 right-2 p-1.5 rounded-md bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/90 transition-colors border border-border/50"
                                 title={t("chat.copy")}
                               >
                                 <Copy className="h-3 w-3" />
