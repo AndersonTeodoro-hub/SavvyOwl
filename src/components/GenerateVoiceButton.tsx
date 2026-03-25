@@ -22,7 +22,7 @@ const DEFAULT_VOICES = [
 
 export function GenerateVoiceButton({ text }: Props) {
   const elevenLabs = useElevenLabsKey();
-  const { googleApiKey } = useGoogleApiKey();
+  const googleApiKey = useGoogleApiKey();
   const [loading, setLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

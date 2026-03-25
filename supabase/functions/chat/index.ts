@@ -470,16 +470,24 @@ ${characterBlock}
 
     // -- Stream --
     let providerResponse: Response;
+    let actualProvider = modelConfig.provider;
 
     if (modelConfig.provider === "anthropic") {
       providerResponse = await streamAnthropic(ANTHROPIC_API_KEY, modelConfig.geminiModelId || modelConfig.modelId, systemPrompt, messages, image);
     } else {
       providerResponse = await streamGemini(GOOGLE_API_KEY, modelConfig.geminiModelId || modelConfig.modelId, systemPrompt, messages, image);
+
+      // Fallback: if Gemini fails (403/500), try Anthropic with claude-sonnet
+      if (!providerResponse.ok && (providerResponse.status === 403 || providerResponse.status >= 500)) {
+        console.log(`[CHAT] Gemini failed (${providerResponse.status}), falling back to Anthropic claude-sonnet-4-5`);
+        providerResponse = await streamAnthropic(ANTHROPIC_API_KEY, "claude-sonnet-4-5", systemPrompt, messages, image);
+        actualProvider = "anthropic";
+      }
     }
 
     if (!providerResponse.ok) {
       const errorText = await providerResponse.text();
-      console.error(`Provider error (${modelConfig.provider}):`, providerResponse.status, errorText);
+      console.error(`Provider error (${actualProvider}):`, providerResponse.status, errorText);
 
       if (image && providerResponse.status >= 400) {
         console.log("Retrying without image...");
@@ -508,7 +516,7 @@ ${characterBlock}
       const metadata = {
         model: modelConfig.geminiModelId || modelConfig.modelId,
         display_name: modelConfig.displayName,
-        provider: modelConfig.provider,
+        provider: actualProvider,
         cost_eur: costEur,
         tokens_input: tokensInput,
         tokens_output: tokensOutput,
@@ -532,7 +540,7 @@ ${characterBlock}
       await writer.close();
     };
 
-    if (modelConfig.provider === "anthropic") {
+    if (actualProvider === "anthropic") {
       const decoder = new TextDecoder();
       let fullContent = "";
       let inputTokens = 0;
