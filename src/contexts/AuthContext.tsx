@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setMonitoringUser, clearMonitoringUser } from "@/lib/monitoring";
 import i18n from "@/i18n";
 
 type Profile = {
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const p = data as Profile;
       setProfile(p);
       applyLanguage(p.language);
+      setMonitoringUser(userId, undefined, p.plan);
     }
   };
 
@@ -122,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
+    clearMonitoringUser();
   };
 
   return (

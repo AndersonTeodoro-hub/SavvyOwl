@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
+import { ErrorBoundary, SafeComponent } from "@/components/ErrorBoundary";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -23,34 +24,36 @@ import { Navigate } from "react-router-dom";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="dark" storageKey="savvyowl-theme" disableTransitionOnChange={false}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <InstallPrompt />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<Navigate to="/dashboard/chat" replace />} />
-              <Route path="home" element={<DashboardHome />} />
-              <Route path="chat" element={<Chat />} />
-              <Route path="prompts" element={<Prompts />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="characters" element={<CharactersPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="dark" storageKey="savvyowl-theme" disableTransitionOnChange={false}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <InstallPrompt />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<Navigate to="/dashboard/chat" replace />} />
+                <Route path="home" element={<SafeComponent><DashboardHome /></SafeComponent>} />
+                <Route path="chat" element={<SafeComponent><Chat /></SafeComponent>} />
+                <Route path="prompts" element={<SafeComponent><Prompts /></SafeComponent>} />
+                <Route path="analytics" element={<SafeComponent><Analytics /></SafeComponent>} />
+                <Route path="characters" element={<SafeComponent><CharactersPage /></SafeComponent>} />
+                <Route path="settings" element={<SafeComponent><SettingsPage /></SafeComponent>} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
