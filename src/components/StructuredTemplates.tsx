@@ -629,111 +629,124 @@ Deliver in blocks of 5. Each scene: Title, script excerpt, why it exists, VEO 3 
         const step = v.step?.charAt(0) || "1";
         if (step === "1") {
           return isPT
-            ? `Voce e um estrategista de conteudo viral especializado em ${v.platform}. Sua expertise e criar conceitos que viralizam no nicho de ${v.niche}.
+            ? `Voce e um estrategista de conteudo viral especializado em ${v.platform} no nicho de ${v.niche}, estilo ${v.style}.
 
-Crie 10 conceitos de videos curtos (${v.platform}) no estilo ${v.style} para o nicho de ${v.niche}.
+Crie exatamente 5 conceitos de videos curtos para ${v.platform}. Duraçao: ${v.duration || "30s"}.
 
-Para cada conceito entregue exatamente:
-- TITULO (com emojis de ${v.platform})
-- HOOK (primeiros 1-3 segundos - a frase exata que para o scroll)
-- FORMATO VIRAL (nome do formato: POV, 3-part hook, silent review, etc.)
-- GATILHO PSICOLOGICO (curiosidade, medo, identificacao, polemica, etc.)
-- POTENCIAL (alto/medio e por que)
+Para cada conceito entregue EXATAMENTE neste formato:
 
-Regras: Conceitos que funcionam com video gerado por IA (VEO3). Sem necessidade de rosto real. Otimizados para ${v.platform}. Cada conceito deve poder ser produzido em ${v.duration || "30s"}.
+**CONCEITO [N]: [TITULO com emojis]**
+- HOOK: "[frase exata dos primeiros 1-3 segundos]"
+- FORMATO: [nome do formato viral]
+- GATILHO: [mecanismo psicológico]
+- POTENCIAL: [Alto/Médio + 1 linha do porquê]
 
-Ao final escreva: Selecione um conceito e use na Etapa 2.`
-            : `You are a viral content strategist for ${v.platform}, niche: ${v.niche}, style: ${v.style}.
+REGRAS:
+- Exatamente 5 conceitos, não mais
+- Todos produzíveis com VEO3 (IA), sem rosto real
+- Otimizados para ${v.platform} (9:16)
+- Hooks que PARAM o scroll — concretos, não genéricos
 
-Create 10 short video concepts. Each: TITLE (with emojis) / HOOK (first 1-3s, exact scroll-stopping phrase) / VIRAL FORMAT / PSYCHOLOGICAL TRIGGER / POTENTIAL. All producible with VEO3 AI, no real face needed, ${v.duration || "30s"} max. End with: Select a concept for Step 2.`;
+No final escreva exatamente: "Responde com o número (1-5) do conceito que queres desenvolver e eu crio o roteiro completo + cenas VEO3 automaticamente."`
+            : `Viral content strategist for ${v.platform}, niche: ${v.niche}, style: ${v.style}.
+
+Create exactly 5 short video concepts for ${v.platform}. Duration: ${v.duration || "30s"}.
+
+Format each as:
+**CONCEPT [N]: [TITLE with emojis]**
+- HOOK: "[exact first 1-3 second phrase]"
+- FORMAT: [viral format name]
+- TRIGGER: [psychological mechanism]
+- POTENTIAL: [High/Medium + 1 line why]
+
+Rules: Exactly 5 concepts. All VEO3 producible, no real face, 9:16. Scroll-stopping hooks.
+
+End with: "Reply with the number (1-5) of the concept you want and I'll create the full script + VEO3 scenes automatically."`;
         }
         if (step === "2") {
           return isPT
-            ? `Plataforma: ${v.platform} | Duracao: ${v.duration || "30s"} | Estilo: ${v.style} | Nicho: ${v.niche} | Idioma: ${v.videoLang}
-Conceito escolhido: [COLE O CONCEITO DA ETAPA 1]
+            ? `Plataforma: ${v.platform} | Duracao: ${v.duration || "30s"} | Estilo: ${v.style} | Nicho: ${v.niche} | Idioma: ${v.videoLang} | Cenas: ${v.scenes || "4"}
 
-Voce e um roteirista de videos virais para ${v.platform}, especialista em conteudo de alta retencao e engajamento. Crie o roteiro completo otimizado para ${v.duration || "30s"}.
+IMPORTANTE: O utilizador vai selecionar um conceito da lista anterior OU colar um conceito. Desenvolve o PIPELINE COMPLETO de uma vez:
 
-ESTRUTURA OBRIGATORIA:
+## PARTE 1 — ROTEIRO (${v.duration || "30s"})
 
-HOOK (0-3s): A frase ou acao exata que para o scroll. Deve criar curiosidade imediata ou choque. Escreva o texto exato da fala e o que aparece na tela.
+Para cada momento do video:
+**[TEMPO]** (ex: 0-3s)
+- VISUAL: Descrição da cena
+- FALA (${v.videoLang}): Texto exato da narração
+- TEXTO NA TELA: Overlay curto (max 5 palavras)
+- SOM: Direção sonora
 
-DESENVOLVIMENTO (3s ate penultima cena): Construcao de tensao progressiva. Cada momento revela algo novo. Manter a promessa do hook. Nunca perder ritmo.
+Regras: Hook em 0-3s OBRIGATÓRIO. CTA nos últimos 3s. Ritmo dinâmico. 9:16 vertical.
 
-CTA (ultimos 3-5s): Chamada para acao que gera: seguir, comentar, compartilhar ou salvar. Nao pedir likes diretamente - criar motivo para interagir.
+## PARTE 2 — CENAS VEO3 (${v.scenes || "4"} cenas de 8 segundos)
 
-FORMATO DO ROTEIRO - Para cada momento entregue:
-TEMPO: [ex: 0-3s]
-VISUAL: O que aparece na tela (descricao da cena)
-FALA/NARRACAO (${v.videoLang}): Texto exato
-TEXTO NA TELA: Overlay curto e impactante (max 5 palavras)
-MUSICA/SOM: Direcao sonora
+Para CADA cena:
 
-REGRAS:
-- Otimizado para ${v.platform} (formato vertical 9:16)
-- Todas as cenas devem ser produzidas com VEO3 (IA)
-- Fala/narracao em ${v.videoLang}
-- Texto na tela em ${v.videoLang}
-- Ritmo dinamico, sem momentos mortos
-- Hook nos primeiros 1-3 segundos e OBRIGATORIO
-- Incluir ao final: HASHTAGS (10) + MELHOR HORARIO para publicar + LEGENDA DO POST`
-            : `Platform: ${v.platform} | Duration: ${v.duration || "30s"} | Style: ${v.style} | Niche: ${v.niche} | Language: ${v.videoLang}
-Chosen concept: [PASTE STEP 1 CONCEPT]
+**CENA [N] — [Titulo]**
 
-Viral video screenwriter for ${v.platform}. Create complete script optimized for ${v.duration || "30s"}.
+Prompt VEO3 em bloco de código:
+\`\`\`
+[Prompt COMPLETO em inglês: personagem, ação dos 8 segundos, câmera, iluminação, cenário, expressão. Diálogo entre aspas em ${v.videoLang}. Formato 9:16.]
+\`\`\`
 
-Structure: HOOK (0-3s, exact scroll-stopping phrase) -> DEVELOPMENT (progressive tension) -> CTA (last 3-5s, engagement driver).
+Texto na tela: [overlay em ${v.videoLang}]
 
-For each moment: TIME / VISUAL / SPEECH (${v.videoLang}) / TEXT ON SCREEN / MUSIC. Rules: 9:16 vertical, VEO3 producible, speech in ${v.videoLang}, dynamic pace. Include at end: 10 HASHTAGS + BEST TIME + POST CAPTION.`;
+Da Cena 2 em diante: "Maintain same character, lighting, color palette and visual tone as Scene 1."
+
+## PARTE 3 — FINALIZAÇÃO
+- MONTAGEM CAPCUT: ordem, transições, música (3 linhas)
+- HASHTAGS: 10 hashtags de nicho
+- MELHOR HORÁRIO: para publicar em ${v.platform}
+- LEGENDA DO POST: pronta a copiar
+
+REGRAS ABSOLUTAS:
+- Cada prompt VEO3 dentro de bloco de código (\`\`\`)
+- Prompts em inglês, falas em ${v.videoLang}
+- ZERO explicações extras — só o que é preciso para executar
+- Entregar tudo de uma vez (roteiro + cenas + finalização)`
+            : `Platform: ${v.platform} | Duration: ${v.duration || "30s"} | Style: ${v.style} | Niche: ${v.niche} | Language: ${v.videoLang} | Scenes: ${v.scenes || "4"}
+
+The user will select a concept or paste one. Develop the COMPLETE PIPELINE at once:
+
+## PART 1 — SCRIPT (${v.duration || "30s"})
+For each moment: **[TIME]** → VISUAL / SPEECH (${v.videoLang}) / TEXT ON SCREEN / SOUND. Hook 0-3s mandatory, CTA last 3s.
+
+## PART 2 — VEO3 SCENES (${v.scenes || "4"} scenes, 8 seconds each)
+Each scene: title, VEO3 prompt in code block (English, full 8s action, camera, lighting, dialogue in ${v.videoLang} in quotes). From scene 2: add consistency line.
+
+## PART 3 — FINALIZATION
+CapCut assembly (3 lines), 10 hashtags, best posting time, post caption ready to copy.
+
+Rules: All VEO3 prompts in code blocks. Prompts English, speech ${v.videoLang}. ZERO extra explanations. Deliver everything at once.`;
         }
         return isPT
-          ? `Total de cenas: ${v.scenes || "4"} | Idioma da fala: ${v.videoLang} | Plataforma: ${v.platform}
-Roteiro: [COLE O ROTEIRO DA ETAPA 2]
+          ? `Total de cenas: ${v.scenes || "4"} | Idioma: ${v.videoLang} | Plataforma: ${v.platform}
 
-Voce e um diretor de video viral e storyboarder especializado em conteudo curto de alta retencao, com dominio avancado do VEO 3.
+O utilizador vai colar o roteiro. Transforma em ${v.scenes || "4"} cenas de 8 segundos para VEO3.
 
-OBJETIVO: Transformar o roteiro em ${v.scenes || "4"} cenas de exatamente 8 segundos cada, prontas para gerar no VEO 3, otimizadas para ${v.platform}.
+Para CADA cena:
 
-PADRAO VISUAL (OBRIGATORIO):
-- Estilo ${v.style} - autenticidade acima de tudo
-- Iluminacao natural ou ambiente coerente
-- Formato vertical 9:16
-- Expressoes faciais e movimentos naturais
-- Sem elementos que parecam stock footage generico
-- Se o estilo for UGC: aparencia de gravacao com telemovel, luz natural, cenario caseiro
+**CENA [N] — [Titulo]**
 
-REGRAS VEO 3 PARA VIDEO VIRAL:
-- Cada cena USA OS 8 SEGUNDOS COMPLETOS
-- Movimento natural e dinamico (diferente do canal dark que e sutil)
-- Camera pode ser mais expressiva: zoom rapido, pan, tracking
-- Incluir dialogo/fala entre aspas no prompt (VEO3 gera lip-sync)
-- Cena 1 = HOOK VISUAL (captar atencao imediatamente)
-- Ultima cena = CTA VISUAL
-
-FORMATO - Para cada cena:
-
-**CENA [N] - [Titulo curto]**
-Momento do roteiro: [qual parte representa]
-
-Prompt VEO 3 (em bloco de codigo, pronto para copiar):
+Prompt VEO3 em bloco de código:
 \`\`\`
-[Prompt EM INGLES. Incluir: personagem, acao completa dos 8 segundos, camera, iluminacao, cenario, expressao. Se tiver fala, incluir entre aspas no idioma ${v.videoLang}. Formato 9:16. Sem texto na imagem.]
+[Prompt em inglês: personagem, ação completa dos 8 segundos, câmera, iluminação, cenário, expressão. Diálogo entre aspas em ${v.videoLang}. 9:16.]
 \`\`\`
 
 Texto na tela: [overlay em ${v.videoLang}, max 5 palavras]
 
-Da Cena 2 em diante incluir no prompt: "Maintain the same character appearance, lighting style, color palette and visual tone as Scene 1."
+Da Cena 2: "Maintain same character appearance, lighting style, color palette and visual tone as Scene 1."
 
-APOS TODAS AS CENAS incluir:
-MONTAGEM CAPCUT (3 linhas): ordem, transicoes, musica sugerida.`
-          : `Scenes: ${v.scenes || "4"} | Speech language: ${v.videoLang} | Platform: ${v.platform}
-Script: [PASTE STEP 2 SCRIPT]
+Após todas as cenas:
+- MONTAGEM CAPCUT (3 linhas): ordem, transições, música
+- Estilo: ${v.style}, autenticidade, 9:16
+- Cena 1 = HOOK | Última = CTA
+- Cada cena USA OS 8 SEGUNDOS COMPLETOS`
+          : `Scenes: ${v.scenes || "4"} | Language: ${v.videoLang} | Platform: ${v.platform}
 
-Viral video director + storyboarder for VEO 3. Transform script into ${v.scenes || "4"} scenes of exactly 8 seconds each for ${v.platform}.
-
-Style: ${v.style}, authentic, 9:16 vertical. VEO3 rules: full 8 seconds, dynamic movement, lip-sync dialogue in quotes (${v.videoLang}). Scene 1 = HOOK, last = CTA.
-
-For each scene: Title, script moment, VEO 3 prompt in code block (ENGLISH, character, full 8s action, camera, lighting, dialogue in ${v.videoLang}), text on screen. From scene 2: add consistency line. After all scenes: CapCut assembly in 3 lines.`;
+Transform the pasted script into ${v.scenes || "4"} VEO3 scenes (8s each). Each: title + VEO3 prompt in code block (English, 8s action, camera, lighting, dialogue in ${v.videoLang}). Scene 1=HOOK, last=CTA. After all: CapCut assembly 3 lines. Style: ${v.style}, 9:16.`;
       },
     },
     {
