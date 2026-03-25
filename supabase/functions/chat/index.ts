@@ -373,7 +373,7 @@ serve(async (req) => {
     });
 
     const { data: { user } } = await anonClient.auth.getUser();
-    const { messages, mode, conversationId, image } = await req.json();
+    const { messages, mode, conversationId, image, characterBlock } = await req.json();
 
     const modeKey = (mode || "quick") as keyof typeof MODELS;
     const modelConfig = MODELS[modeKey] || MODELS.quick;
@@ -455,7 +455,18 @@ serve(async (req) => {
     }
 
     // -- System prompt --
-    const systemPrompt = modeKey === "creator" ? CREATOR_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
+    let systemPrompt = modeKey === "creator" ? CREATOR_SYSTEM_PROMPT : BASE_SYSTEM_PROMPT;
+
+    // Inject character identity lock if a character is selected
+    if (characterBlock && typeof characterBlock === "string" && characterBlock.trim()) {
+      systemPrompt += `\n\n<active_character>
+The user has selected a CHARACTER with a locked identity. This character's identity block MUST be injected into EVERY prompt you generate for image or video tools. The character details are absolute — do not deviate, do not modify, do not reinterpret.
+
+When generating prompts for Nano Banana, Veo3, Midjourney, or any tool, ALWAYS include this character's full identity in the prompt. When writing scene descriptions, this character is the protagonist unless the user specifies otherwise.
+
+${characterBlock}
+</active_character>`;
+    }
 
     // -- Stream --
     let providerResponse: Response;

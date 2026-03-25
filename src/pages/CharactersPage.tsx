@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
+import { useNavigate } from "react-router-dom";
 import {
   Users, Plus, ArrowLeft, Lock, Unlock, Trash2, Copy, Check,
   ChevronDown, Loader2, Sparkles, Eye, Pencil, Image, Video,
-  AlertCircle, UserCircle,
+  AlertCircle, UserCircle, Download, MessageSquare,
 } from "lucide-react";
 
 type View = "library" | "create" | "detail";
@@ -133,15 +136,64 @@ export default function CharactersPage() {
   const { t, i18n } = useTranslation();
   const isPT = i18n.language?.startsWith("pt");
   const engine = useCharacterEngine();
+  const navigate = useNavigate();
+  const googleApiKey = useGoogleApiKey();
   const [view, setView] = useState<View>("library");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [refineInput, setRefineInput] = useState("");
   const [showTechnical, setShowTechnical] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeChar = engine.characters.find((c) => c.id === activeId) || null;
+
+  const handleGenerateReferenceImage = async () => {
+    if (!activeChar?.expanded?.nano_banana_prompt) return;
+    setGeneratingImage(true);
+    setReferenceImage(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            prompt: activeChar.expanded.nano_banana_prompt,
+            apiKey: googleApiKey || undefined,
+          }),
+        }
+      );
+
+      const data = await resp.json();
+      if (data.error) {
+        toast.error(data.error);
+        return;
+      }
+      if (data.image?.data) {
+        const url = `data:${data.image.mimeType || "image/png"};base64,${data.image.data}`;
+        setReferenceImage(url);
+        toast.success(isPT ? "Imagem de referência gerada!" : "Reference image generated!");
+      }
+    } catch (e) {
+      toast.error(isPT ? "Erro ao gerar imagem" : "Error generating image");
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const handleUseInChat = () => {
+    navigate("/dashboard/chat");
+  };
 
   useEffect(() => {
     engine.list();
@@ -431,6 +483,66 @@ export default function CharactersPage() {
                 <DetailSection title={isPT ? "Voz & Comportamento" : "Voice & Behavior"} data={d.voice_behavior} />
               </div>
             )}
+
+            {/* Actions — Generate Image + Use in Chat */}
+            <div className="rounded-xl border border-border p-4 space-y-3">
+              <p className="text-sm font-semibold text-foreground">
+                {isPT ? "Ações" : "Actions"}
+              </p>
+
+              <div className="flex gap-2 flex-wrap">
+                {d?.nano_banana_prompt && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleGenerateReferenceImage}
+                    disabled={generatingImage}
+                    className="gap-1.5 text-xs"
+                  >
+                    {generatingImage ? <Loader2 className="h-3 w-3 animate-spin" /> : <Image className="h-3 w-3" />}
+                    {generatingImage
+                      ? (isPT ? "A gerar..." : "Generating...")
+                      : (isPT ? "Gerar Imagem de Referência" : "Generate Reference Image")}
+                  </Button>
+                )}
+                {activeChar.status === "locked" && (
+                  <Button
+                    size="sm"
+                    onClick={handleUseInChat}
+                    className="gap-1.5 text-xs"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    {isPT ? "Usar no Chat" : "Use in Chat"}
+                  </Button>
+                )}
+              </div>
+
+              {/* Reference image preview */}
+              {referenceImage && (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">{isPT ? "Imagem de referência gerada:" : "Generated reference image:"}</p>
+                  <div className="relative inline-block">
+                    <img
+                      src={referenceImage}
+                      alt="Reference"
+                      className="max-w-[320px] w-full rounded-xl border border-border"
+                    />
+                    <a
+                      href={referenceImage}
+                      download={`${d?.name || "character"}-reference.png`}
+                      className="absolute top-2 right-2 p-1.5 rounded-md bg-background/80 text-foreground hover:bg-background transition-colors border border-border/50"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    {isPT
+                      ? "Use esta imagem como reference frame no Veo3 ou HeyGen para manter consistência visual no vídeo."
+                      : "Use this image as a reference frame in Veo3 or HeyGen to maintain visual consistency in video."}
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Prompts */}
             <div className="space-y-3">

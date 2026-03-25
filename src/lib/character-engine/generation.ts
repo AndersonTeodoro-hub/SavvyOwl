@@ -1,7 +1,7 @@
 // savvyowl-character-engine/prompts/generation.ts
 // Funções que transformam um ExpandedCharacter em prompts prontos para cada ferramenta
 
-import type { ExpandedCharacter, CharacterWardrobe } from "../types/character";
+import type { ExpandedCharacter, CharacterWardrobe } from "@/types/character";
 
 /**
  * Gera o bloco de identidade textual — o "DNA" que vai em todo prompt.

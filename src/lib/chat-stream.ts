@@ -13,6 +13,7 @@ export async function streamChat({
   conversationId,
   accessToken,
   image,
+  characterBlock,
   onDelta,
   onDone,
   onError,
@@ -22,6 +23,7 @@ export async function streamChat({
   conversationId: string;
   accessToken?: string;
   image?: ChatImage | null;
+  characterBlock?: string | null;
   onDelta: (text: string) => void;
   onDone: (response: { model: string; cost_eur: number; tokens_input: number; tokens_output: number; image_url?: string }) => void;
   onError: (error: string) => void;
@@ -34,7 +36,7 @@ export async function streamChat({
         Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
-      body: JSON.stringify({ messages, mode, conversationId, ...(image ? { image } : {}) }),
+      body: JSON.stringify({ messages, mode, conversationId, ...(image ? { image } : {}), ...(characterBlock ? { characterBlock } : {}) }),
     });
 
     if (resp.status === 429) {

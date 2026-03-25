@@ -8,24 +8,24 @@ import type {
   CharacterStatus,
   ScenePromptConfig,
   GeneratedPrompts,
-} from "../types/character";
+} from "@/types/character";
 
 import {
   EXPANSION_SYSTEM_PROMPT,
   buildExpansionMessage,
-} from "../prompts/expansion";
+} from "./expansion";
 
 import {
   REFINEMENT_SYSTEM_PROMPT,
   buildRefinementMessage,
-} from "../prompts/refinement";
+} from "./refinement";
 
 import {
   buildCharacterIdentityBlock,
   buildNanoBananaPrompt,
   buildVeo3Prompt,
   buildNegativePrompt,
-} from "../prompts/generation";
+} from "./generation";
 
 // ─────────────────────────────────────────────
 // CONFIGURAÇÃO

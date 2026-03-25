@@ -20,6 +20,7 @@ import { GenerateImageButton } from "@/components/GenerateImageButton";
 import { GenerateVideoButton } from "@/components/GenerateVideoButton";
 import { GenerateVoiceButton } from "@/components/GenerateVoiceButton";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
+import { CharacterSelector } from "@/components/CharacterSelector";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
 
@@ -52,6 +53,13 @@ export default function Chat() {
   const { t } = useTranslation();
   const sentFirstMessage = useRef(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [activeCharacterBlock, setActiveCharacterBlock] = useState<string | null>(null);
+  const [activeCharacterName, setActiveCharacterName] = useState<string | null>(null);
+
+  const handleCharacterSelect = (block: string | null, name: string | null) => {
+    setActiveCharacterBlock(block);
+    setActiveCharacterName(name);
+  };
 
   const handleCopyMessage = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text);
@@ -239,6 +247,7 @@ export default function Chat() {
         conversationId: convId,
         accessToken,
         image: imagePayload,
+        characterBlock: activeCharacterBlock,
         onDelta: upsertAssistant,
         onDone: async (meta) => {
           await supabase.from("messages").insert({
@@ -528,8 +537,8 @@ export default function Chat() {
         {/* Input area */}
         <div className="shrink-0 border-t border-border bg-background">
           <div className="max-w-[48rem] mx-auto w-full px-3 md:px-6">
-            {/* Mode pills */}
-            <div className="flex gap-1 pt-3 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {/* Mode pills + Character selector */}
+            <div className="flex items-center gap-1 pt-3 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
               {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
                 const isOpusLocked = key === "opus" && profile?.plan !== "pro";
                 return (
@@ -555,6 +564,8 @@ export default function Chat() {
                   </button>
                 );
               })}
+              <div className="w-px h-5 bg-border/50 mx-1 shrink-0" />
+              <CharacterSelector onSelect={handleCharacterSelect} selectedName={activeCharacterName} />
             </div>
 
             {/* Pending image */}
