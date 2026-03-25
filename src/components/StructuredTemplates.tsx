@@ -39,8 +39,9 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
 
   // When viral video is selected, build and send the prompt
   const handleViralVideoSelect = (vid: any) => {
-    const v = fieldValues;
-    const prompt = isPT
+    try {
+      const v = fieldValues;
+      const prompt = isPT
       ? `Modela este vídeo viral para eu recriar com ${v.imageTool} + ${v.videoTool} + CapCut.
 
 VÍDEO: "${vid.title}" | ${vid.channel} | ${formatNumber(vid.views)} views | ${vid.duration} | ${vid.url}
@@ -154,6 +155,11 @@ ABSOLUTE RULES:
 
     onSend(prompt);
     resetViralFlow();
+    } catch (e) {
+      console.error("Error building viral prompt:", e);
+      toast.error(isPT ? "Erro ao modelar vídeo. Tenta novamente." : "Error modeling video. Try again.");
+      resetViralFlow();
+    }
   };
 
   const templates: Template[] = [
@@ -750,7 +756,7 @@ For each scene: Title, script moment, VEO 3 prompt in code block (ENGLISH, chara
 O MEU CONTEXTO:
 - Público-alvo: ${v.audience}
 ${v.brand ? `- Produto/Marca: ${v.brand}` : ""}
-- Ferramentas disponíveis: ${v.tools}
+- Ferramentas disponíveis: ${v.imageTool} + ${v.videoTool} + CapCut
 
 PASSO 1 — TENDÊNCIAS VIRAIS:
 Identifica os 10 formatos/padrões de vídeo que estão a viralizar AGORA no nicho de ${v.niche} no ${v.platform}. Para cada um:
@@ -772,7 +778,7 @@ Para cada formato:
 - DIREÇÃO DE MÚSICA/SOM
 - HASHTAGS específicas para este formato
 - MELHOR HORÁRIO para publicar
-- COMO PRODUZIR com as minhas ferramentas (${v.tools}): passo a passo técnico
+- COMO PRODUZIR com as minhas ferramentas (${v.imageTool} + ${v.videoTool} + CapCut): passo a passo técnico
 - FERRAMENTAS MAIS ECONÓMICAS para cada etapa da produção
 
 PASSO 3 — PLANO DE EXECUÇÃO:
@@ -784,7 +790,7 @@ PASSO 3 — PLANO DE EXECUÇÃO:
 MY CONTEXT:
 - Target audience: ${v.audience}
 ${v.brand ? `- Product/Brand: ${v.brand}` : ""}
-- Available tools: ${v.tools}
+- Available tools: ${v.imageTool} + ${v.videoTool} + CapCut
 
 STEP 1 — VIRAL TRENDS:
 Identify the 10 video formats/patterns going viral RIGHT NOW in the ${v.niche} niche on ${v.platform}. For each:
@@ -806,7 +812,7 @@ For each format:
 - MUSIC/SOUND direction
 - Specific HASHTAGS for this format
 - BEST TIME to post
-- HOW TO PRODUCE with my tools (${v.tools}): technical step-by-step
+- HOW TO PRODUCE with my tools (${v.imageTool} + ${v.videoTool} + CapCut): technical step-by-step
 - MOST AFFORDABLE TOOLS for each production step
 
 STEP 3 — EXECUTION PLAN:
