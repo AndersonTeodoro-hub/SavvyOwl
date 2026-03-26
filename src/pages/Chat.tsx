@@ -21,6 +21,7 @@ import { GenerateVideoButton } from "@/components/GenerateVideoButton";
 import { GenerateVoiceButton } from "@/components/GenerateVoiceButton";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
 import { CharacterSelector } from "@/components/CharacterSelector";
+import { useCharacter } from "@/contexts/CharacterContext";
 
 type Mode = "quick" | "deep" | "creator" | "opus";
 
@@ -53,13 +54,7 @@ export default function Chat() {
   const { t } = useTranslation();
   const sentFirstMessage = useRef(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [activeCharacterBlock, setActiveCharacterBlock] = useState<string | null>(null);
-  const [activeCharacterName, setActiveCharacterName] = useState<string | null>(null);
-
-  const handleCharacterSelect = (block: string | null, name: string | null) => {
-    setActiveCharacterBlock(block);
-    setActiveCharacterName(name);
-  };
+  const { identityBlock: activeCharacterBlock } = useCharacter();
 
   const handleCopyMessage = async (text: string, index: number) => {
     await navigator.clipboard.writeText(text);
@@ -565,7 +560,7 @@ export default function Chat() {
                 );
               })}
               <div className="w-px h-5 bg-border/50 mx-1 shrink-0" />
-              <CharacterSelector onSelect={handleCharacterSelect} selectedName={activeCharacterName} />
+              <CharacterSelector />
             </div>
 
             {/* Pending image */}

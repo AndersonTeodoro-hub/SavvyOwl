@@ -462,7 +462,21 @@ serve(async (req) => {
       systemPrompt += `\n\n<active_character>
 The user has selected a CHARACTER with a locked identity. This character's identity block MUST be injected into EVERY prompt you generate for image or video tools. The character details are absolute — do not deviate, do not modify, do not reinterpret.
 
-When generating prompts for Nano Banana, Veo3, Midjourney, or any tool, ALWAYS include this character's full identity in the prompt. When writing scene descriptions, this character is the protagonist unless the user specifies otherwise.
+CRITICAL RULES:
+1. When generating prompts for Nano Banana, Veo3, Midjourney, or any tool, ALWAYS include this character's FULL identity block at the START of the prompt inside the code block.
+2. The NEGATIVE PROMPT must go INSIDE the same code block as the main prompt, on a line starting with "Negative:" — NEVER as a separate code block with its own "Generate Image" button.
+3. When writing scene descriptions, this character is the protagonist unless the user specifies otherwise.
+4. NEVER write "insert character description here" or "use the character block" — always include the ACTUAL identity text.
+5. Each code block must be SELF-CONTAINED: identity block + scene prompt + negative prompt = ONE block.
+
+FORMAT FOR EACH PROMPT CODE BLOCK:
+\`\`\`
+[FULL CHARACTER IDENTITY BLOCK]
+
+[Scene/image specific prompt: action, camera, lighting, expression, setting]
+
+Negative: [negative prompt items]
+\`\`\`
 
 ${characterBlock}
 </active_character>`;

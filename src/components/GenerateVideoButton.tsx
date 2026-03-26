@@ -2,15 +2,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
-import { Loader2, Video, Download, X } from "lucide-react";
+import { useCharacter } from "@/contexts/CharacterContext";
+import { Loader2, Video, Download, X, Users } from "lucide-react";
 import { toast } from "sonner";
 
 type Props = {
   prompt: string;
 };
 
+/**
+ * GenerateVideoButton — agora injeta automaticamente o identity block
+ * do personagem ativo via CharacterContext no prompt enviado ao Veo3.
+ */
 export function GenerateVideoButton({ prompt }: Props) {
   const apiKey = useGoogleApiKey();
+  const { identityBlock, activeCharacterName } = useCharacter();
   const [loading, setLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +26,14 @@ export function GenerateVideoButton({ prompt }: Props) {
 
   // Veo3 requires API key - no free tier for video
   if (!apiKey) return null;
+
+  /**
+   * Constrói o prompt final com identity block injetado.
+   */
+  const buildFinalPrompt = (): string => {
+    if (!identityBlock) return prompt;
+    return `${identityBlock}\n\n── SCENE DIRECTION ──\n${prompt}`;
+  };
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -33,6 +47,8 @@ export function GenerateVideoButton({ prompt }: Props) {
 
       setProgress("A gerar video (pode demorar 1-3 min)...");
 
+      const finalPrompt = buildFinalPrompt();
+
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
         {
@@ -43,7 +59,7 @@ export function GenerateVideoButton({ prompt }: Props) {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            prompt,
+            prompt: finalPrompt,
             apiKey,
             aspectRatio,
           }),
@@ -88,14 +104,22 @@ export function GenerateVideoButton({ prompt }: Props) {
   return (
     <div className="mt-1">
       {!videoUrl && !loading && !showOptions && (
-        <Button
-          onClick={() => setShowOptions(true)}
-          size="sm"
-          variant="outline"
-          className="text-xs gap-1.5 border-purple-400/30 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
-        >
-          <Video className="h-3 w-3" />Gerar Video (Veo3)
-        </Button>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button
+            onClick={() => setShowOptions(true)}
+            size="sm"
+            variant="outline"
+            className="text-xs gap-1.5 border-purple-400/30 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20"
+          >
+            <Video className="h-3 w-3" />Gerar Video (Veo3)
+          </Button>
+          {activeCharacterName && (
+            <span className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1">
+              <Users className="h-2.5 w-2.5" />
+              {activeCharacterName}
+            </span>
+          )}
+        </div>
       )}
 
       {showOptions && !loading && !videoUrl && (
@@ -167,6 +191,11 @@ export function GenerateVideoButton({ prompt }: Props) {
               Gerar outra
             </Button>
           </div>
+          {activeCharacterName && (
+            <p className="text-[10px] text-green-600/70 dark:text-green-400/70 mt-1">
+              Identity lock: {activeCharacterName}
+            </p>
+          )}
         </div>
       )}
     </div>

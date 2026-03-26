@@ -1,67 +1,79 @@
 # RESUMO PARA PRÓXIMO CHAT - SavvyOwl (26/03/2026)
 
-## PROBLEMA PRIORITÁRIO — PIPELINE DE CONSISTÊNCIA
+## INTEGRAÇÃO CHARACTER ENGINE — CONCLUÍDA
 
-O Character Engine existe mas NÃO está integrado nos templates de geração.
-Resultado: cada cena gera uma pessoa completamente diferente. O negative prompt
-aparece separado do prompt principal com botão "Gerar Imagem" próprio (errado).
+O Character Engine foi integrado como centro de todo o pipeline de geração.
+A consistência visual é agora automática em todos os templates e botões.
 
-### O QUE PRECISA SER FEITO (URGENTE):
-1. Templates de cenas (Scene Generator, Viral Pipeline, Dark Channel) devem 
-   OBRIGAR seleção de personagem locked ANTES de gerar
-2. O identity block do personagem deve ser INJETADO automaticamente em cada 
-   prompt VEO3/Nano Banana gerado pela IA
-3. Negative prompt deve vir JUNTO do prompt principal (não como bloco separado 
-   com botão de gerar imagem próprio)
-4. Os botões "Gerar Imagem" e "Gerar Vídeo" nos code blocks devem incluir 
-   automaticamente o identity block do personagem ativo
-5. A imagem de referência gerada na CharactersPage deve poder ser usada como 
-   reference frame no Veo3
+### O QUE FOI FEITO:
+1. ✅ **CharacterContext** (`src/contexts/CharacterContext.tsx`) — contexto React global
+   - `useCharacter()` hook disponível em qualquer componente
+   - Guarda: characters[], activeCharacter, identityBlock, negativePrompt
+   - Adicionado ao App.tsx dentro do AuthProvider
 
-### FLUXO CORRETO (a implementar):
-1. Utilizador cria personagem → expande → aprova → LOCK
-2. Ao usar qualquer template de geração, o personagem locked é selecionado
-3. A IA recebe o identity block no system prompt 
-4. TODOS os prompts gerados incluem o identity block automaticamente
-5. O botão "Gerar Imagem" injeta identity block + negative prompt juntos
-6. O botão "Gerar Vídeo" injeta identity block + referência de imagem
+2. ✅ **CharacterSelector** reescrito para usar contexto global (sem props)
 
-### FICHEIROS A MODIFICAR:
-- src/components/StructuredTemplates.tsx — templates precisam de seletor de personagem
-- src/components/GenerateImageButton.tsx — precisa receber identity block + negative
-- src/components/GenerateVideoButton.tsx — precisa receber identity block + ref image
-- src/pages/Chat.tsx — o characterBlock já é passado ao chat, mas não aos botões
-- supabase/functions/chat/index.ts — system prompt já injeta character, mas os 
-  prompts dos templates ainda pedem negative separado
+3. ✅ **GenerateImageButton** — injeta automaticamente:
+   - Identity block no início do prompt
+   - Negative prompt no final do prompt
+   - Mostra nome do personagem ativo ao lado do botão
+
+4. ✅ **GenerateVideoButton** — injeta automaticamente:
+   - Identity block com "SCENE DIRECTION" wrapper
+   - Mostra nome do personagem ativo
+
+5. ✅ **StructuredTemplates** — reformulado:
+   - useCharacter() integrado
+   - Templates de cena mostram banner verde "Personagem ativo" com info
+   - Banner amarelo de aviso quando NÃO há personagem selecionado
+   - Campo manual "character" removido do scene-generator
+   - Identity block + negative prompt injetados automaticamente no prompt enviado ao chat
+   - handleViralVideoSelect também injeta identity block
+   - Negative prompt vai DENTRO do code block (não separado)
+   - Instrução explícita à IA para não gerar negative prompt como bloco separado
+
+6. ✅ **Edge function chat/index.ts** — instruções melhoradas:
+   - 5 regras críticas para a IA usar o character block
+   - Formato explícito: identity + scene + negative = UM bloco de código
+   - Proíbe "insert character here" ou blocos separados
+
+7. ✅ **Chat.tsx** — migrado de state local para useCharacter()
+
+### TEMPLATES QUE INJETAM IDENTITY BLOCK:
+- scene-generator, dark-channel, viral-pipeline, viral-modeling, veo3-video, ugc-influencer
 
 ## ESTADO ATUAL — O QUE FUNCIONA
 - ✅ Chat (4 modos: Quick/Deep/Creator/Opus)
 - ✅ Gemini Flash (via fallback Anthropic quando Google 403)
-- ✅ Nano Banana (geração de imagem)
+- ✅ Nano Banana (geração de imagem) — COM identity lock automático
 - ✅ Gemini TTS (geração de voz)
-- ✅ 10 templates estruturados
-- ✅ Viral video modeling (YouTube search)
+- ✅ 10 templates estruturados — COM identity lock automático
+- ✅ Viral video modeling (YouTube search) — COM identity lock automático
 - ✅ Character Engine backend (expand, refine, lock, unlock)
 - ✅ Character Engine UI (CharactersPage)
-- ✅ CharacterSelector no Chat (injeta identity no system prompt)
+- ✅ CharacterContext global (useCharacter hook)
 - ✅ Error boundaries + Sentry infrastructure
 - ✅ Login email + Google OAuth
 - ✅ Sidebar com Characters
 
+## PRÓXIMOS PASSOS SUGERIDOS
+1. Testar fluxo end-to-end: criar personagem → lock → usar template → gerar imagem
+2. Verificar se a IA de facto inclui o identity block nos code blocks gerados
+3. Adicionar suporte para imagem de referência do personagem no Veo3 (img2vid)
+4. Onboarding flow para novos utilizadores
+5. Stripe end-to-end testing
+
 ## O QUE NÃO FUNCIONA BEM
-- ❌ Consistência visual entre cenas (Character Engine não integrado nos templates)
-- ❌ Negative prompt separado do prompt principal nos code blocks
-- ❌ Google API Key dá 403 do servidor (funciona do PC do Anderson)
-  - Key: AIzaSyDODIsozzGbDhMRqeFx4MwaTfe0IrcNUV0
-  - Fallback para Anthropic está ativo
+- ⚠️ Google API Key dá 403 do servidor (fallback Anthropic ativo)
 - ⚠️ Stripe não testado end-to-end
 - ⚠️ Onboarding flow não existe
+- ⚠️ Imagem de referência do CharactersPage ainda não usada como ref frame no Veo3
 
 ## SUPABASE
 - Project ID: kumnrldlzttsrgjlsspa
 - URL: https://kumnrldlzttsrgjlsspa.supabase.co
 - 11 edge functions deployed
-- Tabelas: profiles, conversations, messages, prompts, usage_logs, projects, 
+- Tabelas: profiles, conversations, messages, prompts, usage_logs, projects,
   model_registry, characters
 
 ## GIT
