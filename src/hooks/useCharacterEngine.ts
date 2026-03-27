@@ -4,10 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 const ENGINE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-engine`;
 
 async function callEngine(action: string, payload: Record<string, any> = {}) {
+  // Tenta obter sessão — pode precisar de esperar pela restauração
+  let token: string | null = null;
+  
+  // Primeira tentativa
   const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
+  token = sessionData?.session?.access_token || null;
+
+  // Se não tem token, espera um pouco e tenta de novo (sessão a restaurar)
+  if (!token) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const { data: retry } = await supabase.auth.getSession();
+    token = retry?.session?.access_token || null;
+  }
 
   if (!token) {
+    // Silêncio para action "list" — não é erro crítico, só ainda não tem sessão
+    if (action === "list") return { characters: [] };
     throw new Error("Not authenticated");
   }
 
