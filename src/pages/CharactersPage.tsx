@@ -168,7 +168,9 @@ export default function CharactersPage() {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            prompt: activeChar.expanded.nano_banana_prompt,
+            prompt: activeChar.expanded.negative_prompt
+              ? `${activeChar.expanded.nano_banana_prompt}\n\nNegative: ${activeChar.expanded.negative_prompt}`
+              : activeChar.expanded.nano_banana_prompt,
             apiKey: googleApiKey || undefined,
           }),
         }
@@ -554,11 +556,14 @@ export default function CharactersPage() {
               </p>
 
               {d?.nano_banana_prompt && (
-                <PromptBlock label="Nano Banana — Imagem" icon={Image} color="#eab308" text={d.nano_banana_prompt} />
-              )}
-
-              {d?.negative_prompt && (
-                <PromptBlock label="Negative Prompt" icon={AlertCircle} color="#ef4444" text={d.negative_prompt} />
+                <PromptBlock
+                  label="Nano Banana — Imagem"
+                  icon={Image}
+                  color="#eab308"
+                  text={d.negative_prompt
+                    ? `${d.nano_banana_prompt}\n\nNegative: ${d.negative_prompt}`
+                    : d.nano_banana_prompt}
+                />
               )}
             </div>
 
