@@ -7,11 +7,15 @@ async function callEngine(action: string, payload: Record<string, any> = {}) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
 
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
   const resp = await fetch(ENGINE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${token}`,
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     body: JSON.stringify({ action, ...payload }),
