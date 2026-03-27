@@ -207,13 +207,13 @@ Detalhes do personagem:
 - Plataforma principal: ${v.platform}
 
 Preciso de:
-1. PROMPT PRINCIPAL completo e pronto a colar na ferramenta
-2. PROMPT NEGATIVO detalhado e específico
-3. VERSÃO CURTA para ferramentas com limite de caracteres
-4. BLOCO DE CONSISTÊNCIA do personagem para reutilizar em futuras gerações
-5. PARÂMETROS TÉCNICOS (proporção, ângulo, iluminação)
-6. 2 VARIAÇÕES com cenários ou moods diferentes (cada uma completa e autónoma)
-7. PRÓXIMOS PASSOS: como usar esta imagem como referência para criar vídeo (Veo3, HeyGen, etc.)
+1. PROMPT PRINCIPAL completo e pronto a colar na ferramenta (com negative prompt na última linha do mesmo bloco de código, formato "Negative: ...")
+2. VERSÃO CURTA para ferramentas com limite de caracteres
+3. PARÂMETROS TÉCNICOS (proporção, ângulo, iluminação)
+4. 2 VARIAÇÕES com cenários ou moods diferentes (cada uma completa e autónoma, com negative dentro do mesmo bloco)
+5. PRÓXIMOS PASSOS: como usar esta imagem como referência para criar vídeo (Veo3, HeyGen, etc.)
+
+REGRA: O negative prompt vai SEMPRE como última linha dentro do bloco de código do prompt principal. NUNCA como bloco de código separado.
 
 O prompt deve ser para estilo UGC — parecer autêntico, gravado com telemóvel, natural e não comercial.`
         : `Create an ultra-detailed professional prompt to generate a UGC influencer image in ${v.tool || "Nano Banana"}.
@@ -227,13 +227,13 @@ Character details:
 - Main platform: ${v.platform}
 
 I need:
-1. MAIN PROMPT complete and ready to paste
-2. Detailed NEGATIVE PROMPT
-3. SHORT VERSION for character-limited tools
-4. CHARACTER CONSISTENCY BLOCK for reuse
-5. TECHNICAL PARAMETERS (ratio, angle, lighting)
-6. 2 VARIATIONS with different settings/moods (each complete and standalone)
-7. NEXT STEPS: how to use this image as reference for video (Veo3, HeyGen, etc.)
+1. MAIN PROMPT complete and ready to paste (with negative prompt as last line inside the same code block, format "Negative: ...")
+2. SHORT VERSION for character-limited tools
+3. TECHNICAL PARAMETERS (ratio, angle, lighting)
+4. 2 VARIATIONS with different settings/moods (each complete and standalone, with negative inside same block)
+5. NEXT STEPS: how to use this image as reference for video (Veo3, HeyGen, etc.)
+
+RULE: The negative prompt ALWAYS goes as the last line inside the main prompt code block. NEVER as a separate code block.
 
 The prompt must be UGC style — authentic, smartphone-like, natural, not commercial.`,
     },
@@ -440,12 +440,12 @@ Estilo: ${v.style}
 Proporção: ${v.aspect}
 
 Preciso de:
-1. PROMPT PRINCIPAL detalhado com descrição de movimento, câmera, iluminação, ação
-2. PROMPT NEGATIVO
-3. VERSÃO CURTA
-4. 2 VARIAÇÕES com ângulos ou moods diferentes
-5. NOTAS DE DIREÇÃO: o que ajustar se o primeiro resultado não ficar perfeito
-6. Se for para personagem: BLOCO DE CONSISTÊNCIA para manter aparência entre gerações`
+1. PROMPT PRINCIPAL detalhado com descrição de movimento, câmera, iluminação, ação (com negative prompt como última linha dentro do mesmo bloco de código)
+2. VERSÃO CURTA
+3. 2 VARIAÇÕES com ângulos ou moods diferentes
+4. NOTAS DE DIREÇÃO: o que ajustar se o primeiro resultado não ficar perfeito
+
+REGRA: O negative prompt vai SEMPRE dentro do bloco de código do prompt principal (linha "Negative: ..."). NUNCA como bloco separado.`
         : `Create a professional prompt to generate video in ${v.tool}.
 
 Concept: ${v.concept}
@@ -454,12 +454,12 @@ Style: ${v.style}
 Aspect ratio: ${v.aspect}
 
 I need:
-1. Detailed MAIN PROMPT with movement, camera, lighting, action description
-2. NEGATIVE PROMPT
-3. SHORT VERSION
-4. 2 VARIATIONS with different angles or moods
-5. DIRECTION NOTES: what to adjust if first result isn't perfect
-6. If character-based: CONSISTENCY BLOCK to maintain appearance across generations`,
+1. Detailed MAIN PROMPT with movement, camera, lighting, action description (with negative prompt as last line inside the same code block)
+2. SHORT VERSION
+3. 2 VARIATIONS with different angles or moods
+4. DIRECTION NOTES: what to adjust if first result isn't perfect
+
+RULE: The negative prompt ALWAYS goes inside the main prompt code block (line "Negative: ..."). NEVER as a separate block.`,
     },
     {
       id: "scene-generator",
@@ -504,7 +504,6 @@ PARA CADA CENA entrega:
 - TRANSIÇÃO PARA PRÓXIMA CENA: como conectar
 
 NO FINAL inclui:
-- BLOCO DE CONSISTÊNCIA do personagem (se aplicável) para usar em todas as cenas
 - SEQUÊNCIA DE MONTAGEM: ordem das cenas e como montar o vídeo final
 - DICAS DE PÓS-PRODUÇÃO: como juntar as cenas no CapCut/editor
 - DURAÇÃO TOTAL ESTIMADA do vídeo final`
@@ -535,7 +534,6 @@ FOR EACH SCENE deliver:
 - TRANSITION TO NEXT SCENE: how to connect
 
 AT THE END include:
-- CHARACTER CONSISTENCY BLOCK (if applicable) to use across all scenes
 - EDITING SEQUENCE: scene order and how to assemble the final video
 - POST-PRODUCTION TIPS: how to join scenes in CapCut/editor
 - ESTIMATED TOTAL DURATION of final video`,
