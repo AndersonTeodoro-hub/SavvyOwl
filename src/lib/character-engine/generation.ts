@@ -84,9 +84,9 @@ export function buildCharacterIdentityBlock(char: ExpandedCharacter): string {
     }
   }
 
-  // Mandato de realismo UGC
+  // Mandato de realismo UGC + prevenção de erros comuns
   parts.push("");
-  parts.push("PHOTOREALISM MANDATE: This is a REAL person filmed with a smartphone. Visible skin pores, real skin texture with micro-imperfections, natural subsurface scattering, real hair strands with flyaways, authentic natural lighting, no airbrushing, no beauty filter, no CGI smoothness, no illustration. Shot on iPhone 15 Pro, handheld, available light. UGC authentic aesthetic.");
+  parts.push("PHOTOREALISM MANDATE: This is a REAL person filmed with a smartphone. Visible skin pores, real skin texture with micro-imperfections, natural subsurface scattering, real hair strands with flyaways, authentic natural lighting, no airbrushing, no beauty filter, no CGI smoothness, no illustration. Shot on iPhone 15 Pro, handheld, available light. UGC authentic aesthetic. Anatomically correct hands with exactly five fingers. Natural human micro-movements: subtle weight shifts, breathing, eye blinks. If holding a phone or laptop, the screen MUST face toward the character and toward camera, never showing the back of the device.");
 
   return parts.join("\n");
 }
@@ -191,7 +191,14 @@ export function buildVeo3Prompt(
  * Combina o negative genérico UGC com o específico do personagem.
  */
 export function buildNegativePrompt(char: ExpandedCharacter): string {
-  const base = "perfect symmetry, airbrushed skin, CGI render, illustration, anime, cartoon, glamour lighting, studio backdrop, stock photo pose, generic beauty, filtered look, oversaturated colors, plastic skin, beauty filter, smooth poreless skin, perfect teeth, magazine retouching";
+  const base = [
+    // Anti-AI look
+    "perfect symmetry, airbrushed skin, CGI render, illustration, anime, cartoon, glamour lighting, studio backdrop, stock photo pose, generic beauty, filtered look, oversaturated colors, plastic skin, beauty filter, smooth poreless skin, perfect teeth, magazine retouching",
+    // Veo3 common failures
+    "screen on wrong side of device, screen on back of phone, screen on back of laptop, reversed phone screen, backwards tablet, text appearing mirrored, text on wrong surface, phone held backwards, laptop screen facing away from user",
+    // Other common AI failures
+    "extra fingers, missing fingers, deformed hands, extra limbs, mutated face, two faces, clone of character, duplicate person in frame, text overlay burned into skin, watermark, logo on clothing that wasn't specified"
+  ].join(", ");
   return char.negative_prompt
     ? `${char.negative_prompt}, ${base}`
     : base;

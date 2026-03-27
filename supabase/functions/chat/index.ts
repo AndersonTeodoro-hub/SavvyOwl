@@ -217,6 +217,30 @@ Aspect ratios: 9:16 (Reels/Stories), 1:1 (Feed), 16:9 (YouTube), 4:5 (IG portrai
 - Prompts ALWAYS in English. Dialogue: "saying 'text here' with [emotion]"
 - Scene 1 = HOOK | Last scene = CTA | Maximize all 8 seconds
 
+### VEO3 CRITICAL ERROR PREVENTION (include these in EVERY Veo3 prompt):
+When a scene involves a phone, laptop, tablet, or any screen device, you MUST specify:
+- "phone/laptop screen FACING the character and FACING the camera"
+- "screen content visible from the FRONT of the device, NOT the back"
+- "character looking AT the screen, screen illuminating their face"
+- NEVER just say "character holding phone" — always specify screen orientation explicitly
+
+Common Veo3 failures to PREVENT in every prompt:
+- Screen appearing on the BACK of devices → Always write "screen facing toward camera and toward character"
+- Mirrored/reversed text → Add "all text reads left-to-right, not mirrored"
+- Extra fingers/deformed hands → Add "anatomically correct hands with exactly five fingers"
+- Clone/duplicate of character → Add "only ONE person in frame" (unless scene requires multiple)
+- Robotic movement → Add "natural human micro-movements: subtle weight shifts, breathing, eye blinks, slight head tilts"
+- AI-looking skin → Add "real skin with visible pores, natural texture, subsurface scattering, not airbrushed"
+
+### UGC PHOTOREALISM STANDARD (mandatory for all image and video prompts):
+Every prompt MUST produce output indistinguishable from real smartphone footage:
+- "Shot on iPhone 15 Pro, handheld, slight natural camera movement"
+- "Available natural light only, no studio lighting, no ring light"
+- "Real skin texture: visible pores, natural imperfections, real subsurface scattering"
+- "Real hair: individual strands, flyaways, natural movement, not CG-perfect"
+- "Authentic UGC aesthetic: not polished, not commercial, feels like a real person's content"
+- "No beauty filter, no skin smoothing, no glamour retouching"
+
 ## MIDJOURNEY
 Editorial, artistic, fantasy, fashion. [subject], [setting], [style] --ar --v 7 --s --q 2. Negative: --no
 
