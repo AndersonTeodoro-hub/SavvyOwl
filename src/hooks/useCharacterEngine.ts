@@ -3,19 +3,51 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ENGINE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-engine`;
 
+async function getAccessToken(): Promise<string> {
+  // Try to get session, with retry for race condition on page load
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData?.session?.access_token) {
+      return sessionData.session.access_token;
+    }
+    // Wait before retry
+    if (attempt < 2) await new Promise(r => setTimeout(r, 500));
+  }
+  throw new Error("Not authenticated. Please login first.");
+}
+
 async function callEngine(action: string, payload: Record<string, any> = {}) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
+  const token = await getAccessToken();
 
   const resp = await fetch(ENGINE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${token}`,
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     body: JSON.stringify({ action, ...payload }),
   });
+
+  // If 401, session may have expired — try refreshing once
+  if (resp.status === 401) {
+    const { data: refreshData } = await supabase.auth.refreshSession();
+    if (refreshData?.session?.access_token) {
+      const retryResp = await fetch(ENGINE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${refreshData.session.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      const retryData = await retryResp.json();
+      if (!retryResp.ok) throw new Error(retryData.error || "Request failed");
+      return retryData;
+    }
+    throw new Error("Session expired. Please login again.");
+  }
 
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || "Request failed");
