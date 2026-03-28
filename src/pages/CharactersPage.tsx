@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
 import { useNavigate } from "react-router-dom";
 import {
@@ -198,11 +199,18 @@ export default function CharactersPage() {
     navigate("/dashboard/chat");
   };
 
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
-    // Only call engine.list() when we have a confirmed valid user from AuthContext
-    // AuthContext already handles token refresh — no need for getSession() or onAuthStateChange here
-    if (user) {
+    // Only call engine.list() ONCE when we have a confirmed valid user
+    // The ref prevents re-fires from re-renders or dependency changes
+    if (user && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
       engine.list();
+    }
+    // Reset when user logs out so next login fetches again
+    if (!user) {
+      hasFetchedRef.current = false;
     }
   }, [user]);
 
