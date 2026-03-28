@@ -1,6 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+// stripe-webhook — zero external imports, uses native Deno crypto for signature verification
 
 const PRICE_TO_PLAN: Record<string, string> = {
   "price_1TG1KaKg016ceaDVbTqFq1CW": "starter",
@@ -13,138 +11,154 @@ const PLAN_CREDITS: Record<string, number> = {
   pro: 500,
 };
 
-const PACK_CREDITS: Record<string, number> = {
-  "price_1TG1OiKg016ceaDVYWhCa8st": 50,
-  "price_1TG1QCKg016ceaDVLsAC6Za1": 150,
-  "price_1TG1RUKg016ceaDVKYrWhI6V": 400,
-};
+const log = (step: string, d?: unknown) =>
+  console.log(`[WEBHOOK] ${step}${d ? " " + JSON.stringify(d) : ""}`);
 
-const logStep = (step: string, details?: unknown) => {
-  console.log(`[STRIPE-WEBHOOK] ${step}${details ? " - " + JSON.stringify(details) : ""}`);
-};
-
-serve(async (req) => {
+// Stripe webhook signature verification using Web Crypto
+async function verifyStripeSignature(
+  payload: string,
+  sigHeader: string,
+  secret: string
+): Promise<boolean> {
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-    if (!stripeKey || !webhookSecret) throw new Error("Missing Stripe secrets");
+    const parts = sigHeader.split(",");
+    const timestamp = parts.find(p => p.startsWith("t="))?.slice(2) ?? "";
+    const sig = parts.find(p => p.startsWith("v1="))?.slice(3) ?? "";
+    if (!timestamp || !sig) return false;
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const body = await req.text();
-    const signature = req.headers.get("stripe-signature");
-    if (!signature) throw new Error("No stripe-signature header");
-
-    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
-    logStep("Event received", { type: event.type, id: event.id });
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
+    const signed = `${timestamp}.${payload}`;
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
     );
+    const signatureBuffer = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signed));
+    const computed = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+    return computed === sig;
+  } catch {
+    return false;
+  }
+}
 
-    // ── Subscription checkout completed ────────────────────────────────────────
+// Supabase REST helpers
+async function updateProfile(userId: string, data: Record<string, unknown>, supabaseUrl: string, serviceKey: string) {
+  return fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${serviceKey}`,
+      "apikey": serviceKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+}
+
+async function getProfileByCustomer(customerId: string, supabaseUrl: string, serviceKey: string) {
+  const resp = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?stripe_customer_id=eq.${customerId}&select=id,plan`,
+    {
+      headers: {
+        "Authorization": `Bearer ${serviceKey}`,
+        "apikey": serviceKey,
+      },
+    }
+  );
+  const data = await resp.json();
+  return data?.[0] ?? null;
+}
+
+async function insertTransaction(tx: Record<string, unknown>, supabaseUrl: string, serviceKey: string) {
+  return fetch(`${supabaseUrl}/rest/v1/credit_transactions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${serviceKey}`,
+      "apikey": serviceKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(tx),
+  });
+}
+
+Deno.serve(async (req) => {
+  try {
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const body = await req.text();
+    const sigHeader = req.headers.get("stripe-signature") ?? "";
+
+    if (!await verifyStripeSignature(body, sigHeader, webhookSecret)) {
+      log("Invalid signature");
+      return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 400 });
+    }
+
+    const event = JSON.parse(body);
+    log("Event", { type: event.type, id: event.id });
+
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
       const userId = session.metadata?.user_id;
       const plan = session.metadata?.plan;
       const pack = session.metadata?.pack;
-      const customerId = session.customer as string;
+      const credits = parseInt(session.metadata?.credits ?? "0");
+      const customerId = session.customer;
 
-      if (!userId) { logStep("No user_id in metadata"); return new Response(JSON.stringify({ received: true })); }
-
-      if (plan && session.mode === "subscription") {
-        // Subscription purchase
-        const credits = PLAN_CREDITS[plan] ?? 10;
-        await supabase.from("profiles").update({
-          plan,
-          stripe_customer_id: customerId,
-          credits_balance: credits,
-        }).eq("id", userId);
-        await supabase.from("credit_transactions").insert({
-          user_id: userId, amount: credits, type: "purchase",
-          description: `Subscrição ${plan} — ${credits} créditos`,
-          stripe_session_id: session.id,
-        });
-        logStep("Subscription activated", { userId, plan, credits });
+      if (userId && plan && session.mode === "subscription") {
+        const planCredits = PLAN_CREDITS[plan] ?? 10;
+        await updateProfile(userId, { plan, stripe_customer_id: customerId, credits_balance: planCredits }, supabaseUrl, serviceKey);
+        await insertTransaction({ user_id: userId, amount: planCredits, type: "purchase", description: `Subscrição ${plan} — ${planCredits} créditos`, stripe_session_id: session.id }, supabaseUrl, serviceKey);
+        log("Subscription activated", { userId, plan, planCredits });
       }
 
-      if (pack && session.mode === "payment") {
-        // Credit pack purchase
-        const packCredits = parseInt(session.metadata?.credits || "0");
-        const { data: profile } = await supabase.from("profiles")
-          .select("credits_balance").eq("id", userId).single();
-        const newBalance = (profile?.credits_balance ?? 0) + packCredits;
-        await supabase.from("profiles").update({
-          stripe_customer_id: customerId,
-          credits_balance: newBalance,
-        }).eq("id", userId);
-        await supabase.from("credit_transactions").insert({
-          user_id: userId, amount: packCredits, type: "purchase",
-          description: `Pack ${pack} — ${packCredits} créditos`,
-          stripe_session_id: session.id,
+      if (userId && pack && session.mode === "payment" && credits > 0) {
+        // Get current balance
+        const resp = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance`, {
+          headers: { "Authorization": `Bearer ${serviceKey}`, "apikey": serviceKey }
         });
-        logStep("Credit pack purchased", { userId, pack, packCredits, newBalance });
+        const profiles = await resp.json();
+        const current = profiles?.[0]?.credits_balance ?? 0;
+        const newBalance = current + credits;
+        await updateProfile(userId, { credits_balance: newBalance, stripe_customer_id: customerId }, supabaseUrl, serviceKey);
+        await insertTransaction({ user_id: userId, amount: credits, type: "purchase", description: `Pack ${pack} — ${credits} créditos`, stripe_session_id: session.id }, supabaseUrl, serviceKey);
+        log("Credit pack purchased", { userId, pack, credits, newBalance });
       }
     }
 
-    // ── Subscription updated (plan change) ────────────────────────────────────
     if (event.type === "customer.subscription.updated") {
-      const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
-      const priceId = subscription.items.data[0]?.price.id;
-      const plan = PRICE_TO_PLAN[priceId] || "free";
+      const sub = event.data.object;
+      const priceId = sub.items?.data?.[0]?.price?.id ?? "";
+      const plan = PRICE_TO_PLAN[priceId] ?? "free";
       const credits = PLAN_CREDITS[plan] ?? 10;
-
-      const { data: profiles } = await supabase.from("profiles")
-        .select("id").eq("stripe_customer_id", customerId).limit(1);
-
-      if (profiles?.length) {
-        const userId = profiles[0].id;
-        await supabase.from("profiles").update({ plan, credits_balance: credits }).eq("id", userId);
-        await supabase.from("credit_transactions").insert({
-          user_id: userId, amount: credits, type: "purchase",
-          description: `Mudança/renovação plano ${plan} — ${credits} créditos`,
-        });
-        logStep("Subscription updated", { customerId, plan, credits });
+      const profile = await getProfileByCustomer(sub.customer, supabaseUrl, serviceKey);
+      if (profile) {
+        await updateProfile(profile.id, { plan, credits_balance: credits }, supabaseUrl, serviceKey);
+        await insertTransaction({ user_id: profile.id, amount: credits, type: "purchase", description: `Atualização plano ${plan}` }, supabaseUrl, serviceKey);
+        log("Subscription updated", { plan, credits });
       }
     }
 
-    // ── Subscription deleted → free ────────────────────────────────────────────
     if (event.type === "customer.subscription.deleted") {
-      const subscription = event.data.object as Stripe.Subscription;
-      const customerId = subscription.customer as string;
-      const { data: profiles } = await supabase.from("profiles")
-        .select("id").eq("stripe_customer_id", customerId).limit(1);
-
-      if (profiles?.length) {
-        const userId = profiles[0].id;
-        await supabase.from("profiles").update({ plan: "free", credits_balance: 10 }).eq("id", userId);
-        await supabase.from("credit_transactions").insert({
-          user_id: userId, amount: 10, type: "bonus",
-          description: "Downgrade para free — 10 créditos gratuitos",
-        });
-        logStep("Downgraded to free", { customerId });
+      const profile = await getProfileByCustomer(event.data.object.customer, supabaseUrl, serviceKey);
+      if (profile) {
+        await updateProfile(profile.id, { plan: "free", credits_balance: 10 }, supabaseUrl, serviceKey);
+        log("Downgraded to free", { userId: profile.id });
       }
     }
 
-    // ── Invoice paid (monthly renewal) ────────────────────────────────────────
     if (event.type === "invoice.paid") {
-      const invoice = event.data.object as Stripe.Invoice;
+      const invoice = event.data.object;
       if (invoice.billing_reason === "subscription_cycle") {
-        const customerId = invoice.customer as string;
-        const { data: profiles } = await supabase.from("profiles")
-          .select("id, plan").eq("stripe_customer_id", customerId).limit(1);
-
-        if (profiles?.length) {
-          const { id: userId, plan } = profiles[0];
-          const credits = PLAN_CREDITS[plan] ?? 10;
-          await supabase.from("profiles").update({ credits_balance: credits }).eq("id", userId);
-          await supabase.from("credit_transactions").insert({
-            user_id: userId, amount: credits, type: "purchase",
-            description: `Renovação mensal ${plan} — ${credits} créditos`,
-          });
-          logStep("Monthly renewal", { customerId, plan, credits });
+        const profile = await getProfileByCustomer(invoice.customer, supabaseUrl, serviceKey);
+        if (profile) {
+          const credits = PLAN_CREDITS[profile.plan] ?? 10;
+          await updateProfile(profile.id, { credits_balance: credits }, supabaseUrl, serviceKey);
+          await insertTransaction({ user_id: profile.id, amount: credits, type: "purchase", description: `Renovação mensal ${profile.plan}` }, supabaseUrl, serviceKey);
+          log("Monthly renewal", { plan: profile.plan, credits });
         }
       }
     }
@@ -152,12 +166,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({ received: true }), {
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: msg });
-    return new Response(JSON.stringify({ error: msg }), {
-      headers: { "Content-Type": "application/json" },
-      status: 400,
-    });
+  } catch (e) {
+    log("ERROR", { msg: e instanceof Error ? e.message : String(e) });
+    return new Response(JSON.stringify({ error: "Internal error" }), { status: 500 });
   }
 });
