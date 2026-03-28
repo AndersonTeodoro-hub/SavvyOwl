@@ -1,318 +1,579 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { LanguageSelector } from "@/components/LanguageSelector";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { Check, ArrowDown, Menu as MenuIcon, X, ArrowRight, Clock, Sparkles, Zap, Shield, Lock, Eye, KeyRound, ChevronDown, Search, Image, Video, Flame, Wand2, FileText } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { ArrowRight, Check, ChevronDown, Play, Zap, Users, Video, Image, Sparkles, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const FONT_DISPLAY = "'Cormorant Garamond', Georgia, serif";
-const FONT_BODY = "'Libre Franklin', sans-serif";
-const fadeUp = { hidden: { opacity: 0, y: 30 }, visible: (i: number) => ({ opacity: 1, y: 0, transition: { duration: 0.7, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } }) };
-const fadeInView = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] } } };
+// ── Tokens ────────────────────────────────────────────────────────────────────
+const C = {
+  bg: "#080808",
+  surface: "#111111",
+  surfaceHover: "#1a1a1a",
+  border: "rgba(255,255,255,0.06)",
+  borderGold: "rgba(201,169,110,0.3)",
+  gold: "#c9a96e",
+  goldLight: "#e8c98a",
+  text: "#f0ede8",
+  textMuted: "rgba(240,237,232,0.4)",
+  textFaint: "rgba(240,237,232,0.18)",
+  white: "#ffffff",
+};
+
+const ease = [0.16, 1, 0.3, 1] as [number, number, number, number];
+
+// ── Components ────────────────────────────────────────────────────────────────
+
+function GoldLine({ className = "" }: { className?: string }) {
+  return <div className={className} style={{ width: 40, height: 1, backgroundColor: C.gold, opacity: 0.6 }} />;
+}
+
+function Tag({ children }: { children: string }) {
+  return (
+    <span style={{ fontSize: 10, letterSpacing: "3px", color: C.gold, border: `1px solid ${C.borderGold}`, padding: "4px 12px", display: "inline-block" }}>
+      {children}
+    </span>
+  );
+}
+
+function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.9, delay, ease }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function Landing() {
-  const { t } = useTranslation();
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [proLoading, setProLoading] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [optPhase, setOptPhase] = useState<0 | 1 | 2>(0);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
-  useEffect(() => { const ref = searchParams.get("ref"); if (ref) localStorage.setItem("savvyowl_referral", ref); }, [searchParams]);
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) localStorage.setItem("savvyowl_referral", ref);
+  }, [searchParams]);
 
-  const handleProClick = async () => {
-    if (!user || !session) { navigate("/register?plan=starter"); return; }
-    setProLoading(true);
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  const handleCheckout = async (plan: string) => {
+    if (!user || !session) { navigate(`/register?plan=${plan}`); return; }
+    setLoadingPlan(plan);
     try {
-      const { data, error } = await supabase.functions.invoke("stripe-checkout", { body: { action: "create-checkout", plan: "starter" } });
+      const { data, error } = await supabase.functions.invoke("stripe-checkout", { body: { action: "create-checkout", plan } });
       if (error) throw error;
-      if (data?.url) window.location.href = data.url; else throw new Error("No checkout URL");
-    } catch (err: any) { toast.error(err.message || "Error"); } finally { setProLoading(false); }
+      if (data?.url) window.location.href = data.url;
+      else throw new Error("No URL");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Erro");
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
-  useEffect(() => { const h = () => setScrolled(window.scrollY > 40); window.addEventListener("scroll", h, { passive: true }); return () => window.removeEventListener("scroll", h); }, []);
-  useEffect(() => { const t: NodeJS.Timeout[] = []; const r = () => { setOptPhase(0); t.push(setTimeout(() => setOptPhase(1), 3000)); t.push(setTimeout(() => setOptPhase(2), 4000)); t.push(setTimeout(r, 9000)); }; r(); return () => t.forEach(clearTimeout); }, []);
+  const stats = [
+    { value: "Veo 3.1", label: "Motor de vídeo" },
+    { value: "Imagen 3", label: "Motor de imagem" },
+    { value: "10+", label: "Templates UGC" },
+    { value: "100%", label: "Personagem consistente" },
+  ];
 
-  const gold = "#c9a96e";
-  const dark = "#1a1814";
-  const light = "#f5f0e8";
-  const card = "#221f1a";
-  const cardLight = "#ece5d9";
+  const features = [
+    {
+      icon: Users,
+      title: "Character Engine",
+      desc: "O teu influencer virtual mantém o mesmo rosto, estilo e energia em cada imagem e vídeo gerado. Zero inconsistências.",
+      tag: "EXCLUSIVO",
+    },
+    {
+      icon: Video,
+      title: "Vídeo UGC Autêntico",
+      desc: "Gera vídeos de 8 segundos com Veo 3.1 que parecem filmados com telemóvel — não parecem feitos por IA.",
+      tag: "VEO 3.1",
+    },
+    {
+      icon: Image,
+      title: "Imagens Profissionais",
+      desc: "Vertex AI Imagen 3 para imagens de produto e lifestyle que vendem. Identity lock automático do teu personagem.",
+      tag: "IMAGEN 3",
+    },
+    {
+      icon: Sparkles,
+      title: "10 Templates Profissionais",
+      desc: "Viral Pipeline, Dark Channel, Scene Generator, UGC Influencer — fluxos completos do prompt ao conteúdo publicado.",
+      tag: "TEMPLATES",
+    },
+    {
+      icon: Zap,
+      title: "Pipeline Completo",
+      desc: "Texto, imagem e vídeo num só lugar. Sem saltar entre apps. Da ideia ao conteúdo em minutos, não horas.",
+      tag: "WORKFLOW",
+    },
+    {
+      icon: Play,
+      title: "Modela Vídeos Virais",
+      desc: "Encontra vídeos virais do YouTube e adapta-os ao teu nicho com prompts prontos — tudo automaticamente.",
+      tag: "VIRAL",
+    },
+  ];
+
+  const plans = [
+    {
+      key: "free",
+      name: "Gratuito",
+      price: "€0",
+      period: "",
+      sub: "Para começar",
+      features: ["10 créditos", "Até 10 imagens", "Todos os templates", "Character Engine"],
+      cta: "Começar Grátis",
+      primary: false,
+      action: () => navigate("/register"),
+    },
+    {
+      key: "starter",
+      name: "Starter",
+      price: "€14,99",
+      period: "/mês",
+      sub: "Para criadores individuais",
+      features: ["150 créditos/mês", "150 imagens ou 15 vídeos", "Character Engine ilimitado", "Vídeo UGC com Veo 3.1", "Suporte prioritário"],
+      cta: "Começar Agora",
+      primary: true,
+      action: () => handleCheckout("starter"),
+    },
+    {
+      key: "pro",
+      name: "Pro",
+      price: "€34,99",
+      period: "/mês",
+      sub: "Para equipas profissionais",
+      features: ["500 créditos/mês", "500 imagens ou 50 vídeos", "Character Engine ilimitado", "Veo 3.1 + acesso antecipado", "Suporte dedicado"],
+      cta: "Começar Agora",
+      primary: false,
+      action: () => handleCheckout("pro"),
+    },
+  ];
+
+  const faqs = [
+    { q: "O que são créditos?", a: "1 crédito = 1 imagem. 10 créditos = 1 vídeo de 8 segundos. Os créditos do plano renovam mensalmente. Packs avulso nunca expiram." },
+    { q: "O que é o Character Engine?", a: "É o nosso sistema exclusivo que mantém o teu influencer virtual visualmente consistente em todas as imagens e vídeos. O mesmo rosto, o mesmo estilo, sempre." },
+    { q: "Os vídeos parecem feitos por IA?", a: "Não é esse o objetivo. Usamos Veo 3.1 com prompts otimizados para estética UGC — câmara instável, pele com textura, iluminação natural. O resultado parece filmado com telemóvel." },
+    { q: "Posso cancelar quando quiser?", a: "Sim. Cancelas a qualquer momento. O acesso continua até ao fim do período já pago." },
+    { q: "Precisam de cartão de crédito para o plano gratuito?", a: "Não. Registas com email ou Google e tens acesso imediato a 10 créditos gratuitos." },
+    { q: "Qual a diferença entre Starter e Pro?", a: "Volume de créditos (150 vs 500/mês) e nível de suporte. Ambos têm acesso total ao Character Engine, Veo 3.1 e todos os templates." },
+  ];
 
   return (
-    <div className="relative" style={{ fontFamily: FONT_BODY }}>
-      <div className="pointer-events-none fixed inset-0 z-[100] opacity-[0.02]"><svg width="100%" height="100%"><filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" /></filter><rect width="100%" height="100%" filter="url(#grain)" /></svg></div>
+    <div style={{ backgroundColor: C.bg, color: C.text, fontFamily: "'Libre Franklin', sans-serif", overflowX: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Libre+Franklin:wght@300;400;500&display=swap');
+        .display { font-family: 'Cormorant Garamond', Georgia, serif; }
+        ::selection { background: rgba(201,169,110,0.25); }
+        html { scroll-behavior: smooth; }
+      `}</style>
 
-      {/* NAV */}
-      <nav className="fixed top-0 w-full z-50 transition-all duration-300" style={{ backgroundColor: scrolled ? "rgba(26,24,20,0.92)" : "transparent", backdropFilter: scrolled ? "blur(20px)" : "none", borderBottom: scrolled ? `1px solid ${light}07` : "1px solid transparent" }}>
-        <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 md:px-8">
-          <div className="flex items-center">
-            <img src="/logo.svg" alt="SavvyOwl" className="h-[44px] w-auto mr-2" />
-            <span className="text-xs font-medium hidden sm:inline" style={{ letterSpacing: "0.15em", color: "#F0F6FF" }}>SAVVYOWL</span>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            {["features", "how", "pricing", "faq"].map(id => (
-              <a key={id} href={`#${id}`} className={`text-[${light}]/40 hover:text-[${light}] text-xs transition-colors`} style={{ letterSpacing: "2px" }}>
-                {id === "features" ? "FEATURES" : id === "how" ? t("landing.nav.product") : id === "pricing" ? t("landing.nav.pricing") : "FAQ"}
-              </a>
+      {/* ── NAV ─────────────────────────────────────────────────────────────── */}
+      <motion.nav
+        style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          borderBottom: `1px solid ${scrolled ? C.border : "transparent"}`,
+          backgroundColor: scrolled ? "rgba(8,8,8,0.95)" : "transparent",
+          backdropFilter: scrolled ? "blur(24px)" : "none",
+          transition: "all 0.4s ease",
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <img src="/logo.svg" alt="SavvyOwl" style={{ height: 36 }} />
+            <span style={{ fontSize: 11, letterSpacing: "0.2em", color: C.text, fontWeight: 500 }}>SAVVYOWL</span>
+          </Link>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 32 }} className="hidden md:flex">
+            {[["#features", "FEATURES"], ["#how", "COMO FUNCIONA"], ["#pricing", "PREÇOS"], ["#faq", "FAQ"]].map(([href, label]) => (
+              <a key={href} href={href} style={{ fontSize: 10, letterSpacing: "2px", color: C.textMuted, textDecoration: "none", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.textMuted)}
+              >{label}</a>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2"><LanguageSelector /><ThemeToggle /></div>
-            <Link to="/login" className={`text-[${light}]/60 hover:text-[${light}] text-xs px-3 py-2 transition-colors hidden md:inline`}>{t("landing.nav.login")}</Link>
-            <Link to="/register" className="text-xs px-4 py-2 transition-all hover:scale-[1.02] hidden md:inline-block" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = gold; e.currentTarget.style.color = dark; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = gold; }}>{t("landing.nav.cta")}</Link>
-            <button className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-[#f5f0e8]/60" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>{mobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}</button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <Link to="/login" className="hidden md:inline" style={{ fontSize: 11, color: C.textMuted, textDecoration: "none", letterSpacing: "1px", transition: "color 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.color = C.text)}
+              onMouseLeave={e => (e.currentTarget.style.color = C.textMuted)}
+            >ENTRAR</Link>
+            <Link to="/register" style={{ fontSize: 10, letterSpacing: "2px", padding: "10px 20px", backgroundColor: C.gold, color: C.bg, textDecoration: "none", fontWeight: 500, transition: "opacity 0.2s" }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.85")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            >COMEÇAR GRÁTIS</Link>
+            <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", color: C.text, cursor: "pointer", padding: 8 }}>
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#1a1814]/95 backdrop-blur-xl border-t border-[#f5f0e8]/10 px-4 py-6 space-y-4">
-            {["features", "how", "pricing", "faq"].map(id => (<a key={id} href={`#${id}`} onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center" style={{ letterSpacing: "2px" }}>{id.toUpperCase()}</a>))}
-            <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block text-[#f5f0e8]/60 text-sm py-2 min-h-[44px] flex items-center">{t("landing.nav.login")}</Link>
-            <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block text-center text-xs px-4 py-3 min-h-[44px]" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "1px" }}>{t("landing.nav.cta")}</Link>
-            <div className="flex items-center gap-2 pt-2"><LanguageSelector /><ThemeToggle /></div>
-          </div>
-        )}
-      </nav>
 
-      {/* HERO */}
-      <section className="min-h-screen flex items-center justify-center bg-[#1a1814] text-[#f5f0e8] pt-16 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="inline-block px-4 py-1.5 mb-10" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.hero.badge")}</motion.div>
-          <motion.h1 custom={1} variants={fadeUp} initial="hidden" animate="visible" className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-6" style={{ fontFamily: FONT_DISPLAY, maxWidth: 720, margin: "0 auto", letterSpacing: "-0.02em" }}>{t("landing.hero.h1a")}<br /><span style={{ color: gold, fontStyle: "italic", fontWeight: 500 }}>{t("landing.hero.h1b")}</span></motion.h1>
-          <motion.p custom={2} variants={fadeUp} initial="hidden" animate="visible" className="text-sm sm:text-base text-[#f5f0e8]/40 leading-relaxed mb-10 mx-auto" style={{ fontWeight: 300, maxWidth: 560 }}>{t("landing.hero.subtitle")}</motion.p>
-          <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/register" className="inline-flex items-center gap-2 text-xs px-6 py-3 transition-all hover:scale-[1.03]" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>{t("landing.hero.cta")}<ArrowRight className="h-3.5 w-3.5" /></Link>
-            <a href="#features" className="inline-block text-xs px-6 py-3 text-[#f5f0e8]/40 hover:text-[#f5f0e8] transition-colors" style={{ letterSpacing: "1px" }}>{t("landing.hero.ctaSecondary")}</a>
-          </motion.div>
-          <motion.p custom={4} variants={fadeUp} initial="hidden" animate="visible" className="mt-12 text-[11px] text-[#f5f0e8]/20" style={{ letterSpacing: "2px" }}>{t("landing.hero.socialProof")}</motion.p>
-        </div>
-      </section>
-
-      {/* PAIN */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.pain.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.pain.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.pain.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${light}0d` }}>
-            {([{ icon: Clock, key: "pain1" }, { icon: Sparkles, key: "pain2" }, { icon: Zap, key: "pain3" }] as const).map(c => (
-              <div key={c.key} className="bg-[#221f1a] p-8"><c.icon className="h-5 w-5 mb-4" style={{ color: gold }} /><h3 className="text-lg mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t(`landing.pain.${c.key}_title`)}</h3><p className="text-sm text-[#f5f0e8]/40 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.pain.${c.key}_desc`)}</p></div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      <div className="bg-[#1a1814] flex justify-center"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-
-      {/* FEATURES */}
-      <section id="features" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.features.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.features.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.features.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
-            {([{ icon: Search, key: "f1" }, { icon: Image, key: "f2" }, { icon: Video, key: "f3" }, { icon: Flame, key: "f4" }, { icon: Wand2, key: "f5" }, { icon: FileText, key: "f6" }] as const).map(c => (
-              <div key={c.key} className="bg-[#ece5d9] p-8 hover:bg-[#e5ddd0] transition-colors"><c.icon className="h-5 w-5 mb-4" style={{ color: gold }} /><h3 className="text-lg mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t(`landing.features.${c.key}_title`)}</h3><p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.features.${c.key}_desc`)}</p></div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* DEMO */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto text-center">
-          <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.demo.badge")}</div>
-          <h2 className="text-3xl md:text-4xl mb-3" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.demo.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.demo.title_b")}</span></h2>
-          <p className="text-[#f5f0e8]/45 text-sm mb-12" style={{ fontWeight: 300 }}>{t("landing.demo.subtitle")}</p>
-          <div className="text-left space-y-6">
-            <div className="p-6 transition-all duration-700" style={{ border: `1px solid ${light}1a`, backgroundColor: card, opacity: optPhase >= 1 ? 0.35 : 1, textDecoration: optPhase >= 1 ? "line-through" : "none" }}>
-              <p className="text-[10px] uppercase mb-2 text-[#f5f0e8]/30" style={{ letterSpacing: "3px" }}>{t("landing.demo.youWrote")}</p>
-              <p className="text-sm leading-relaxed text-[#f5f0e8]/70" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t("landing.demo.before_text")}</p>
-            </div>
-            {optPhase >= 1 && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-center"><ArrowDown className="h-5 w-5" style={{ color: gold }} /></motion.div>}
-            {optPhase >= 2 && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="p-6" style={{ border: `1px solid ${gold}`, backgroundColor: card }}>
-                <p className="text-[10px] uppercase mb-2" style={{ letterSpacing: "3px", color: gold }}>{t("landing.demo.savvySent")}</p>
-                <p className="text-sm leading-relaxed text-[#f5f0e8]/70">{t("landing.demo.after_text")}</p>
-              </motion.div>
-            )}
-          </div>
-          {optPhase >= 2 && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="grid grid-cols-2 md:grid-cols-4 mt-8" style={{ gap: "1px", backgroundColor: `${light}0d` }}>
-              {[{ label: t("landing.demo.stat1_label"), value: t("landing.demo.stat1_value"), accent: false }, { label: t("landing.demo.stat2_label"), value: t("landing.demo.stat2_value"), accent: false }, { label: t("landing.demo.stat3_label"), value: t("landing.demo.stat3_value"), accent: true }, { label: t("landing.demo.stat4_label"), value: t("landing.demo.stat4_value"), accent: true }].map(s => (
-                <div key={s.label} className="bg-[#221f1a] p-4 text-center"><p className="text-[10px] text-[#f5f0e8]/35 mb-1" style={{ letterSpacing: "2px" }}>{s.label}</p><p className="text-lg" style={{ fontFamily: FONT_DISPLAY, color: s.accent ? gold : light }}>{s.value}</p></div>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              style={{ backgroundColor: "rgba(8,8,8,0.98)", borderTop: `1px solid ${C.border}`, padding: "16px 24px 24px" }}>
+              {[["#features", "FEATURES"], ["#how", "COMO FUNCIONA"], ["#pricing", "PREÇOS"], ["#faq", "FAQ"]].map(([href, label]) => (
+                <a key={href} href={href} onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "14px 0", fontSize: 11, letterSpacing: "2px", color: C.textMuted, textDecoration: "none", borderBottom: `1px solid ${C.border}` }}>{label}</a>
               ))}
+              <Link to="/login" onClick={() => setMenuOpen(false)} style={{ display: "block", padding: "14px 0", fontSize: 11, letterSpacing: "2px", color: C.textMuted, textDecoration: "none" }}>ENTRAR</Link>
             </motion.div>
           )}
-        </motion.div>
-      </section>
+        </AnimatePresence>
+      </motion.nav>
 
-      <div className="bg-[#1a1814] flex justify-center"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
+      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      <section ref={heroRef} style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+        {/* Background grid */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`, backgroundSize: "80px 80px", opacity: 0.4 }} />
+        {/* Gradient orb */}
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: 600, height: 600, background: `radial-gradient(ellipse, rgba(201,169,110,0.08) 0%, transparent 70%)`, pointerEvents: "none" }} />
 
-      {/* HOW IT WORKS */}
-      <section id="how" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.howItWorks.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.howItWorks.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.howItWorks.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
-            {[1, 2, 3].map(n => (<div key={n} className="bg-[#ece5d9] p-8"><span className="text-3xl mb-4 block" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold }}>0{n}</span><h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t(`landing.howItWorks.step${n}_title`)}</h3><p className="text-sm text-[#1a1814]/45 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.howItWorks.step${n}_desc`)}</p></div>))}
-          </div>
-        </motion.div>
-      </section>
+        <motion.div style={{ y: heroY, opacity: heroOpacity, position: "relative", zIndex: 1, textAlign: "center", padding: "120px 24px 60px", maxWidth: 960, margin: "0 auto" }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
+            <Tag>PLATAFORMA DE CONTEÚDO UGC COM IA</Tag>
+          </motion.div>
 
-      {/* BENEFITS */}
-      <section className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.benefits.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.benefits.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.benefits.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${light}0d` }}>
-            {["card1", "card2", "card3"].map((key, i) => (<div key={key} className="bg-[#221f1a] p-8"><span className="text-2xl mb-4 block" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic", color: gold }}>0{i + 1}</span><h3 className="text-xl mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t(`landing.benefits.${key}_title`)}</h3><p className="text-sm text-[#f5f0e8]/45 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.benefits.${key}_desc`)}</p></div>))}
-          </div>
-        </motion.div>
-      </section>
+          <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: 0.15, ease }}
+            className="display"
+            style={{ fontSize: "clamp(52px, 10vw, 108px)", lineHeight: 1.0, margin: "32px 0 24px", letterSpacing: "-0.03em", fontWeight: 400 }}
+          >
+            O teu personagem.<br />
+            <span style={{ color: C.gold, fontStyle: "italic" }}>Sempre consistente.</span>
+          </motion.h1>
 
-      <div className="bg-[#1a1814] flex justify-center"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
+          <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, ease }}
+            style={{ fontSize: 16, color: C.textMuted, maxWidth: 520, margin: "0 auto 48px", lineHeight: 1.7, fontWeight: 300 }}
+          >
+            Cria imagens e vídeos UGC autênticos com o teu influencer virtual — o mesmo rosto, em cada cena, sem estúdio, sem câmara.
+          </motion.p>
 
-      {/* TUTORIAL */}
-      <section id="tutorial" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.tutorial.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.tutorial.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.tutorial.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
-            {[1, 2, 3, 4].map(n => (<div key={n} className="bg-[#ece5d9] p-8"><span className="text-[10px] uppercase mb-3 block" style={{ letterSpacing: "3px", color: gold }}>{t(`landing.tutorial.step${n}_title`)}</span><p className="text-sm text-[#1a1814]/60 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.tutorial.step${n}_desc`)}</p></div>))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* SECURITY */}
-      <section id="security" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.security.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.security.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.security.title_b")}</span></h2>
-          </div>
-          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: `${light}0d` }}>
-            {([{ icon: Shield, key: "s1" }, { icon: KeyRound, key: "s2" }, { icon: Lock, key: "s3" }, { icon: Eye, key: "s4" }] as const).map(c => (
-              <div key={c.key} className="bg-[#221f1a] p-8"><c.icon className="h-5 w-5 mb-4" style={{ color: gold }} /><h3 className="text-lg mb-3" style={{ fontFamily: FONT_DISPLAY, fontStyle: "italic" }}>{t(`landing.security.${c.key}_title`)}</h3><p className="text-sm text-[#f5f0e8]/40 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.security.${c.key}_desc`)}</p></div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      <div className="bg-[#1a1814] flex justify-center"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-
-      {/* PRICING */}
-      <section id="pricing" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.pricing.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.pricing.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.pricing.title_b")}</span></h2>
-            <p className="text-sm mt-4 text-[#1a1814]/40" style={{ fontWeight: 300 }}>Sem contratos. Cancela quando quiseres.</p>
-          </div>
-
-          {/* 3 Plans */}
-          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
-            {/* Free */}
-            <div className="bg-[#ece5d9] p-8 flex flex-col">
-              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>GRATUITO</p>
-              <p className="text-5xl mb-1" style={{ fontFamily: FONT_DISPLAY }}>€0</p>
-              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>Para experimentar</p>
-              <ul className="space-y-2 mb-8 flex-1">
-                {["10 créditos gratuitos", "Até 10 imagens", "Todos os templates", "Character Engine"].map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/50"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#1a1814]/20" /><span>{f}</span></li>
-                ))}
-              </ul>
-              <Link to="/register" className="block text-center text-xs py-3" style={{ border: "1px solid rgba(26,24,20,0.2)", color: dark, letterSpacing: "1px" }}>COMEÇAR GRÁTIS</Link>
-            </div>
-
-            {/* Starter */}
-            <div className="bg-[#1a1814] p-8 flex flex-col relative" style={{ borderTop: `3px solid ${gold}` }}>
-              <span className="absolute top-3 right-4 text-[9px] px-2 py-0.5" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "2px" }}>POPULAR</span>
-              <p className="text-[10px] text-[#f5f0e8]/30 mb-1" style={{ letterSpacing: "3px" }}>STARTER</p>
-              <p className="text-5xl mb-1 text-[#f5f0e8]" style={{ fontFamily: FONT_DISPLAY }}>€14,99<span className="text-lg text-[#f5f0e8]/30">/mês</span></p>
-              <p className="text-sm text-[#f5f0e8]/30 mb-6" style={{ fontWeight: 300 }}>Para criadores individuais</p>
-              <ul className="space-y-2 mb-8 flex-1">
-                {["150 créditos/mês", "150 imagens ou 15 vídeos", "Character Engine ilimitado", "Vídeo UGC com Veo 3.1", "Suporte prioritário"].map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-[#f5f0e8]/70"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} /><span>{f}</span></li>
-                ))}
-              </ul>
-              <button onClick={handleProClick} disabled={proLoading} className="block w-full text-center text-xs py-3 transition-all hover:opacity-90" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>
-                {proLoading ? "..." : "COMEÇAR AGORA"}
-              </button>
-            </div>
-
-            {/* Pro */}
-            <div className="bg-[#ece5d9] p-8 flex flex-col">
-              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>PRO</p>
-              <p className="text-5xl mb-1" style={{ fontFamily: FONT_DISPLAY }}>€34,99<span className="text-lg text-[#1a1814]/30">/mês</span></p>
-              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>Para equipas profissionais</p>
-              <ul className="space-y-2 mb-8 flex-1">
-                {["500 créditos/mês", "500 imagens ou 50 vídeos", "Character Engine ilimitado", "Vídeo UGC com Veo 3.1 Fast", "Suporte dedicado"].map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/70"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} /><span>{f}</span></li>
-                ))}
-              </ul>
-              <Link to="/pricing" className="block text-center text-xs py-3 transition-all hover:opacity-90" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>COMEÇAR AGORA</Link>
-            </div>
-          </div>
-
-          {/* Credit packs teaser */}
-          <div className="text-center mt-10">
-            <Link to="/pricing" className="inline-flex items-center gap-2 text-xs text-[#1a1814]/40 hover:text-[#1a1814] transition-colors" style={{ letterSpacing: "1px" }}>
-              Ver packs de créditos avulso <ArrowRight className="h-3 w-3" />
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.45, ease }}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, flexWrap: "wrap" }}
+          >
+            <Link to="/register" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 32px", backgroundColor: C.gold, color: C.bg, textDecoration: "none", fontSize: 11, letterSpacing: "2px", fontWeight: 500, transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.goldLight; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.gold; }}
+            >
+              CRIAR GRATUITAMENTE <ArrowRight size={14} />
             </Link>
-          </div>
+            <a href="#features" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 24px", color: C.textMuted, textDecoration: "none", fontSize: 11, letterSpacing: "2px", border: `1px solid ${C.border}`, transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.color = C.text; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = C.textMuted; e.currentTarget.style.borderColor = C.border; }}
+            >
+              VER COMO FUNCIONA
+            </a>
+          </motion.div>
+
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.8 }}
+            style={{ marginTop: 48, fontSize: 10, letterSpacing: "3px", color: C.textFaint }}
+          >
+            USADO POR CRIADORES EM PORTUGAL, BRASIL E ANGOLA
+          </motion.p>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2.5 }}
+          style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)" }}
+        >
+          <ChevronDown size={20} style={{ color: C.textFaint }} />
         </motion.div>
       </section>
 
-      {/* FAQ */}
-      <section id="faq" className="bg-[#1a1814] text-[#f5f0e8] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto">
-          <div className="text-center mb-14">
-            <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.faq.badge")}</div>
-            <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.faq.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.faq.title_b")}</span></h2>
-          </div>
-          <div style={{ borderTop: `1px solid ${light}0d` }}>
-            {[1, 2, 3, 4, 5, 6].map(n => (
-              <div key={n} style={{ borderBottom: `1px solid ${light}0d` }}>
-                <button onClick={() => setOpenFaq(openFaq === n ? null : n)} className="w-full flex items-center justify-between py-5 text-left">
-                  <span className="text-sm text-[#f5f0e8]/70 pr-4">{t(`landing.faq.q${n}`)}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 transition-transform" style={{ color: gold, transform: openFaq === n ? "rotate(180deg)" : "rotate(0)" }} />
-                </button>
-                {openFaq === n && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="pb-5"><p className="text-sm text-[#f5f0e8]/40 leading-relaxed" style={{ fontWeight: 300 }}>{t(`landing.faq.a${n}`)}</p></motion.div>}
+      {/* ── STATS BAR ───────────────────────────────────────────────────────── */}
+      <section style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, backgroundColor: C.surface }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
+          {stats.map((s, i) => (
+            <Reveal key={s.label} delay={i * 0.08}>
+              <div style={{ padding: "32px 24px", textAlign: "center", borderRight: i < 3 ? `1px solid ${C.border}` : "none" }}>
+                <p className="display" style={{ fontSize: 36, fontWeight: 400, color: C.gold, letterSpacing: "-0.02em", marginBottom: 4 }}>{s.value}</p>
+                <p style={{ fontSize: 10, letterSpacing: "2px", color: C.textMuted }}>{s.label.toUpperCase()}</p>
               </div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="flex justify-center mb-12"><div style={{ width: 40, height: 1, backgroundColor: gold }} /></div>
-          <h2 className="text-3xl md:text-4xl mb-4" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.cta_final.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.cta_final.title_b")}</span></h2>
-          <p className="text-[#1a1814]/40 text-sm mb-10" style={{ fontWeight: 300 }}>{t("landing.cta_final.subtitle")}</p>
-          <Link to="/register" className="inline-flex items-center gap-2 text-xs px-6 py-3 transition-all hover:scale-[1.03]" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>{t("landing.cta_final.cta")}<ArrowRight className="h-3.5 w-3.5" /></Link>
+            </Reveal>
+          ))}
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-[#1a1814] py-8 px-4" style={{ borderTop: `1px solid ${light}0d` }}>
-        <p className="text-center text-[#f5f0e8]/[0.12] text-[11px]" style={{ letterSpacing: "2px" }}>{t("landing.footer.text")}</p>
+      {/* ── PROBLEM ─────────────────────────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+          <Reveal>
+            <Tag>O PROBLEMA</Tag>
+            <h2 className="display" style={{ fontSize: "clamp(36px, 5vw, 60px)", lineHeight: 1.1, margin: "24px 0", fontWeight: 400 }}>
+              Conteúdo UGC<br />
+              <span style={{ color: C.gold, fontStyle: "italic" }}>que não engana ninguém.</span>
+            </h2>
+            <p style={{ color: C.textMuted, lineHeight: 1.8, fontWeight: 300, fontSize: 15 }}>
+              Tens ferramentas de IA. Generates imagens. Mas os teus vídeos parecem feitos por robô, o teu personagem muda de cara em cada cena, e demoras horas a montar tudo.
+            </p>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {[
+                { n: "01", title: "Personagem inconsistente", desc: "Cada geração cria um rosto diferente. Os seguidores não se identificam com ninguém." },
+                { n: "02", title: "Vídeos com estética IA", desc: "Perfeito demais para parecer real. Plataformas e utilizadores detetam e ignoram." },
+                { n: "03", title: "Workflow fragmentado", desc: "ChatGPT + MidJourney + CapCut + Runway. Horas gastas, resultado medíocre." },
+              ].map(item => (
+                <div key={item.n} style={{ backgroundColor: C.surface, padding: "28px 32px", borderLeft: `2px solid ${C.border}` }}>
+                  <span style={{ fontSize: 10, color: C.gold, letterSpacing: "2px" }}>{item.n}</span>
+                  <p style={{ fontSize: 15, fontWeight: 500, margin: "8px 0 4px", color: C.text }}>{item.title}</p>
+                  <p style={{ fontSize: 13, color: C.textMuted, fontWeight: 300 }}>{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── SOLUTION DIVIDER ────────────────────────────────────────────────── */}
+      <div style={{ textAlign: "center", padding: "60px 24px", borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, backgroundColor: C.surface }}>
+        <Reveal>
+          <p className="display" style={{ fontSize: "clamp(24px, 4vw, 48px)", fontStyle: "italic", color: C.gold, fontWeight: 400 }}>
+            "A solução não é mais ferramentas.<br />É a ferramenta certa."
+          </p>
+        </Reveal>
+      </div>
+
+      {/* ── FEATURES ────────────────────────────────────────────────────────── */}
+      <section id="features" style={{ padding: "120px 24px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ marginBottom: 80 }}>
+              <Tag>FUNCIONALIDADES</Tag>
+              <h2 className="display" style={{ fontSize: "clamp(36px, 5vw, 64px)", lineHeight: 1.1, margin: "24px 0 0", fontWeight: 400 }}>
+                Tudo o que precisas.<br />
+                <span style={{ color: C.gold, fontStyle: "italic" }}>Num só lugar.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 1 }}>
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 0.08}>
+                <div style={{ backgroundColor: C.surface, padding: "40px 36px", borderBottom: `1px solid ${C.border}`, height: "100%", transition: "background 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = C.surfaceHover)}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = C.surface)}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                    <f.icon size={20} style={{ color: C.gold }} />
+                    <span style={{ fontSize: 9, letterSpacing: "2px", color: C.gold, border: `1px solid ${C.borderGold}`, padding: "3px 8px" }}>{f.tag}</span>
+                  </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 500, marginBottom: 12, letterSpacing: "-0.01em" }}>{f.title}</h3>
+                  <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.7, fontWeight: 300 }}>{f.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
+      <section id="how" style={{ padding: "120px 24px", backgroundColor: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 80 }}>
+              <Tag>COMO FUNCIONA</Tag>
+              <h2 className="display" style={{ fontSize: "clamp(36px, 5vw, 64px)", lineHeight: 1.1, margin: "24px 0 0", fontWeight: 400 }}>
+                Três passos.<br />
+                <span style={{ color: C.gold, fontStyle: "italic" }}>Zero fricção.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+            {[
+              { n: "01", title: "Cria o teu Personagem", desc: "Define o visual do teu influencer virtual. O Character Engine gera o identity lock — um perfil de consistência visual que bloqueia a aparência em todos os conteúdos." },
+              { n: "02", title: "Escolhe um Template", desc: "Seleciona entre 10 templates profissionais: Viral Pipeline, Dark Channel, UGC Scene, Viral Modeling. Preenches os campos e a SavvyOwl constrói o pipeline completo." },
+              { n: "03", title: "Gera e Publica", desc: "Imagens com Imagen 3, vídeos com Veo 3.1 — todos com o teu personagem. Descarrega, publica. O ciclo repete-se em minutos, não horas." },
+            ].map((step, i) => (
+              <Reveal key={step.n} delay={i * 0.12}>
+                <div style={{ padding: "48px 36px" }}>
+                  <span className="display" style={{ fontSize: 72, fontWeight: 400, color: C.borderGold, letterSpacing: "-0.04em", lineHeight: 1 }}>{step.n}</span>
+                  <h3 style={{ fontSize: 20, fontWeight: 500, margin: "24px 0 12px", letterSpacing: "-0.01em" }}>{step.title}</h3>
+                  <p style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.8, fontWeight: 300 }}>{step.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SOCIAL PROOF / QUOTE ────────────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <Reveal>
+            <GoldLine className="mx-auto mb-12" />
+            <p className="display" style={{ fontSize: "clamp(28px, 4vw, 52px)", lineHeight: 1.3, fontWeight: 400, fontStyle: "italic", marginBottom: 32 }}>
+              "Finalmente uma plataforma que entende que UGC não é sobre perfeição — é sobre <span style={{ color: C.gold }}>autenticidade consistente.</span>"
+            </p>
+            <p style={{ fontSize: 11, letterSpacing: "3px", color: C.textMuted }}>CRIADORES DE CONTEÚDO EM PORTUGAL, BRASIL E ANGOLA</p>
+            <GoldLine className="mx-auto mt-12" />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── PRICING ─────────────────────────────────────────────────────────── */}
+      <section id="pricing" style={{ padding: "120px 24px", backgroundColor: C.surface, borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 80 }}>
+              <Tag>PREÇOS</Tag>
+              <h2 className="display" style={{ fontSize: "clamp(36px, 5vw, 64px)", lineHeight: 1.1, margin: "24px 0 12px", fontWeight: 400 }}>
+                Investe no teu<br />
+                <span style={{ color: C.gold, fontStyle: "italic" }}>crescimento.</span>
+              </h2>
+              <p style={{ color: C.textMuted, fontSize: 14, fontWeight: 300 }}>Sem contratos. Cancela quando quiseres. 10 créditos gratuitos para começar.</p>
+            </div>
+          </Reveal>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+            {plans.map((plan, i) => (
+              <Reveal key={plan.key} delay={i * 0.1}>
+                <div style={{ backgroundColor: plan.primary ? C.bg : C.surfaceHover, padding: "48px 36px", position: "relative", borderTop: plan.primary ? `2px solid ${C.gold}` : `2px solid transparent`, display: "flex", flexDirection: "column", height: "100%" }}>
+                  {plan.primary && (
+                    <span style={{ position: "absolute", top: -1, right: 24, fontSize: 9, letterSpacing: "2px", backgroundColor: C.gold, color: C.bg, padding: "4px 12px" }}>POPULAR</span>
+                  )}
+                  <p style={{ fontSize: 10, letterSpacing: "3px", color: C.textMuted, marginBottom: 16 }}>{plan.name.toUpperCase()}</p>
+                  <div style={{ marginBottom: 8 }}>
+                    <span className="display" style={{ fontSize: 52, fontWeight: 400, letterSpacing: "-0.03em" }}>{plan.price}</span>
+                    <span style={{ fontSize: 14, color: C.textMuted }}>{plan.period}</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: C.textMuted, marginBottom: 36, fontWeight: 300 }}>{plan.sub}</p>
+                  <ul style={{ listStyle: "none", margin: "0 0 40px", padding: 0, flex: 1 }}>
+                    {plan.features.map(f => (
+                      <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12, fontSize: 13, color: C.textMuted }}>
+                        <Check size={13} style={{ color: C.gold, marginTop: 2, flexShrink: 0 }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={plan.action} disabled={loadingPlan === plan.key}
+                    style={{ width: "100%", padding: "14px", fontSize: 11, letterSpacing: "2px", cursor: "pointer", border: "none", transition: "all 0.2s", backgroundColor: plan.primary ? C.gold : "transparent", color: plan.primary ? C.bg : C.text, border: plan.primary ? "none" : `1px solid ${C.border}`, opacity: loadingPlan === plan.key ? 0.6 : 1 }}
+                    onMouseEnter={e => { if (!plan.primary) e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                    onMouseLeave={e => { if (!plan.primary) e.currentTarget.style.borderColor = C.border; }}
+                  >
+                    {loadingPlan === plan.key ? "..." : plan.cta}
+                  </button>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={0.3}>
+            <div style={{ textAlign: "center", marginTop: 40 }}>
+              <Link to="/pricing" style={{ fontSize: 11, color: C.textMuted, textDecoration: "none", letterSpacing: "2px", display: "inline-flex", alignItems: "center", gap: 8, transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.textMuted)}
+              >
+                VER PACKS DE CRÉDITOS AVULSO <ArrowRight size={12} />
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
+      <section id="faq" style={{ padding: "120px 24px" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <Reveal>
+            <div style={{ marginBottom: 64 }}>
+              <Tag>FAQ</Tag>
+              <h2 className="display" style={{ fontSize: "clamp(36px, 5vw, 60px)", lineHeight: 1.1, margin: "24px 0 0", fontWeight: 400 }}>
+                Tens dúvidas?<br />
+                <span style={{ color: C.gold, fontStyle: "italic" }}>Temos respostas.</span>
+              </h2>
+            </div>
+          </Reveal>
+
+          <div style={{ borderTop: `1px solid ${C.border}` }}>
+            {faqs.map((faq, i) => (
+              <Reveal key={i} delay={i * 0.04}>
+                <div style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    style={{ width: "100%", background: "none", border: "none", padding: "24px 0", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", textAlign: "left", gap: 16 }}
+                  >
+                    <span style={{ fontSize: 15, color: C.text, fontWeight: 400 }}>{faq.q}</span>
+                    <motion.div animate={{ rotate: openFaq === i ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown size={16} style={{ color: C.gold, flexShrink: 0 }} />
+                    </motion.div>
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }}>
+                        <p style={{ paddingBottom: 24, fontSize: 14, color: C.textMuted, lineHeight: 1.8, fontWeight: 300 }}>{faq.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ───────────────────────────────────────────────────────── */}
+      <section style={{ padding: "120px 24px", textAlign: "center", backgroundColor: C.surface, borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <Reveal>
+            <GoldLine className="mx-auto mb-16" />
+            <h2 className="display" style={{ fontSize: "clamp(40px, 7vw, 88px)", lineHeight: 1.05, fontWeight: 400, marginBottom: 24, letterSpacing: "-0.03em" }}>
+              O teu próximo vídeo<br />
+              <span style={{ color: C.gold, fontStyle: "italic" }}>começa aqui.</span>
+            </h2>
+            <p style={{ fontSize: 14, color: C.textMuted, marginBottom: 48, fontWeight: 300 }}>
+              10 créditos gratuitos. Sem cartão de crédito. Cancela quando quiseres.
+            </p>
+            <Link to="/register" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "16px 40px", backgroundColor: C.gold, color: C.bg, textDecoration: "none", fontSize: 11, letterSpacing: "2px", fontWeight: 500, transition: "all 0.2s" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.goldLight; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.gold; }}
+            >
+              CRIAR CONTA GRÁTIS <ArrowRight size={14} />
+            </Link>
+            <GoldLine className="mx-auto mt-16" />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
+      <footer style={{ padding: "40px 24px", borderTop: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src="/logo.svg" alt="SavvyOwl" style={{ height: 28 }} />
+            <span style={{ fontSize: 10, letterSpacing: "2px", color: C.textFaint }}>SAVVYOWL</span>
+          </div>
+          <div style={{ display: "flex", gap: 32 }}>
+            {[["#features", "Features"], ["#pricing", "Preços"], ["/pricing", "Planos"], ["/login", "Entrar"]].map(([href, label]) => (
+              <a key={label} href={href} style={{ fontSize: 10, letterSpacing: "2px", color: C.textFaint, textDecoration: "none", transition: "color 0.2s" }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.textMuted)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.textFaint)}
+              >{label.toUpperCase()}</a>
+            ))}
+          </div>
+          <p style={{ fontSize: 10, letterSpacing: "2px", color: C.textFaint }}>© 2026 SAVVYOWL</p>
+        </div>
       </footer>
     </div>
   );
