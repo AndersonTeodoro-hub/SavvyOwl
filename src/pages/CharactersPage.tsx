@@ -168,7 +168,9 @@ export default function CharactersPage() {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            prompt: activeChar.expanded.nano_banana_prompt,
+            prompt: activeChar.expanded.negative_prompt
+              ? `${activeChar.expanded.nano_banana_prompt}\n\nNegative: ${activeChar.expanded.negative_prompt}`
+              : activeChar.expanded.nano_banana_prompt,
             apiKey: googleApiKey || undefined,
           }),
         }
@@ -196,7 +198,20 @@ export default function CharactersPage() {
   };
 
   useEffect(() => {
-    engine.list();
+    // Espera pela sessão antes de listar
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        engine.list();
+      }
+    };
+    init();
+
+    // Também escuta mudanças de auth (login/logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) engine.list();
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -554,11 +569,14 @@ export default function CharactersPage() {
               </p>
 
               {d?.nano_banana_prompt && (
-                <PromptBlock label="Nano Banana — Imagem" icon={Image} color="#eab308" text={d.nano_banana_prompt} />
-              )}
-
-              {d?.negative_prompt && (
-                <PromptBlock label="Negative Prompt" icon={AlertCircle} color="#ef4444" text={d.negative_prompt} />
+                <PromptBlock
+                  label="Nano Banana — Imagem"
+                  icon={Image}
+                  color="#eab308"
+                  text={d.negative_prompt
+                    ? `${d.nano_banana_prompt}\n\nNegative: ${d.negative_prompt}`
+                    : d.nano_banana_prompt}
+                />
               )}
             </div>
 
@@ -587,5 +605,31 @@ export default function CharactersPage() {
     );
   }
 
-  return null;
+  // Fallback: se view é "detail" mas não há personagem, ou qualquer outro estado inválido — volta à lista
+  if (view === "detail" && !activeChar) {
+    // Autofix: volta para a lista
+    setView("library");
+  }
+
+  // Mostrar lista como fallback seguro
+  return (
+    <div className="flex-1 flex flex-col min-h-0 bg-background">
+      <header className="h-12 flex items-center justify-between border-b border-border px-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">{isPT ? "Personagens" : "Characters"}</span>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => setView("create")} className="gap-1.5 text-xs">
+          <Plus className="h-3.5 w-3.5" />
+          {isPT ? "Novo" : "New"}
+        </Button>
+      </header>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-xs text-muted-foreground">{isPT ? "A carregar personagens..." : "Loading characters..."}</p>
+        </div>
+      </div>
+    </div>
+  );
 }

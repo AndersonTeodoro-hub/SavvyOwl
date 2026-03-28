@@ -1,65 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCharacter } from "@/contexts/CharacterContext";
 import { Users, X, Lock, ChevronDown } from "lucide-react";
-import { buildCharacterIdentityBlock } from "@/lib/character-engine/generation";
 
-interface CharacterOption {
-  id: string;
-  name: string;
-  summary: string;
-  status: string;
-  expanded: any;
-}
-
-type Props = {
-  onSelect: (characterBlock: string | null, characterName: string | null) => void;
-  selectedName: string | null;
-};
-
-export function CharacterSelector({ onSelect, selectedName }: Props) {
-  const { user } = useAuth();
+/**
+ * CharacterSelector — dropdown para selecionar personagem locked.
+ * Usa o CharacterContext global, permitindo que qualquer componente
+ * (templates, botões de gerar, etc.) aceda ao personagem ativo.
+ */
+export function CharacterSelector() {
   const { i18n } = useTranslation();
   const isPT = i18n.language?.startsWith("pt");
-  const [characters, setCharacters] = useState<CharacterOption[]>([]);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from("characters")
-        .select("id, expanded, status")
-        .eq("user_id", user.id)
-        .eq("status", "locked")
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        setCharacters(
-          data.map((c: any) => ({
-            id: c.id,
-            name: c.expanded?.name || "?",
-            summary: c.expanded?.summary || "",
-            status: c.status,
-            expanded: c.expanded,
-          }))
-        );
-      }
-    })();
-  }, [user]);
+  const {
+    characters,
+    activeCharacterName,
+    selectCharacter,
+    clearCharacter,
+  } = useCharacter();
 
   if (characters.length === 0) return null;
 
-  const handleSelect = (char: CharacterOption) => {
-    const block = buildCharacterIdentityBlock(char.expanded);
-    onSelect(block, char.name);
+  const handleSelect = (id: string) => {
+    selectCharacter(id);
     setOpen(false);
   };
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSelect(null, null);
+    clearCharacter();
   };
 
   return (
@@ -67,14 +36,14 @@ export function CharacterSelector({ onSelect, selectedName }: Props) {
       <button
         onClick={() => setOpen(!open)}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-          selectedName
+          activeCharacterName
             ? "bg-primary/15 text-primary border border-primary/30"
             : "text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent"
         }`}
       >
         <Users className="h-3 w-3" />
-        {selectedName || (isPT ? "Personagem" : "Character")}
-        {selectedName ? (
+        {activeCharacterName || (isPT ? "Personagem" : "Character")}
+        {activeCharacterName ? (
           <X className="h-3 w-3 ml-0.5 hover:text-destructive" onClick={handleClear} />
         ) : (
           <ChevronDown className="h-3 w-3" />
@@ -94,7 +63,7 @@ export function CharacterSelector({ onSelect, selectedName }: Props) {
               {characters.map((char) => (
                 <button
                   key={char.id}
-                  onClick={() => handleSelect(char)}
+                  onClick={() => handleSelect(char.id)}
                   className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-secondary/50 transition-colors text-left"
                 >
                   <Lock className="h-3 w-3 text-green-500 shrink-0" />
@@ -105,10 +74,10 @@ export function CharacterSelector({ onSelect, selectedName }: Props) {
                 </button>
               ))}
             </div>
-            {selectedName && (
+            {activeCharacterName && (
               <div className="p-2 border-t border-border">
                 <button
-                  onClick={() => { onSelect(null, null); setOpen(false); }}
+                  onClick={() => { clearCharacter(); setOpen(false); }}
                   className="w-full text-xs text-muted-foreground hover:text-destructive p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
                 >
                   {isPT ? "Remover personagem" : "Remove character"}

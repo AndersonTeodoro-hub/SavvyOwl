@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CharacterProvider } from "@/contexts/CharacterContext";
 import { ThemeProvider } from "next-themes";
 import { ErrorBoundary, SafeComponent } from "@/components/ErrorBoundary";
 
@@ -33,6 +34,7 @@ const App = () => (
         <InstallPrompt />
         <BrowserRouter>
           <AuthProvider>
+          <CharacterProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
@@ -48,6 +50,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+          </CharacterProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

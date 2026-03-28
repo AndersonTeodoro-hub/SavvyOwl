@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useGoogleApiKey } from "@/hooks/useGoogleApiKey";
-import { Loader2, ImageIcon, Download, X, Key } from "lucide-react";
+import { useCharacter } from "@/contexts/CharacterContext";
+import { Loader2, ImageIcon, Download, X, Key, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -10,14 +11,42 @@ type Props = {
   prompt: string;
 };
 
+/**
+ * GenerateImageButton — agora injeta automaticamente o identity block
+ * e o negative prompt do personagem ativo via CharacterContext.
+ * O prompt final enviado ao Nano Banana = identity block + prompt + negative prompt.
+ */
 export function GenerateImageButton({ prompt }: Props) {
   const apiKey = useGoogleApiKey();
   const navigate = useNavigate();
+  const { identityBlock, negativePrompt, activeCharacterName } = useCharacter();
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [freeCredits, setFreeCredits] = useState<{ remaining: number; limit: number } | null>(null);
   const [limitReached, setLimitReached] = useState(false);
+
+  /**
+   * Constrói o prompt final com identity block + negative prompt injetados.
+   * Se não há personagem ativo, envia o prompt original tal como está.
+   */
+  const buildFinalPrompt = (): string => {
+    const parts: string[] = [];
+
+    if (identityBlock) {
+      parts.push(identityBlock);
+      parts.push("");
+    }
+
+    parts.push(prompt);
+
+    if (negativePrompt) {
+      parts.push("");
+      parts.push(`NEGATIVE PROMPT: ${negativePrompt}`);
+    }
+
+    return parts.join("\n");
+  };
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -29,6 +58,8 @@ export function GenerateImageButton({ prompt }: Props) {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
 
+      const finalPrompt = buildFinalPrompt();
+
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
         {
@@ -39,7 +70,7 @@ export function GenerateImageButton({ prompt }: Props) {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            prompt,
+            prompt: finalPrompt,
             apiKey: apiKey || undefined,
           }),
         }
@@ -86,19 +117,27 @@ export function GenerateImageButton({ prompt }: Props) {
   return (
     <div className="mt-2">
       {!imageUrl && !limitReached && (
-        <Button
-          onClick={handleGenerate}
-          disabled={loading}
-          size="sm"
-          variant="outline"
-          className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-        >
-          {loading ? (
-            <><Loader2 className="h-3 w-3 animate-spin" />A gerar imagem...</>
-          ) : (
-            <><ImageIcon className="h-3 w-3" />Gerar Imagem (Nano Banana){!apiKey && " - Gratis"}</>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button
+            onClick={handleGenerate}
+            disabled={loading}
+            size="sm"
+            variant="outline"
+            className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            {loading ? (
+              <><Loader2 className="h-3 w-3 animate-spin" />A gerar imagem...</>
+            ) : (
+              <><ImageIcon className="h-3 w-3" />Gerar Imagem (Nano Banana){!apiKey && " - Gratis"}</>
+            )}
+          </Button>
+          {activeCharacterName && (
+            <span className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1">
+              <Users className="h-2.5 w-2.5" />
+              {activeCharacterName}
+            </span>
           )}
-        </Button>
+        </div>
       )}
 
       {limitReached && (
@@ -137,6 +176,11 @@ export function GenerateImageButton({ prompt }: Props) {
               Gerar outra
             </Button>
           </div>
+          {activeCharacterName && (
+            <p className="text-[10px] text-green-600/70 dark:text-green-400/70 mt-1">
+              Identity lock: {activeCharacterName}
+            </p>
+          )}
           {freeCredits && (
             <p className="text-[10px] text-muted-foreground/60 mt-1.5">
               {freeCredits.remaining > 0

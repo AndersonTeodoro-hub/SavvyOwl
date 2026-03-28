@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, X, Loader2, ExternalLink, Eye, ThumbsUp, Play } from "lucide-react";
+import { ChevronRight, X, Loader2, ExternalLink, Eye, ThumbsUp, Play, Users, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useCharacter } from "@/contexts/CharacterContext";
 
 type TemplateField = {
   key: string;
@@ -29,6 +30,7 @@ type Props = {
 
 export function StructuredTemplates({ onSend, disabled }: Props) {
   const { t, i18n } = useTranslation();
+  const { identityBlock, negativePrompt, activeCharacterName } = useCharacter();
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [viralVideos, setViralVideos] = useState<any[]>([]);
@@ -41,8 +43,38 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const handleViralVideoSelect = (vid: any) => {
     try {
       const v = fieldValues;
+      const hasChar = !!identityBlock;
+
+      // Bloco de instrução de personagem (se houver)
+      const charSection = hasChar ? (isPT
+        ? `\n\n## 3. IMAGEM (${v.imageTool})
+O personagem já está definido via Identity Lock. USA EXACTAMENTE o identity block abaixo em cada prompt — NÃO inventes descrição nova:
+
+\`\`\`
+${identityBlock}
+
+[prompt da cena aqui: enquadramento, pose, iluminação, fundo, expressão]
+
+Negative: ${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look, no illustration, no anime"}
+\`\`\`
+
+NOTA: O negative prompt vai DENTRO do mesmo bloco de código, não separado.`
+        : `\n\n## 3. IMAGE (${v.imageTool})
+Character is already defined via Identity Lock. Use EXACTLY the identity block below in every prompt — do NOT invent a new description:
+
+\`\`\`
+${identityBlock}
+
+[scene prompt here: framing, pose, lighting, background, expression]
+
+Negative: ${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look, no illustration, no anime"}
+\`\`\`
+
+NOTE: The negative prompt goes INSIDE the same code block, not separate.`)
+        : "";
+
       const prompt = isPT
-      ? `Modela este vídeo viral para eu recriar com ${v.imageTool} + ${v.videoTool} + CapCut.
+      ? `${hasChar ? `═══ PERSONAGEM ATIVO — IDENTITY LOCK ═══\n${identityBlock}\n═══ FIM IDENTITY LOCK ═══\n\n` : ""}Modela este vídeo viral para eu recriar com ${v.imageTool} + ${v.videoTool} + CapCut.
 
 VÍDEO: "${vid.title}" | ${vid.channel} | ${formatNumber(vid.views)} views | ${vid.duration} | ${vid.url}
 CONTEXTO: ${v.niche} | Público: ${v.audience} ${v.brand ? `| Marca: ${v.brand}` : ""} | Idioma: ${v.videoLang}
@@ -54,24 +86,17 @@ Máximo 4 linhas. Porque viralizou, técnica, emoção.
 
 ## 2. IDEIA DA MODELAGEM
 Máximo 4 linhas. Como vou adaptar este vídeo ao meu contexto, qual a mensagem, diferencial.
-
+${hasChar ? charSection : `
 ## 3. IMAGEM (${v.imageTool})
 Descrição do personagem em 2 linhas, depois:
 
 Prompt ${v.imageTool} dentro de bloco de código (entre \`\`\`):
 \`\`\`
 [prompt completo em inglês aqui]
-\`\`\`
 
-Negative prompt dentro de bloco de código:
+Negative: [negative prompt aqui]
 \`\`\`
-[negative prompt aqui]
-\`\`\`
-
-Bloco de consistência dentro de bloco de código:
-\`\`\`
-[consistência do personagem aqui]
-\`\`\`
+`}
 
 ## 4. CENAS ${v.videoTool}
 Calcula quantas cenas de 8 segundos são necessárias.
@@ -81,7 +106,7 @@ Para CADA cena:
 
 Prompt ${v.videoTool} dentro de bloco de código:
 \`\`\`
-[prompt completo em inglês, com ação, câmera, iluminação, expressão, cenário, diálogo entre aspas no idioma ${v.videoLang}. Maximizar 8 segundos. Sem prefixos.]
+${hasChar ? "[identity block do personagem] + " : ""}[prompt completo em inglês, com ação, câmera, iluminação, expressão, cenário, diálogo entre aspas no idioma ${v.videoLang}. Maximizar 8 segundos.]${hasChar ? `\n\nNegative: ${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look"}` : ""}
 \`\`\`
 
 Texto na tela: [overlay curto, máx 5 palavras]
@@ -96,8 +121,8 @@ REGRAS ABSOLUTAS:
 - ZERO explicações desnecessárias — só o que é preciso para executar
 - Cada cena ${v.videoTool} usa o MÁXIMO dos 8 segundos
 - Cena 1 = HOOK | Última cena = CTA
-- NÃO repetir a análise nem reexplicar o que já foi dito`
-      : `Model this viral video for me to recreate with ${v.imageTool} + ${v.videoTool} + CapCut.
+${hasChar ? "- CADA prompt (imagem e vídeo) DEVE começar com o identity block COMPLETO do personagem\n- O negative prompt vai DENTRO do bloco de código, NÃO como bloco separado" : ""}`
+      : `${hasChar ? `═══ ACTIVE CHARACTER — IDENTITY LOCK ═══\n${identityBlock}\n═══ END IDENTITY LOCK ═══\n\n` : ""}Model this viral video for me to recreate with ${v.imageTool} + ${v.videoTool} + CapCut.
 
 VIDEO: "${vid.title}" | ${vid.channel} | ${formatNumber(vid.views)} views | ${vid.duration} | ${vid.url}
 CONTEXT: ${v.niche} | Audience: ${v.audience} ${v.brand ? `| Brand: ${v.brand}` : ""} | Language: ${v.videoLang}
@@ -108,25 +133,18 @@ DELIVER EXACTLY IN THIS ORDER AND FORMAT:
 Max 4 lines. Why it went viral, technique, emotion.
 
 ## 2. MODELING IDEA
-Max 4 lines. How I'll adapt this video to my context, message, differentiator.
-
+Max 4 lines. How to adapt to my context, message, differentiator.
+${hasChar ? charSection : `
 ## 3. IMAGE (${v.imageTool})
 Character description in 2 lines, then:
 
 ${v.imageTool} prompt inside code block:
 \`\`\`
-[complete prompt in English here]
-\`\`\`
+[complete prompt in English]
 
-Negative prompt inside code block:
+Negative: [negative prompt]
 \`\`\`
-[negative prompt here]
-\`\`\`
-
-Consistency block inside code block:
-\`\`\`
-[character consistency here]
-\`\`\`
+`}
 
 ## 4. SCENES ${v.videoTool}
 Calculate how many 8-second scenes needed.
@@ -136,7 +154,7 @@ For EACH scene:
 
 ${v.videoTool} prompt inside code block:
 \`\`\`
-[complete prompt in English, with action, camera, lighting, expression, setting, dialogue in quotes in ${v.videoLang}. Maximize 8 seconds. No prefixes.]
+${hasChar ? "[character identity block] + " : ""}[complete prompt in English, action, camera, lighting, expression, setting, dialogue in ${v.videoLang}. Maximize 8 seconds.]${hasChar ? `\n\nNegative: ${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look"}` : ""}
 \`\`\`
 
 Text on screen: [short overlay, max 5 words]
@@ -145,13 +163,13 @@ Text on screen: [short overlay, max 5 words]
 3 lines max: scene order, transitions, music.
 
 ABSOLUTE RULES:
-- Every prompt MUST be inside a code block (\`\`\`) so user can copy with one click
+- Every prompt MUST be inside a code block
 - Image and video prompts ALWAYS in English
 - Dialogue/speech in: ${v.videoLang}
-- ZERO unnecessary explanations — only what's needed to execute
+- ZERO unnecessary explanations
 - Each ${v.videoTool} scene uses MAXIMUM 8 seconds
 - Scene 1 = HOOK | Last scene = CTA
-- Do NOT repeat analysis or re-explain what was already said`;
+${hasChar ? "- EVERY prompt (image and video) MUST start with the FULL character identity block\n- Negative prompt goes INSIDE the code block, NOT as a separate block" : ""}`;
 
     onSend(prompt);
     resetViralFlow();
@@ -189,13 +207,13 @@ Detalhes do personagem:
 - Plataforma principal: ${v.platform}
 
 Preciso de:
-1. PROMPT PRINCIPAL completo e pronto a colar na ferramenta
-2. PROMPT NEGATIVO detalhado e específico
-3. VERSÃO CURTA para ferramentas com limite de caracteres
-4. BLOCO DE CONSISTÊNCIA do personagem para reutilizar em futuras gerações
-5. PARÂMETROS TÉCNICOS (proporção, ângulo, iluminação)
-6. 2 VARIAÇÕES com cenários ou moods diferentes (cada uma completa e autónoma)
-7. PRÓXIMOS PASSOS: como usar esta imagem como referência para criar vídeo (Veo3, HeyGen, etc.)
+1. PROMPT PRINCIPAL completo e pronto a colar na ferramenta (com negative prompt na última linha do mesmo bloco de código, formato "Negative: ...")
+2. VERSÃO CURTA para ferramentas com limite de caracteres
+3. PARÂMETROS TÉCNICOS (proporção, ângulo, iluminação)
+4. 2 VARIAÇÕES com cenários ou moods diferentes (cada uma completa e autónoma, com negative dentro do mesmo bloco)
+5. PRÓXIMOS PASSOS: como usar esta imagem como referência para criar vídeo (Veo3, HeyGen, etc.)
+
+REGRA: O negative prompt vai SEMPRE como última linha dentro do bloco de código do prompt principal. NUNCA como bloco de código separado.
 
 O prompt deve ser para estilo UGC — parecer autêntico, gravado com telemóvel, natural e não comercial.`
         : `Create an ultra-detailed professional prompt to generate a UGC influencer image in ${v.tool || "Nano Banana"}.
@@ -209,13 +227,13 @@ Character details:
 - Main platform: ${v.platform}
 
 I need:
-1. MAIN PROMPT complete and ready to paste
-2. Detailed NEGATIVE PROMPT
-3. SHORT VERSION for character-limited tools
-4. CHARACTER CONSISTENCY BLOCK for reuse
-5. TECHNICAL PARAMETERS (ratio, angle, lighting)
-6. 2 VARIATIONS with different settings/moods (each complete and standalone)
-7. NEXT STEPS: how to use this image as reference for video (Veo3, HeyGen, etc.)
+1. MAIN PROMPT complete and ready to paste (with negative prompt as last line inside the same code block, format "Negative: ...")
+2. SHORT VERSION for character-limited tools
+3. TECHNICAL PARAMETERS (ratio, angle, lighting)
+4. 2 VARIATIONS with different settings/moods (each complete and standalone, with negative inside same block)
+5. NEXT STEPS: how to use this image as reference for video (Veo3, HeyGen, etc.)
+
+RULE: The negative prompt ALWAYS goes as the last line inside the main prompt code block. NEVER as a separate code block.
 
 The prompt must be UGC style — authentic, smartphone-like, natural, not commercial.`,
     },
@@ -422,12 +440,12 @@ Estilo: ${v.style}
 Proporção: ${v.aspect}
 
 Preciso de:
-1. PROMPT PRINCIPAL detalhado com descrição de movimento, câmera, iluminação, ação
-2. PROMPT NEGATIVO
-3. VERSÃO CURTA
-4. 2 VARIAÇÕES com ângulos ou moods diferentes
-5. NOTAS DE DIREÇÃO: o que ajustar se o primeiro resultado não ficar perfeito
-6. Se for para personagem: BLOCO DE CONSISTÊNCIA para manter aparência entre gerações`
+1. PROMPT PRINCIPAL detalhado com descrição de movimento, câmera, iluminação, ação (com negative prompt como última linha dentro do mesmo bloco de código)
+2. VERSÃO CURTA
+3. 2 VARIAÇÕES com ângulos ou moods diferentes
+4. NOTAS DE DIREÇÃO: o que ajustar se o primeiro resultado não ficar perfeito
+
+REGRA: O negative prompt vai SEMPRE dentro do bloco de código do prompt principal (linha "Negative: ..."). NUNCA como bloco separado.`
         : `Create a professional prompt to generate video in ${v.tool}.
 
 Concept: ${v.concept}
@@ -436,12 +454,12 @@ Style: ${v.style}
 Aspect ratio: ${v.aspect}
 
 I need:
-1. Detailed MAIN PROMPT with movement, camera, lighting, action description
-2. NEGATIVE PROMPT
-3. SHORT VERSION
-4. 2 VARIATIONS with different angles or moods
-5. DIRECTION NOTES: what to adjust if first result isn't perfect
-6. If character-based: CONSISTENCY BLOCK to maintain appearance across generations`,
+1. Detailed MAIN PROMPT with movement, camera, lighting, action description (with negative prompt as last line inside the same code block)
+2. SHORT VERSION
+3. 2 VARIATIONS with different angles or moods
+4. DIRECTION NOTES: what to adjust if first result isn't perfect
+
+RULE: The negative prompt ALWAYS goes inside the main prompt code block (line "Negative: ..."). NEVER as a separate block.`,
     },
     {
       id: "scene-generator",
@@ -454,7 +472,6 @@ I need:
         { key: "maxDuration", label: isPT ? "Duração máx. por cena" : "Max duration per scene", type: "select", options: ["5s", "8s (Veo3 max)", "10s", "15s", "30s"], placeholder: "" },
         { key: "videoType", label: isPT ? "Tipo de vídeo" : "Video type", type: "select", options: isPT ? ["Influencer UGC", "Vídeo Dark / Narração", "Review de produto", "Tutorial passo a passo", "Storytelling emocional", "Antes e Depois", "Vlog / Day in my life"] : ["UGC Influencer", "Dark Video / Narration", "Product Review", "Step-by-step Tutorial", "Emotional Storytelling", "Before & After", "Vlog / Day in my life"], placeholder: "" },
         { key: "objective", label: isPT ? "Objetivo do vídeo" : "Video objective", placeholder: isPT ? "ex: vender um curso de marketing, apresentar produto de skincare, motivar audiência" : "e.g., sell a marketing course, present skincare product, motivate audience" },
-        { key: "character", label: isPT ? "Descrição do personagem (se houver)" : "Character description (if any)", placeholder: isPT ? "ex: mulher brasileira, 28 anos, cabelo longo castanho, estilo casual" : "e.g., Brazilian woman, 28, long brown hair, casual style" },
         { key: "voiceover", label: isPT ? "Narração / Voz" : "Narration / Voice", type: "select", options: isPT ? ["Com voz off (narração)", "Personagem a falar", "Sem voz (só música + texto)", "Voz off + texto na tela"] : ["Voiceover (narration)", "Character speaking", "No voice (music + text only)", "Voiceover + text on screen"], placeholder: "" },
         { key: "aspect", label: isPT ? "Proporção" : "Aspect ratio", type: "select", options: ["9:16 (Reels/TikTok)", "16:9 (YouTube)", "1:1 (Feed)"], placeholder: "" },
         { key: "music", label: isPT ? "Estilo de música" : "Music style", placeholder: isPT ? "ex: motivacional épica, lo-fi relaxante, trending TikTok, dramática" : "e.g., epic motivational, lo-fi relaxing, trending TikTok, dramatic" },
@@ -470,7 +487,6 @@ BRIEFING DO VÍDEO:
 - Proporção: ${v.aspect}
 - Narração: ${v.voiceover}
 - Música: ${v.music}
-${v.character ? `- Personagem: ${v.character}` : ""}
 
 REGRAS OBRIGATÓRIAS:
 1. Cada cena deve usar o MÁXIMO da duração disponível (${v.maxDuration}) — nunca gerar cenas curtas
@@ -480,17 +496,14 @@ REGRAS OBRIGATÓRIAS:
 
 PARA CADA CENA entrega:
 - CENA [N] — Título descritivo
-- PROMPT ${v.tool}: prompt completo e pronto a colar na ferramenta, incluindo descrição detalhada de: ação/movimento, enquadramento de câmera, iluminação, expressão do personagem, cenário, o que acontece do início ao fim da cena
-- PROMPT NEGATIVO: o que excluir nesta cena
+- PROMPT ${v.tool}: prompt completo dentro de bloco de código, incluindo: ação/movimento, enquadramento de câmera, iluminação, expressão do personagem, cenário, o que acontece do início ao fim da cena. O negative prompt vai NO FINAL do mesmo bloco de código (linha "Negative: ...")
 - NARRAÇÃO/VOZ: texto exacto da fala ou narração (com timing)
 - TEXTO NA TELA: overlays, legendas, títulos (com posição e estilo)
 - MÚSICA: direção sonora para esta cena
 - DURAÇÃO: ${v.maxDuration}
 - TRANSIÇÃO PARA PRÓXIMA CENA: como conectar
-${v.character ? `- CONSISTÊNCIA: manter sempre a mesma aparência — ${v.character}` : ""}
 
 NO FINAL inclui:
-- BLOCO DE CONSISTÊNCIA do personagem (se aplicável) para usar em todas as cenas
 - SEQUÊNCIA DE MONTAGEM: ordem das cenas e como montar o vídeo final
 - DICAS DE PÓS-PRODUÇÃO: como juntar as cenas no CapCut/editor
 - DURAÇÃO TOTAL ESTIMADA do vídeo final`
@@ -504,7 +517,6 @@ VIDEO BRIEF:
 - Aspect ratio: ${v.aspect}
 - Narration: ${v.voiceover}
 - Music: ${v.music}
-${v.character ? `- Character: ${v.character}` : ""}
 
 MANDATORY RULES:
 1. Each scene must use the MAXIMUM available duration (${v.maxDuration}) — never generate short scenes
@@ -514,17 +526,14 @@ MANDATORY RULES:
 
 FOR EACH SCENE deliver:
 - SCENE [N] — Descriptive title
-- ${v.tool} PROMPT: complete prompt ready to paste, including detailed description of: action/movement, camera framing, lighting, character expression, setting, what happens from start to end
-- NEGATIVE PROMPT: what to exclude in this scene
+- ${v.tool} PROMPT: complete prompt inside a code block, including: action/movement, camera framing, lighting, character expression, setting, what happens from start to end. Negative prompt goes at the END of the same code block (line "Negative: ...")
 - NARRATION/VOICE: exact speech or narration text (with timing)
 - TEXT ON SCREEN: overlays, captions, titles (with position and style)
 - MUSIC: sound direction for this scene
 - DURATION: ${v.maxDuration}
 - TRANSITION TO NEXT SCENE: how to connect
-${v.character ? `- CONSISTENCY: always maintain same appearance — ${v.character}` : ""}
 
 AT THE END include:
-- CHARACTER CONSISTENCY BLOCK (if applicable) to use across all scenes
 - EDITING SEQUENCE: scene order and how to assemble the final video
 - POST-PRODUCTION TIPS: how to join scenes in CapCut/editor
 - ESTIMATED TOTAL DURATION of final video`,
@@ -835,6 +844,12 @@ STEP 3 — EXECUTION PLAN:
     },
   ];
 
+  // Templates que geram cenas/prompts de imagem/vídeo e precisam de identity lock
+  const isSceneTemplate = (id: string) => [
+    "scene-generator", "dark-channel", "viral-pipeline", "viral-modeling",
+    "veo3-video", "ugc-influencer"
+  ].includes(id);
+
   const handleSubmitTemplate = async () => {
     if (!activeTemplate) return;
 
@@ -878,7 +893,47 @@ STEP 3 — EXECUTION PLAN:
     }
 
     // Normal flow for other templates
-    const prompt = activeTemplate.buildPrompt(fieldValues);
+    let prompt = activeTemplate.buildPrompt(fieldValues);
+
+    // === CHARACTER ENGINE INJECTION ===
+    // Se há personagem ativo, injeta identity block + negative prompt no prompt final
+    // Isto garante que a IA gere prompts com consistência visual
+    if (identityBlock && isSceneTemplate(activeTemplate.id)) {
+      const charInstruction = isPT
+        ? `\n\n═══ PERSONAGEM ATIVO — IDENTITY LOCK ═══
+O personagem abaixo é OBRIGATÓRIO em todas as cenas. Cada prompt de imagem/vídeo que gerares DEVE incluir este bloco de identidade COMPLETO no início. NÃO inventes descrições — usa EXACTAMENTE este bloco:
+
+${identityBlock}
+
+NEGATIVE PROMPT (incluir em TODOS os prompts de imagem):
+${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look, no illustration, no anime, no cartoon"}
+
+REGRA: O negative prompt vai JUNTO do prompt principal (não como bloco separado). Formato:
+\`\`\`
+[identity block + prompt da cena]
+
+Negative: [negative prompt]
+\`\`\`
+═══ FIM IDENTITY LOCK ═══`
+        : `\n\n═══ ACTIVE CHARACTER — IDENTITY LOCK ═══
+The character below is MANDATORY in all scenes. Every image/video prompt you generate MUST include this identity block in FULL at the beginning. Do NOT invent descriptions — use EXACTLY this block:
+
+${identityBlock}
+
+NEGATIVE PROMPT (include in ALL image prompts):
+${negativePrompt || "no perfect symmetry, no airbrushed skin, no CGI look, no illustration, no anime, no cartoon"}
+
+RULE: The negative prompt goes TOGETHER with the main prompt (not as a separate block). Format:
+\`\`\`
+[identity block + scene prompt]
+
+Negative: [negative prompt]
+\`\`\`
+═══ END IDENTITY LOCK ═══`;
+
+      prompt = charInstruction + "\n\n" + prompt;
+    }
+
     onSend(prompt);
     setActiveTemplate(null);
     setFieldValues({});
@@ -993,6 +1048,37 @@ STEP 3 — EXECUTION PLAN:
       </div>
 
       <div className="space-y-3">
+        {/* Character Engine Banner — mostra quando há personagem ativo em templates de cena */}
+        {activeCharacterName && activeTemplate && isSceneTemplate(activeTemplate.id) && (
+          <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-green-500/30 bg-green-500/5">
+            <Lock className="h-3.5 w-3.5 text-green-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                {isPT ? "Personagem ativo" : "Active character"}: {activeCharacterName}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {isPT
+                  ? "Identity block + negative prompt serão injetados automaticamente em cada prompt gerado"
+                  : "Identity block + negative prompt will be auto-injected into every generated prompt"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Aviso quando NÃO há personagem em templates de cena */}
+        {!activeCharacterName && activeTemplate && isSceneTemplate(activeTemplate.id) && (
+          <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/5">
+            <Users className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-muted-foreground">
+                {isPT
+                  ? "Nenhum personagem selecionado. As cenas serão geradas sem identity lock. Seleciona um personagem no seletor acima para consistência visual."
+                  : "No character selected. Scenes will be generated without identity lock. Select a character above for visual consistency."}
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTemplate.fields.map((field) => (
           <div key={field.key}>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">
