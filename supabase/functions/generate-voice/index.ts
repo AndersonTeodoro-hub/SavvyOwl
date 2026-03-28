@@ -1,11 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 const GEMINI_VOICES = [
   { id: "Charon", name: "Charon", gender: "Male", style: "Informative" },
   { id: "Kore", name: "Kore", gender: "Female", style: "Firm" },
@@ -24,16 +16,28 @@ const GEMINI_VOICES = [
   { id: "Pulcherrima", name: "Pulcherrima", gender: "Female", style: "Forward" },
 ];
 
-serve(async (req) => {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const supabaseClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "", { global: { headers: { Authorization: authHeader } } });
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const token = authHeader.replace("Bearer ", "");
+
+    const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
+    });
+    if (!userResp.ok) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const userData = await userResp.json();
+    if (!userData?.id) return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const body = await req.json();
     const { text, voiceId, action, provider, elevenLabsKey, googleApiKey } = body;
@@ -53,7 +57,7 @@ serve(async (req) => {
 
     // ElevenLabs (BYOK)
     if (provider === "elevenlabs" && elevenLabsKey) {
-      console.log(`[VOICE] ElevenLabs for user ${user.id}`);
+      console.log(`[VOICE] ElevenLabs for user ${userData.id}`);
       const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: "POST",
         headers: { "xi-api-key": elevenLabsKey, "Content-Type": "application/json", "Accept": "audio/mpeg" },
@@ -68,7 +72,7 @@ serve(async (req) => {
     const gKey = googleApiKey || Deno.env.get("GOOGLE_API_KEY") || "";
     if (!gKey) return new Response(JSON.stringify({ error: "No API key available" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    console.log(`[VOICE] Gemini TTS for user ${user.id}, voice ${voiceId}`);
+    console.log(`[VOICE] Gemini TTS for user ${userData.id}, voice ${voiceId}`);
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${gKey}`;
     const resp = await fetch(apiUrl, {
       method: "POST",
@@ -90,7 +94,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ audio: audio.data, mimeType: audio.mimeType || "audio/L16;rate=24000", provider: "gemini" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("[VOICE] Error:", err);
     return new Response(JSON.stringify({ error: err.message || "Internal error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
