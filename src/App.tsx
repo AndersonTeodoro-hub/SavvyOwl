@@ -11,6 +11,7 @@ import { ErrorBoundary, SafeComponent } from "@/components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Pricing from "./pages/Pricing";
 import { InstallPrompt } from "./components/InstallPrompt";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./pages/DashboardHome";
@@ -37,6 +38,7 @@ const App = () => (
           <CharacterProvider>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<DashboardLayout />}>

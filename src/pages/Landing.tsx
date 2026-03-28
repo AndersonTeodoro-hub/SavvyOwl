@@ -218,27 +218,63 @@ export default function Landing() {
 
       {/* PRICING */}
       <section id="pricing" className="bg-[#f5f0e8] text-[#1a1814] py-24 md:py-32 px-4">
-        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto">
+        <motion.div variants={fadeInView} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-block px-4 py-1.5 mb-6" style={{ border: `1px solid ${gold}`, color: gold, fontSize: 10, letterSpacing: "4px" }}>{t("landing.pricing.badge")}</div>
             <h2 className="text-3xl md:text-4xl" style={{ fontFamily: FONT_DISPLAY, letterSpacing: "-0.02em" }}>{t("landing.pricing.title_a")} <span style={{ color: gold, fontStyle: "italic" }}>{t("landing.pricing.title_b")}</span></h2>
+            <p className="text-sm mt-4 text-[#1a1814]/40" style={{ fontWeight: 300 }}>Sem contratos. Cancela quando quiseres.</p>
           </div>
-          <div className="grid md:grid-cols-2" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
-            <div className="bg-[#ece5d9] p-8">
-              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.free_label")}</p>
-              <p className="text-5xl mb-2" style={{ fontFamily: FONT_DISPLAY }}>{t("landing.pricing.free_price")}</p>
-              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>{t("landing.pricing.free_subtitle")}</p>
-              <ul className="space-y-3 mb-8">{(t("landing.pricing.free_features", { returnObjects: true }) as string[]).map((f: string) => (<li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/50"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#1a1814]/20" /><span>{f}</span></li>))}</ul>
-              <Link to="/register" className="block text-center text-xs py-3 transition-all" style={{ border: "1px solid rgba(26,24,20,0.2)", color: dark, letterSpacing: "1px" }}>{t("landing.pricing.free_cta")}</Link>
+
+          {/* 3 Plans */}
+          <div className="grid md:grid-cols-3" style={{ gap: "1px", backgroundColor: `${dark}14` }}>
+            {/* Free */}
+            <div className="bg-[#ece5d9] p-8 flex flex-col">
+              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>GRATUITO</p>
+              <p className="text-5xl mb-1" style={{ fontFamily: FONT_DISPLAY }}>€0</p>
+              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>Para experimentar</p>
+              <ul className="space-y-2 mb-8 flex-1">
+                {["10 créditos gratuitos", "Até 10 imagens", "Todos os templates", "Character Engine"].map(f => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/50"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0 text-[#1a1814]/20" /><span>{f}</span></li>
+                ))}
+              </ul>
+              <Link to="/register" className="block text-center text-xs py-3" style={{ border: "1px solid rgba(26,24,20,0.2)", color: dark, letterSpacing: "1px" }}>COMEÇAR GRÁTIS</Link>
             </div>
-            <div className="bg-[#ece5d9] p-8 relative" style={{ borderTop: `3px solid ${gold}` }}>
-              <span className="absolute top-3 right-4 text-[9px] px-2 py-0.5" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "2px" }}>{t("landing.pricing.popular")}</span>
-              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>{t("landing.pricing.pro_label")}</p>
-              <p className="text-5xl mb-2" style={{ fontFamily: FONT_DISPLAY }}>9<span className="text-lg text-[#1a1814]/30">/{t("landing.pricing.month")}</span></p>
-              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>{t("landing.pricing.pro_subtitle")}</p>
-              <ul className="space-y-3 mb-8">{(t("landing.pricing.pro_features", { returnObjects: true }) as string[]).map((f: string) => (<li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/70"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} /><span>{f}</span></li>))}</ul>
-              <button onClick={handleProClick} disabled={proLoading} className="block w-full text-center text-xs py-3 transition-all hover:scale-[1.02] cursor-pointer" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px", opacity: proLoading ? 0.6 : 1 }}>{proLoading ? "..." : t("landing.pricing.pro_cta")}</button>
+
+            {/* Starter */}
+            <div className="bg-[#1a1814] p-8 flex flex-col relative" style={{ borderTop: `3px solid ${gold}` }}>
+              <span className="absolute top-3 right-4 text-[9px] px-2 py-0.5" style={{ border: `1px solid ${gold}`, color: gold, letterSpacing: "2px" }}>POPULAR</span>
+              <p className="text-[10px] text-[#f5f0e8]/30 mb-1" style={{ letterSpacing: "3px" }}>STARTER</p>
+              <p className="text-5xl mb-1 text-[#f5f0e8]" style={{ fontFamily: FONT_DISPLAY }}>€14,99<span className="text-lg text-[#f5f0e8]/30">/mês</span></p>
+              <p className="text-sm text-[#f5f0e8]/30 mb-6" style={{ fontWeight: 300 }}>Para criadores individuais</p>
+              <ul className="space-y-2 mb-8 flex-1">
+                {["150 créditos/mês", "150 imagens ou 15 vídeos", "Character Engine ilimitado", "Vídeo UGC com Veo 3.1", "Suporte prioritário"].map(f => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#f5f0e8]/70"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} /><span>{f}</span></li>
+                ))}
+              </ul>
+              <button onClick={handleProClick} disabled={proLoading} className="block w-full text-center text-xs py-3 transition-all hover:opacity-90" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>
+                {proLoading ? "..." : "COMEÇAR AGORA"}
+              </button>
             </div>
+
+            {/* Pro */}
+            <div className="bg-[#ece5d9] p-8 flex flex-col">
+              <p className="text-[10px] text-[#1a1814]/30 mb-1" style={{ letterSpacing: "3px" }}>PRO</p>
+              <p className="text-5xl mb-1" style={{ fontFamily: FONT_DISPLAY }}>€34,99<span className="text-lg text-[#1a1814]/30">/mês</span></p>
+              <p className="text-sm text-[#1a1814]/30 mb-6" style={{ fontWeight: 300 }}>Para equipas profissionais</p>
+              <ul className="space-y-2 mb-8 flex-1">
+                {["500 créditos/mês", "500 imagens ou 50 vídeos", "Character Engine ilimitado", "Vídeo UGC com Veo 3.1 Fast", "Suporte dedicado"].map(f => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-[#1a1814]/70"><Check className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: gold }} /><span>{f}</span></li>
+                ))}
+              </ul>
+              <Link to="/pricing" className="block text-center text-xs py-3 transition-all hover:opacity-90" style={{ backgroundColor: gold, color: dark, letterSpacing: "1px" }}>COMEÇAR AGORA</Link>
+            </div>
+          </div>
+
+          {/* Credit packs teaser */}
+          <div className="text-center mt-10">
+            <Link to="/pricing" className="inline-flex items-center gap-2 text-xs text-[#1a1814]/40 hover:text-[#1a1814] transition-colors" style={{ letterSpacing: "1px" }}>
+              Ver packs de créditos avulso <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
         </motion.div>
       </section>
