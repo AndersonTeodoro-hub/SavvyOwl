@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
 
-    // Verify user via Supabase REST
     const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
     });
@@ -38,9 +37,26 @@ Deno.serve(async (req) => {
     const { prompt, aspectRatio, duration, model, referenceImageUrl } = body;
     if (!prompt) return json({ error: "Prompt is required" }, 400);
 
-    const CREDIT_COST = 10;
+    const ar = aspectRatio || "9:16";
+    const dur = parseInt(duration) || 8;
+    const selectedModel = model || "veo3-fast";
 
-    // Get profile (credits)
+    // ── MODEL REGISTRY ──
+    const FAL_MODELS: Record<string, { endpoint: string; credits: number; label: string }> = {
+      "veo3-fast":       { endpoint: "fal-ai/veo3/fast",                  credits: 10, label: "Veo3 Fast" },
+      "veo3":            { endpoint: "fal-ai/veo3",                       credits: 15, label: "Veo3" },
+      "wan26-t2v-flash": { endpoint: "wan/v2.6/text-to-video/flash",      credits: 5,  label: "Wan 2.6 Flash" },
+      "wan26-t2v":       { endpoint: "wan/v2.6/text-to-video",            credits: 8,  label: "Wan 2.6" },
+      "wan26-i2v-flash": { endpoint: "wan/v2.6/image-to-video/flash",     credits: 5,  label: "Wan 2.6 I2V Flash" },
+      "wan26-i2v":       { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
+      "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 7,  label: "Wan 2.6 R2V Flash" },
+      "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 10, label: "Wan 2.6 R2V" },
+      "kling":           { endpoint: "fal-ai/kling-video/v2.1/pro",       credits: 10, label: "Kling 2.1 Pro" },
+    };
+
+    const modelConfig = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
+    const CREDIT_COST = modelConfig.credits;
+
     const profileResp = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance,plan`,
       { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
@@ -52,45 +68,43 @@ Deno.serve(async (req) => {
     if (balance < CREDIT_COST) {
       return json({
         error: "insufficient_credits",
-        message: `Sem créditos suficientes para vídeo (tens ${balance}, precisas de ${CREDIT_COST}). Carrega créditos nas Definições.`,
-        balance,
-        cost: CREDIT_COST,
+        message: `Sem créditos suficientes (tens ${balance}, precisas de ${CREDIT_COST}).`,
+        balance, cost: CREDIT_COST,
       }, 402);
     }
 
-    const ar = aspectRatio || "9:16";
-    const dur = parseInt(duration) || 8;
-    const selectedModel = model || "veo3-fast";
+    const modelEndpoint = modelConfig.endpoint;
+    const isWan26 = selectedModel.startsWith("wan26");
+    const isR2V = selectedModel.includes("r2v");
+    const isI2V = selectedModel.includes("i2v");
 
-    const FAL_MODELS: Record<string, string> = {
-      "veo3-fast": "fal-ai/veo3/fast",
-      "veo3": "fal-ai/veo3",
-      "kling": "fal-ai/kling-video/v2.1/pro",
-    };
-    const modelEndpoint = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
+    console.log(`[FAL] ${modelConfig.label} (${modelEndpoint}) ${dur}s ${ar}${referenceImageUrl ? " +ref" : ""}`);
 
-    console.log(`[FAL] Starting ${selectedModel} (${modelEndpoint})${referenceImageUrl ? ' with reference image (img2vid)' : ''}`);
+    // ── BUILD FAL REQUEST ──
+    const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar };
 
-    // Build request body — include image_url for img2vid when reference exists
-    const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar, duration: dur };
-    if (referenceImageUrl) {
-      falBody.image_url = referenceImageUrl;
-      console.log(`[FAL] Reference image: ${referenceImageUrl}`);
+    if (isWan26) {
+      falBody.duration = String(dur);
+      falBody.resolution = "720p";
+      if ((isR2V || isI2V) && referenceImageUrl) {
+        falBody.image_url = referenceImageUrl;
+      }
+    } else {
+      falBody.duration = dur;
+      if (referenceImageUrl) {
+        falBody.image_url = referenceImageUrl;
+      }
     }
 
-    // Submit request to fal.ai
     const submitResp = await fetch(`https://queue.fal.run/${modelEndpoint}`, {
       method: "POST",
-      headers: {
-        Authorization: `Key ${falApiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify(falBody),
     });
 
     if (!submitResp.ok) {
       const err = await submitResp.text();
-      throw new Error(`fal.ai submit error ${submitResp.status}: ${err.substring(0, 400)}`);
+      throw new Error(`fal.ai ${submitResp.status}: ${err.substring(0, 400)}`);
     }
 
     const submitData = await submitResp.json();
@@ -98,7 +112,6 @@ Deno.serve(async (req) => {
     if (!requestId) throw new Error("No request_id from fal.ai");
     console.log(`[FAL] Request ID: ${requestId}`);
 
-    // Poll for result (5 min max, 5s interval)
     const maxWait = 300000;
     const pollInterval = 5000;
     let elapsed = 0;
@@ -113,7 +126,7 @@ Deno.serve(async (req) => {
       );
       if (!statusResp.ok) continue;
       const status = await statusResp.json();
-      console.log(`[FAL] Status at ${elapsed / 1000}s: ${status.status}`);
+      console.log(`[FAL] ${elapsed / 1000}s: ${status.status}`);
 
       if (status.status === "COMPLETED") {
         const resultResp = await fetch(
@@ -122,52 +135,26 @@ Deno.serve(async (req) => {
         );
         const result = await resultResp.json();
         const videoUrl = result.video?.url || result.video_url || result.output?.video?.url;
-        if (!videoUrl) throw new Error(`No video URL in result: ${JSON.stringify(result).substring(0, 300)}`);
+        if (!videoUrl) throw new Error(`No video URL: ${JSON.stringify(result).substring(0, 300)}`);
 
-        // Deduct credits
         const newBalance = balance - CREDIT_COST;
         await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
           method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
+          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
           body: JSON.stringify({ credits_balance: newBalance }),
         });
         await fetch(`${supabaseUrl}/rest/v1/credit_transactions`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            amount: -CREDIT_COST,
-            type: "spend",
-            description: `Vídeo ${dur}s ${selectedModel} (fal.ai)`,
-          }),
+          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ user_id: userId, amount: -CREDIT_COST, type: "spend", description: `Vídeo ${dur}s ${modelConfig.label}` }),
         });
         await fetch(`${supabaseUrl}/rest/v1/usage_logs`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${serviceKey}`,
-            apikey: serviceKey,
-            "Content-Type": "application/json",
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            mode: "video_generation",
-            model: `fal-${selectedModel}`,
-            cost_eur: 0.85,
-          }),
+          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+          body: JSON.stringify({ user_id: userId, mode: "video_generation", model: `fal-${selectedModel}`, cost_eur: dur * 0.10 }),
         });
 
-        console.log(`[FAL] OK ${selectedModel} in ${Math.round(elapsed / 1000)}s | balance: ${balance} → ${newBalance}`);
+        console.log(`[FAL] OK ${modelConfig.label} ${Math.round(elapsed / 1000)}s | ${balance} → ${newBalance}`);
         return json({
           video: { uri: videoUrl, mimeType: "video/mp4" },
           generationTime: Math.round(elapsed / 1000),
@@ -177,11 +164,11 @@ Deno.serve(async (req) => {
       }
 
       if (status.status === "FAILED") {
-        throw new Error(`fal.ai generation failed: ${JSON.stringify(status.error || status).substring(0, 300)}`);
+        throw new Error(`Falhou: ${JSON.stringify(status.error || status).substring(0, 300)}`);
       }
     }
 
-    throw new Error("fal.ai video generation timed out (5 min)");
+    throw new Error("Timeout (5 min)");
 
   } catch (e) {
     console.error("[FAL] Error:", e);
