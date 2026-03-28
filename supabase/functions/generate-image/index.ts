@@ -21,7 +21,6 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
 
-    // Verify user via Supabase REST
     const userResp = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { Authorization: `Bearer ${token}`, apikey: anonKey },
     });
@@ -37,7 +36,6 @@ Deno.serve(async (req) => {
     const usingOwnKey = !!apiKey;
     const CREDIT_COST = 1;
 
-    // Get profile (credits)
     const profileResp = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance,plan`,
       { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
@@ -55,11 +53,13 @@ Deno.serve(async (req) => {
       }, 402);
     }
 
-    // Generate image with Gemini
     const effectiveKey = usingOwnKey ? apiKey : googleApiKey;
+
+    // Gemini 2.5 models — ordered by preference
     const models = [
-      "gemini-2.0-flash-preview-image-generation",
-      "gemini-2.0-flash-exp",
+      "gemini-2.5-flash-preview-05-20",
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
     ];
 
     let imageData: { data: string; mimeType: string } | null = null;
@@ -96,10 +96,9 @@ Deno.serve(async (req) => {
     }
 
     if (!imageData) {
-      throw new Error(`All models failed: ${lastError.substring(0, 200)}`);
+      throw new Error(`All Gemini 2.5 models failed: ${lastError.substring(0, 200)}`);
     }
 
-    // Deduct credits
     if (!usingOwnKey) {
       const newBalance = balance - CREDIT_COST;
       await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
