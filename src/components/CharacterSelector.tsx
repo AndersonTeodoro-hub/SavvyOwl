@@ -53,7 +53,7 @@ export function CharacterSelector() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 w-64 rounded-xl border border-border bg-background shadow-lg overflow-hidden">
+          <div className="absolute bottom-full left-0 mb-1 z-50 w-64 rounded-xl border border-border bg-background shadow-lg overflow-hidden">
             <div className="p-2 border-b border-border">
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2">
                 {isPT ? "Personagens Locked" : "Locked Characters"}
