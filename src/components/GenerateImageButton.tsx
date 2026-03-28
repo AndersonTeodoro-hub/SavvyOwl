@@ -12,7 +12,7 @@ type Props = { prompt: string };
 export function GenerateImageButton({ prompt }: Props) {
   const apiKey = useGoogleApiKey();
   const navigate = useNavigate();
-  const { identityBlock, negativePrompt, activeCharacterName } = useCharacter();
+  const { identityBlock, negativePrompt, activeCharacterName, referenceImageUrl } = useCharacter();
   const [loading, setLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export function GenerateImageButton({ prompt }: Props) {
             Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ prompt: finalPrompt, apiKey: apiKey || undefined }),
+          body: JSON.stringify({ prompt: finalPrompt, apiKey: apiKey || undefined, referenceImageUrl: referenceImageUrl || undefined }),
         }
       );
 

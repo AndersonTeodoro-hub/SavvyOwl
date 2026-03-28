@@ -12,7 +12,7 @@ type Props = { prompt: string };
 export function GenerateVideoButton({ prompt }: Props) {
   const apiKey = useGoogleApiKey();
   const navigate = useNavigate();
-  const { identityBlock, activeCharacterName } = useCharacter();
+  const { identityBlock, activeCharacterName, referenceImageUrl } = useCharacter();
   const [loading, setLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export function GenerateVideoButton({ prompt }: Props) {
             Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
-          body: JSON.stringify({ prompt: finalPrompt, apiKey: apiKey || undefined, aspectRatio }),
+          body: JSON.stringify({ prompt: finalPrompt, apiKey: apiKey || undefined, aspectRatio, referenceImageUrl: referenceImageUrl || undefined }),
         }
       );
 

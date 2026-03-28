@@ -43,8 +43,25 @@ Deno.serve(async (req) => {
     if (!user?.id) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { prompt, apiKey: userApiKey } = body;
+    const { prompt, apiKey: userApiKey, referenceImageUrl } = body;
     if (!prompt) return json({ error: "Prompt is required" }, 400);
+
+    // If reference image provided, fetch it as base64 for img2img
+    let referenceImageBase64: string | null = null;
+    let referenceImageMime = "image/png";
+    if (referenceImageUrl) {
+      try {
+        const imgResp = await fetch(referenceImageUrl);
+        if (imgResp.ok) {
+          const buffer = await imgResp.arrayBuffer();
+          referenceImageBase64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+          referenceImageMime = imgResp.headers.get("content-type") || "image/png";
+          console.log(`[IMG] Reference image loaded (${Math.round(buffer.byteLength / 1024)}KB)`);
+        }
+      } catch (e) {
+        console.log(`[IMG] Failed to load reference image: ${e}`);
+      }
+    }
 
     // Get profile: plan + credits
     const profileResp = await fetch(
@@ -78,13 +95,27 @@ Deno.serve(async (req) => {
     let lastError = "";
 
     for (const model of models) {
+      // Build parts: reference image (if available) + text prompt
+      const parts: unknown[] = [];
+      if (referenceImageBase64) {
+        parts.push({
+          text: "REFERENCE IMAGE — This is the canonical appearance of the character. Generate a new image that matches this person EXACTLY: same face, same skin texture, same features. Only change what the prompt explicitly requests (pose, scene, clothing)."
+        });
+        parts.push({
+          inlineData: { mimeType: referenceImageMime, data: referenceImageBase64 }
+        });
+        parts.push({ text: prompt });
+      } else {
+        parts.push({ text: prompt });
+      }
+
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts }],
             generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
           }),
         }

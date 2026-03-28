@@ -170,15 +170,100 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ character: updated }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ── LOCK ──
+    // ── LOCK ── (auto-generates canonical reference image)
     if (action === "lock") {
       const rows = await dbGet("characters", `id=eq.${characterId}&user_id=eq.${userId}`);
       const char = Array.isArray(rows) ? rows[0] : null;
       if (!char) return new Response(JSON.stringify({ error: "Character not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+      const expanded = char.expanded;
+      const prompt = expanded?.nano_banana_prompt;
+      let referenceImageUrl: string | null = null;
+
+      // Auto-generate canonical reference image if we have a prompt
+      if (prompt) {
+        const googleKey = Deno.env.get("GOOGLE_API_KEY") || "";
+        if (googleKey) {
+          try {
+            console.log("[CHARACTER] Generating canonical reference image on lock...");
+            const fullPrompt = expanded?.negative_prompt
+              ? `${prompt}\n\nNegative: ${expanded.negative_prompt}`
+              : prompt;
+
+            // Try best model first, fallback
+            const imgModels = ["gemini-3-pro-image-preview", "gemini-3.1-flash-image-preview", "gemini-2.5-flash-image"];
+            let imgBase64: string | null = null;
+            let imgMime = "image/png";
+
+            for (const model of imgModels) {
+              const imgResp = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${googleKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+                  }),
+                }
+              );
+              if (!imgResp.ok) { console.log(`[CHARACTER] ${model} failed: ${imgResp.status}`); continue; }
+              const imgData = await imgResp.json();
+              for (const part of imgData.candidates?.[0]?.content?.parts ?? []) {
+                if (part.inlineData) {
+                  imgBase64 = part.inlineData.data;
+                  imgMime = part.inlineData.mimeType || "image/png";
+                  break;
+                }
+              }
+              if (imgBase64) { console.log(`[CHARACTER] Reference image generated with ${model}`); break; }
+            }
+
+            // Upload to Supabase Storage
+            if (imgBase64) {
+              const ext = imgMime.includes("jpeg") ? "jpg" : "png";
+              const storagePath = `${userId}/${characterId}/reference.${ext}`;
+              const binaryData = Uint8Array.from(atob(imgBase64), c => c.charCodeAt(0));
+
+              const uploadResp = await fetch(
+                `${supabaseUrl}/storage/v1/object/character-references/${storagePath}`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${serviceKey}`,
+                    apikey: serviceKey,
+                    "Content-Type": imgMime,
+                    "x-upsert": "true",
+                  },
+                  body: binaryData,
+                }
+              );
+
+              if (uploadResp.ok) {
+                referenceImageUrl = `${supabaseUrl}/storage/v1/object/public/character-references/${storagePath}`;
+                console.log(`[CHARACTER] Reference uploaded: ${referenceImageUrl}`);
+              } else {
+                console.log(`[CHARACTER] Storage upload failed: ${uploadResp.status} ${await uploadResp.text()}`);
+              }
+            }
+          } catch (imgErr) {
+            // Don't block lock if image generation fails
+            console.error("[CHARACTER] Reference image generation failed (non-blocking):", imgErr);
+          }
+        }
+      }
+
       const newHistory = [...(char.history || []), { action: "locked", timestamp: new Date().toISOString() }];
-      const { data: updated } = await dbUpdate("characters", `id=eq.${characterId}`, { status: "locked", locked_at: new Date().toISOString(), history: newHistory });
-      return new Response(JSON.stringify({ character: updated }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const updatePayload: Record<string, unknown> = {
+        status: "locked",
+        locked_at: new Date().toISOString(),
+        history: newHistory,
+      };
+      if (referenceImageUrl) {
+        updatePayload.reference_image_url = referenceImageUrl;
+      }
+      const { data: updated } = await dbUpdate("characters", `id=eq.${characterId}`, updatePayload);
+      return new Response(JSON.stringify({ character: updated, reference_image_url: referenceImageUrl }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // ── UNLOCK ──

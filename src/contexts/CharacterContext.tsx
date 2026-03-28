@@ -9,6 +9,7 @@ interface CharacterData {
   name: string;
   summary: string;
   expanded: ExpandedCharacter;
+  referenceImageUrl: string | null;
 }
 
 interface CharacterContextType {
@@ -22,6 +23,8 @@ interface CharacterContextType {
   negativePrompt: string | null;
   /** Display name of the active character */
   activeCharacterName: string | null;
+  /** The canonical reference image URL for the active character */
+  referenceImageUrl: string | null;
   /** Select a character by ID */
   selectCharacter: (id: string) => void;
   /** Clear selection */
@@ -38,6 +41,7 @@ const CharacterContext = createContext<CharacterContextType>({
   identityBlock: null,
   negativePrompt: null,
   activeCharacterName: null,
+  referenceImageUrl: null,
   selectCharacter: () => {},
   clearCharacter: () => {},
   refreshCharacters: async () => {},
@@ -56,7 +60,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     try {
       const { data } = await supabase
         .from("characters")
-        .select("id, expanded, status")
+        .select("id, expanded, status, reference_image_url")
         .eq("user_id", user.id)
         .eq("status", "locked")
         .order("created_at", { ascending: false });
@@ -67,6 +71,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
           name: c.expanded?.name || "?",
           summary: c.expanded?.summary || "",
           expanded: c.expanded as ExpandedCharacter,
+          referenceImageUrl: c.reference_image_url || null,
         }));
         setCharacters(mapped);
 
@@ -101,6 +106,8 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
     ? buildNegativePrompt(activeCharacter.expanded)
     : null;
 
+  const referenceImageUrl = activeCharacter?.referenceImageUrl || null;
+
   return (
     <CharacterContext.Provider
       value={{
@@ -109,6 +116,7 @@ export function CharacterProvider({ children }: { children: ReactNode }) {
         identityBlock,
         negativePrompt,
         activeCharacterName: activeCharacter?.name || null,
+        referenceImageUrl,
         selectCharacter,
         clearCharacter,
         refreshCharacters: fetchCharacters,

@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { prompt, aspectRatio, duration, model } = body;
+    const { prompt, aspectRatio, duration, model, referenceImageUrl } = body;
     if (!prompt) return json({ error: "Prompt is required" }, 400);
 
     const CREDIT_COST = 10;
@@ -69,7 +69,14 @@ Deno.serve(async (req) => {
     };
     const modelEndpoint = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
 
-    console.log(`[FAL] Starting ${selectedModel} (${modelEndpoint})`);
+    console.log(`[FAL] Starting ${selectedModel} (${modelEndpoint})${referenceImageUrl ? ' with reference image (img2vid)' : ''}`);
+
+    // Build request body — include image_url for img2vid when reference exists
+    const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar, duration: dur };
+    if (referenceImageUrl) {
+      falBody.image_url = referenceImageUrl;
+      console.log(`[FAL] Reference image: ${referenceImageUrl}`);
+    }
 
     // Submit request to fal.ai
     const submitResp = await fetch(`https://queue.fal.run/${modelEndpoint}`, {
@@ -78,7 +85,7 @@ Deno.serve(async (req) => {
         Authorization: `Key ${falApiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt, aspect_ratio: ar, duration: dur }),
+      body: JSON.stringify(falBody),
     });
 
     if (!submitResp.ok) {
