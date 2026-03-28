@@ -1,83 +1,137 @@
-# RESUMO PARA PRÓXIMO CHAT - SavvyOwl (28/03/2026)
+# RESUMO PARA PRÓXIMO CHAT — SavvyOwl (28/03/2026)
 
-## ESTADO: CREDITS + VERTEX AI PIPELINE IMPLEMENTADOS — A AGUARDAR SA JSON DO GCP
-
----
-
-### O QUE FOI FEITO NESTA SESSÃO
-
-#### ✅ Sistema de Créditos (Prioridade 2 — COMPLETO)
-- DB: `credits_balance INTEGER DEFAULT 10` e `credits_total_purchased` adicionados à tabela `profiles`
-- Tabela `credit_transactions` criada (audit trail de todas as movimentações)
-- Utilizadores existentes receberam 10 créditos gratuitos
-- Custos: **1 crédito = imagem**, **10 créditos = vídeo**
-- Stripe webhook atualizado para top-up automático em:
-  - `checkout.session.completed` → plano subscription ou credit pack
-  - `invoice.paid` (billing_reason=subscription_cycle) → renovação mensal
-  - `customer.subscription.updated` → mudança de plano
-  - `customer.subscription.deleted` → downgrade para free (10 créditos)
-- Plan credits: Free=10, Starter=200, Pro=1000
-- `Profile` type no AuthContext atualizado com `credits_balance` e `credits_total_purchased`
-- SettingsPage: card "Créditos SavvyOwl" com saldo, custos, e CTA de upgrade
-
-#### ✅ Vertex AI Pipeline (Prioridade 1 — CODE READY, aguarda SA JSON)
-- `generate-image`: JWT SA → Vertex Imagen 3 (`imagen-3.0-generate-002`) com fallback Gemini
-- `generate-video`: JWT SA → Vertex Veo3 (`veo-3.0-generate-preview`) com fallback Gemini (user key)
-- Autenticação: Service Account JSON → JWT → OAuth2 token exchange implementado
-- `VERTEX_PROJECT_ID` secret: fallback para `gen-lang-client-0464073001`
-- Quando `VERTEX_SERVICE_ACCOUNT_JSON` não está presente → usa Gemini server key
-
-#### ✅ UI Buttons Atualizados
-- `GenerateImageButton`: mostra créditos restantes, erro `insufficient_credits`, CTA para Settings
-- `GenerateVideoButton`: idem + suporta geração sem user API key (via Vertex quando SA presente)
-
-#### ✅ Deployments
-- Commit `07d7a15` no GitHub (Vercel auto-deploya)
-- 3 edge functions re-deployadas via Management API: `generate-image`, `generate-video`, `stripe-webhook`
+## REGRA OBRIGATÓRIA ANTES DE QUALQUER COISA
+```bash
+git clone https://GH_TOKEN_SEE_ANDERSON@github.com/AndersonTeodoro-hub/SavvyOwl.git
+cd SavvyOwl
+git log --oneline -5
+```
+Não escreves código sem ter o repo clonado. Não usas PATCH na Management API com imports externos — dá BOOT_ERROR.
 
 ---
 
-### ❗ O QUE FALTA PARA FECHAR PRIORIDADE 1
+## ESTADO REAL (confirmado ao vivo hoje)
 
-**Precisa do Service Account JSON do GCP:**
-1. console.cloud.google.com → projeto "Default Gemini Project" (gen-lang-client-0464073001)
-2. IAM & Admin → Service Accounts → "Create Service Account"
-   - Nome: `savvyowl-vertex`
-   - Role: **Vertex AI User** + **AI Platform Developer**
-3. Keys → Add Key → JSON → download
-4. Colar o JSON no próximo chat → Claude faz `supabase secrets set VERTEX_SERVICE_ACCOUNT_JSON`
+### Edge Functions — todas a funcionar ✅
+| Função | Status | Notas |
+|--------|--------|-------|
+| chat | ✅ 200 | não tocar — deployada via CLI original |
+| character-engine | ✅ 200 | não tocar — deployada via CLI original |
+| generate-image | ✅ 200 | Deno.serve() + fetch nativo, plan-based models |
+| generate-video | ✅ 200 | fal.ai Veo3 Fast, precisa créditos fal.ai |
+| generate-voice | ✅ 200 | |
+| stripe-checkout | ✅ 200 | fetch nativo — sem SDK Stripe |
+| stripe-webhook | ✅ (400 OPTIONS = correcto) | Stripe chama directamente, sem CORS |
+| youtube-trending | ✅ 200 | |
+| optimize | ✅ 200 | |
 
-**Também falta:**
-- `STRIPE_WEBHOOK_SECRET` no Supabase secrets (necessário para webhook funcionar)
-  - Obtém em: Stripe Dashboard → Developers → Webhooks → endpoint → Signing secret
-  - Endpoint URL: `https://kumnrldlzttsrgjlsspa.supabase.co/functions/v1/stripe-webhook`
-
----
-
-### O QUE FUNCIONA (confirmado deployado)
-- ✅ Chat (4 modos: Quick/Deep/Creator/Opus)
-- ✅ Gemini Flash (fallback Anthropic quando Google 403)
-- ✅ Character Engine backend + UI
-- ✅ CharacterContext global (identity lock nos 6 templates + botões)
-- ✅ Sistema de créditos (DB + edge functions + UI)
-- ✅ Stripe checkout + webhook (falta STRIPE_WEBHOOK_SECRET para validar assinaturas)
-- ✅ Login email + Google OAuth
-- ⚠️ Vertex AI: código pronto, aguarda VERTEX_SERVICE_ACCOUNT_JSON no Supabase
-
-### O QUE NÃO FUNCIONA / FALTA
-- ❌ VERTEX_SERVICE_ACCOUNT_JSON não está nos secrets → imagens/vídeos ainda usam Gemini server key (com risco de 403)
-- ❌ STRIPE_WEBHOOK_SECRET não está nos secrets → webhook falha na validação de assinatura
-- ⚠️ Onboarding flow não existe
-- ⚠️ img2vid com imagem de referência do Character ainda não implementado
+### Regra crítica de deploy
+- Funções com `serve()` do std + `esm.sh` → funcionam (chat, character-engine)
+- Funções com `Deno.serve()` + `fetch` nativo → funcionam (todas as outras)
+- Funções com `npm:` ou `esm.sh` em PATCH via Management API → BOOT_ERROR
+- **Nunca usar PATCH repetido** — corrompe a função. Se falhar, DELETE + POST fresh.
 
 ---
 
-### SUPABASE
-- Project ID: kumnrldlzttsrgjlsspa
-- URL: https://kumnrldlzttsrgjlsspa.supabase.co
-- 11 edge functions deployed
+## O QUE FOI FEITO NESTA SESSÃO
 
-### GIT
-- Repo: https://github.com/AndersonTeodoro-hub/SavvyOwl
+### ✅ Vertex AI Imagen 3
+- Service Account `savvyowl-vertex` criada no GCP
+- Role "Vertex AI User" atribuído
+- `VERTEX_SERVICE_ACCOUNT_JSON` nos secrets do Supabase
+- `VERTEX_PROJECT_ID` = `gen-lang-client-0464073001`
+- Testado e confirmado: imagem gerada com sucesso via Vertex
+
+### ✅ fal.ai (substitui Vertex Veo3 directo — 87% mais barato)
+- Conta criada em fal.ai para empresa SavvyOwl
+- `FAL_API_KEY` nos secrets do Supabase
+- Veo3 Fast: ~€0,80/vídeo (vs €6,00 via Vertex directo)
+- **FALTA: carregar $20 em fal.ai/dashboard/billing** (conta com saldo $0)
+
+### ✅ Sistema de Créditos
+- DB: `credits_balance` e `credits_total_purchased` na tabela `profiles`
+- Tabela `credit_transactions` (audit trail)
+- Default: 10 créditos para novos utilizadores (trigger + coluna DEFAULT 10)
+- Custos: 1 crédito = imagem, 10 créditos = vídeo
+- Plan credits: Free=10, Starter=150, Pro=500
+
+### ✅ Stripe — completo
+- Webhook secret: `STRIPE_WEBHOOK_SECRET` nos secrets do Supabase
+- Produtos criados:
+  - Starter €14,99/mês → `price_1TG1KaKg016ceaDVbTqFq1CW`
+  - Pro €34,99/mês → `price_1TG1NMKg016ceaDVQFtsygnH`
+  - Pack S €4,99 (50 créditos) → `price_1TG1OiKg016ceaDVYWhCa8st`
+  - Pack M €12,99 (150 créditos) → `price_1TG1QCKg016ceaDVLsAC6Za1`
+  - Pack L €29,99 (400 créditos) → `price_1TG1RUKg016ceaDVKYrWhI6V`
+- Webhook trata: checkout.session.completed, subscription.updated, subscription.deleted, invoice.paid
+- stripe-checkout usa fetch nativo (sem SDK) — funciona
+
+### ✅ Geração de Imagens — Plan-Based Model Routing
+- Free → `gemini-2.5-flash-image`
+- Starter → `gemini-3.1-flash-image-preview`
+- Pro → `gemini-3-pro-image-preview` (máxima consistência visual)
+- Fallback automático se modelo falhar
+
+### ✅ Landing Page — Redesign Completo
+- Novo design editorial de luxo (fundo preto, ouro, tipografia Cormorant)
+- Hero com parallax, stats bar, pain section, features, how it works, pricing, FAQ
+- Página `/pricing` dedicada com 3 planos + 3 packs de créditos + FAQ
+- Preços reais: €0 / €14,99 / €34,99
+
+### ✅ Character Engine Pipeline — Integrado em Todo o Lado
+- `GenerateImageButton`: identity block + negative prompt automático
+- `GenerateVideoButton`: identity block antes da direcção de cena
+- `StructuredTemplates`: 6 templates com injeção automática
+- `Chat.tsx → chat edge function`: envia characterBlock, backend tem 6 regras rígidas
+
+### ✅ Bug Fixes
+- CharactersPage: loop de 401 → 429 → logout resolvido
+  - Causa: getSession() + onAuthStateChange duplicava chamadas com token expirado
+  - Fix: usa `user` do AuthContext (já validado), chama engine.list() uma vez
+- useCharacterEngine: retry agressivo (3x) removido — agora 1 tentativa + 1 refresh
+- SettingsPage: botão Pro adicionado, preços €14,99/€34,99 correctos
+- CharacterSelector: z-index [200] + overflow-y visible no toolbar
+
+---
+
+## O QUE FALTA (por ordem de prioridade)
+
+### 🔴 URGENTE — fal.ai créditos
+Carregar $20 em https://fal.ai/dashboard/billing
+Sem isto, todos os vídeos falham com "Exhausted balance"
+
+### 🟡 SettingsPage — packs de créditos
+Existe `/pricing` com os packs mas dentro do dashboard não há botão directo para comprar Pack S/M/L.
+Adicionar card com 3 packs + botão checkout na SettingsPage.
+
+### 🟡 Testar fluxo completo em produção
+Registo → 10 créditos → gerar imagem → crédito descontado → confirmado.
+Nunca foi testado end-to-end em produção.
+
+### 🟠 Onboarding flow
+Utilizador regista-se → vai directamente para chat. Falta guia de primeiros passos.
+
+### 🟠 img2vid com referência do Character
+A imagem de referência criada no CharactersPage ainda não é usada como ref frame no Veo3.
+
+---
+
+## SUPABASE
+- Project ID: `kumnrldlzttsrgjlsspa`
+- URL: `https://kumnrldlzttsrgjlsspa.supabase.co`
+- Região: EU West
+
+## GIT
+- Repo: `https://github.com/AndersonTeodoro-hub/SavvyOwl`
 - Branch: main
-- Último commit: 07d7a15 feat: credits system + Vertex AI pipeline
+- Último commit: `ba40fab` — fix: CharactersPage auth loop
+
+## LIVE APP
+- URL: `https://savvyowl.app`
+- Deploy: Vercel auto-deploy no push para main
+
+## NEGÓCIO
+- Produto: plataforma UGC com IA, diferenciador = Character Engine (consistência visual)
+- Público: social media managers, UGC creators, agências
+- Fundador: Anderson Teodoro (Lisbon, PT)
+- Língua principal: Português (PT/BR)
