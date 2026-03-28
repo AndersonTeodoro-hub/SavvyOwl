@@ -533,7 +533,7 @@ export default function Chat() {
         <div className="shrink-0 border-t border-border bg-background">
           <div className="max-w-[48rem] mx-auto w-full px-3 md:px-6">
             {/* Mode pills + Character selector */}
-            <div className="flex items-center gap-1 pt-3 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <div className="flex items-center gap-1 pt-3 pb-2 overflow-x-auto relative" style={{ scrollbarWidth: "none", msOverflowStyle: "none", overflowY: "visible" }}>
               {(Object.entries(modeLabels) as [Mode, typeof modeLabels.quick][]).map(([key, val]) => {
                 const isOpusLocked = key === "opus" && profile?.plan !== "pro";
                 return (

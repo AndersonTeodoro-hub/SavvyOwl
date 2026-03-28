@@ -157,17 +157,22 @@ export default function SettingsPage() {
             </Badge>
           </div>
           {profile?.plan === "free" && (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Button className="glow-primary" onClick={() => handleUpgrade("starter")} disabled={!!checkoutLoading}>
                 {checkoutLoading === "starter" ? t("settings.saving") : t("settings.upgradeStarter")}
+              </Button>
+              <Button variant="outline" onClick={() => handleUpgrade("pro")} disabled={!!checkoutLoading}>
+                {checkoutLoading === "pro" ? t("settings.saving") : t("settings.upgradePro")}
               </Button>
             </div>
           )}
           {profile?.plan === "starter" && (
-            <div className="flex gap-2">
-              <p className="text-sm text-muted-foreground self-center">{t("settings.topPlan")}</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button className="glow-primary" onClick={() => handleUpgrade("pro")} disabled={!!checkoutLoading}>
+                {checkoutLoading === "pro" ? t("settings.saving") : t("settings.upgradePro")}
+              </Button>
               <Button variant="outline" onClick={handleManageSubscription} disabled={portalLoading}>
-                {portalLoading ? t("settings.saving") : t("settings.manageSubscription", "Manage Subscription")}
+                {portalLoading ? t("settings.saving") : t("settings.manageSubscription", "Gerir Subscrição")}
               </Button>
             </div>
           )}
@@ -175,7 +180,7 @@ export default function SettingsPage() {
             <div className="flex gap-2">
               <p className="text-sm text-muted-foreground self-center">{t("settings.topPlan")}</p>
               <Button variant="outline" onClick={handleManageSubscription} disabled={portalLoading}>
-                {portalLoading ? t("settings.saving") : t("settings.manageSubscription", "Manage Subscription")}
+                {portalLoading ? t("settings.saving") : t("settings.manageSubscription", "Gerir Subscrição")}
               </Button>
             </div>
           )}
@@ -226,7 +231,7 @@ export default function SettingsPage() {
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-xs">
               <p className="text-foreground font-medium mb-2">Créditos a acabar!</p>
               <Button size="sm" className="glow-primary text-xs" onClick={() => handleUpgrade("starter")}>
-                Upgrade para Starter — 200 créditos/mês
+                Upgrade para Starter — €14,99/mês · 150 créditos
               </Button>
             </div>
           )}
