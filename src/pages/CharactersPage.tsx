@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Users, Plus, ArrowLeft, Lock, Unlock, Trash2, Copy, Check,
   ChevronDown, Loader2, Sparkles, Eye, Pencil, Image, Video,
-  AlertCircle, UserCircle, Download, MessageSquare,
+  AlertCircle, UserCircle, Download, MessageSquare, Mic, ExternalLink, Save,
 } from "lucide-react";
 
 type View = "library" | "create" | "detail";
@@ -148,6 +148,9 @@ export default function CharactersPage() {
   const [loadingMsg, setLoadingMsg] = useState("");
   const [generatingImage, setGeneratingImage] = useState(false);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [voicePrompt, setVoicePrompt] = useState<string | null>(null);
+  const [voiceIdInput, setVoiceIdInput] = useState("");
+  const [savingVoiceId, setSavingVoiceId] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeChar = engine.characters.find((c) => c.id === activeId) || null;
@@ -197,6 +200,63 @@ export default function CharactersPage() {
 
   const handleUseInChat = () => {
     navigate("/dashboard/chat");
+  };
+
+  const generateVoicePrompt = () => {
+    if (!activeChar?.expanded) return;
+    const d = activeChar.expanded as any;
+    const voice = d.voice_behavior || {};
+    const identity = d.identity || {};
+    const age = identity.age || "adult";
+    const gender = identity.gender || "";
+    const ethnicity = identity.ethnicity_skin || "";
+    const voiceQuality = voice.voice_quality || "";
+    const emotional = voice.emotional_baseline || "";
+    const mannerisms = voice.mannerisms || "";
+
+    const prompt = `Cria uma voz com as seguintes características no ElevenLabs Voice Design:
+
+PERFIL DO PERSONAGEM: ${d.name || "Personagem"}
+- Género: ${gender}
+- Idade: ${age}
+- Etnia/Aparência: ${ethnicity}
+
+VOZ DESEJADA:
+- Qualidade vocal: ${voiceQuality || "natural, clara, envolvente"}
+- Tom emocional base: ${emotional || "confiante e acessível"}
+- Maneirismos: ${mannerisms || "pausas naturais, ritmo conversacional"}
+
+INSTRUÇÕES PARA O ELEVENLABS:
+1. Vai a elevenlabs.io → Voice Library → Voice Design
+2. Descreve a voz em inglês: "${gender ? (gender.toLowerCase().includes("female") ? "Female" : "Male") : "Male"} voice, ${age}, ${ethnicity ? ethnicity.split(",")[0] : "natural"} accent. ${voiceQuality || "Clear and warm"}. ${emotional || "Confident tone"}. ${mannerisms || "Natural pacing with slight pauses for emphasis"}."
+3. Gera várias amostras e escolhe a que melhor combina com o visual do personagem
+4. Guarda a voz e copia o Voice ID
+5. Cola o Voice ID aqui na SavvyOwl
+
+ALTERNATIVA — Clonar voz existente:
+Se já tens um áudio de referência da voz que queres (mínimo 30 segundos, áudio limpo), podes usar o Voice Cloning do ElevenLabs para criar uma réplica exacta.`;
+
+    setVoicePrompt(prompt);
+    toast.success(isPT ? "Prompt de voz gerado!" : "Voice prompt generated!");
+  };
+
+  const handleSaveVoiceId = async () => {
+    if (!activeChar?.id || !voiceIdInput.trim()) return;
+    setSavingVoiceId(true);
+    try {
+      const { error } = await supabase
+        .from("characters")
+        .update({ elevenlabs_voice_id: voiceIdInput.trim() })
+        .eq("id", activeChar.id);
+      if (error) throw error;
+      toast.success(isPT ? "Voice ID guardado!" : "Voice ID saved!");
+      // Refresh the character list
+      engine.list();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao guardar Voice ID");
+    } finally {
+      setSavingVoiceId(false);
+    }
   };
 
   const hasFetchedRef = useRef(false);
@@ -558,6 +618,136 @@ export default function CharactersPage() {
                 </div>
               )}
             </div>
+
+            {/* Voice Identity — ElevenLabs integration */}
+            {activeChar.status === "locked" && (
+              <div className="rounded-xl border border-orange-400/20 bg-orange-500/5 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Mic className="h-4 w-4 text-orange-400" />
+                  <p className="text-sm font-semibold text-foreground">
+                    {isPT ? "Voz do Personagem" : "Character Voice"}
+                  </p>
+                  {(activeChar as any).elevenlabs_voice_id && (
+                    <span className="text-[9px] bg-green-500/10 text-green-500 px-1.5 py-0.5 rounded-full font-medium">
+                      Voice ID ✓
+                    </span>
+                  )}
+                </div>
+
+                {(activeChar as any).elevenlabs_voice_id ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-lg p-2.5">
+                      <Mic className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground">
+                          {isPT ? "Voz configurada" : "Voice configured"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">
+                          {(activeChar as any).elevenlabs_voice_id}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {isPT
+                        ? "Esta voz será usada automaticamente em todos os vídeos deste personagem."
+                        : "This voice will be used automatically in all videos for this character."}
+                    </p>
+                    {/* Allow changing voice ID */}
+                    <details className="text-xs">
+                      <summary className="text-muted-foreground cursor-pointer hover:text-foreground">
+                        {isPT ? "Alterar Voice ID" : "Change Voice ID"}
+                      </summary>
+                      <div className="flex gap-2 mt-2">
+                        <input
+                          value={voiceIdInput}
+                          onChange={(e) => setVoiceIdInput(e.target.value)}
+                          placeholder="Novo Voice ID..."
+                          className="flex-1 rounded-lg border border-border bg-secondary/30 px-2 py-1.5 text-xs focus:outline-none focus:border-orange-400/40"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSaveVoiceId}
+                          disabled={savingVoiceId || !voiceIdInput.trim()}
+                          className="text-xs gap-1 bg-orange-500 hover:bg-orange-600 text-white"
+                        >
+                          <Save className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </details>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      {isPT
+                        ? "Cria uma voz única no ElevenLabs que combine com este personagem. A SavvyOwl gera o prompt perfeito baseado nas características do personagem."
+                        : "Create a unique voice on ElevenLabs that matches this character. SavvyOwl generates the perfect prompt based on character traits."}
+                    </p>
+
+                    {/* Generate voice prompt */}
+                    {!voicePrompt ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={generateVoicePrompt}
+                        className="gap-1.5 text-xs border-orange-400/30 text-orange-500 hover:bg-orange-500/10"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {isPT ? "Gerar Prompt de Voz" : "Generate Voice Prompt"}
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <pre className="p-3 bg-secondary/20 rounded-lg text-[10px] text-foreground/80 whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto border border-border/30">
+                          {voicePrompt}
+                        </pre>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { navigator.clipboard.writeText(voicePrompt); toast.success("Prompt copiado!"); }}
+                            className="gap-1 text-xs text-orange-500 border-orange-400/30"
+                          >
+                            <Copy className="h-3 w-3" />Copiar Prompt
+                          </Button>
+                          <a
+                            href="https://elevenlabs.io/voice-library/voice-design"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button size="sm" variant="outline" className="gap-1 text-xs">
+                              <ExternalLink className="h-3 w-3" />Abrir ElevenLabs
+                            </Button>
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Voice ID input */}
+                    <div className="border-t border-orange-400/10 pt-3">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                        {isPT ? "Cola aqui o Voice ID do ElevenLabs" : "Paste your ElevenLabs Voice ID"}
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          value={voiceIdInput}
+                          onChange={(e) => setVoiceIdInput(e.target.value)}
+                          placeholder="Ex: pNInz6obpgDQGcFmaJgB"
+                          className="flex-1 rounded-lg border border-border bg-secondary/30 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-orange-400/40"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleSaveVoiceId}
+                          disabled={savingVoiceId || !voiceIdInput.trim()}
+                          className="gap-1.5 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                        >
+                          {savingVoiceId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+                          {isPT ? "Guardar" : "Save"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Prompts */}
             <div className="space-y-3">
