@@ -534,7 +534,12 @@ Sem texto adicional fora deste formato.`,
       };
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      const model = pipeline.sceneDuration <= 8 ? "veo3-fast" : "wan26-t2v-flash";
+      // Model selection: 8s → Veo3 Fast | 15s → Wan I2V (if reference image) or T2V (if not)
+      const model = pipeline.sceneDuration <= 8
+        ? "veo3-fast"
+        : pipeline.referenceImageUrl
+          ? "wan26-i2v-flash"
+          : "wan26-t2v-flash";
 
       // Build final prompt: identity block + scene prompt for visual consistency
       // If user generated narration (ElevenLabs/TTS), force silent video — audio comes from narration
@@ -910,7 +915,7 @@ Sem texto adicional fora deste formato.`,
                         }`}
                       >
                         <span className="text-sm font-bold block">15s</span>
-                        <span className="text-[9px] text-muted-foreground">{pipeline.referenceImageUrl ? "7" : "5"} créd</span>
+                        <span className="text-[9px] text-muted-foreground">5 créd</span>
                       </button>
                     </div>
                   </div>
@@ -967,11 +972,11 @@ Sem texto adicional fora deste formato.`,
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Custo estimado:</span>
                     <span className="text-purple-500 font-bold">
-                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + 0)} créditos
+                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 10 : 5))} créditos
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-1">
-                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + 0} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
+                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 10 : 5)} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
                   </p>
                 </div>
               </div>
@@ -1198,7 +1203,7 @@ Sem texto adicional fora deste formato.`,
                         {scene.generating ? (
                           <><Loader2 className="h-3 w-3 animate-spin" />A gerar...</>
                         ) : (
-                          <><Video className="h-3 w-3" />Gerar Cena {scene.index} · {(pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + 0} créditos</>
+                          <><Video className="h-3 w-3" />Gerar Cena {scene.index} · {(pipeline.sceneDuration <= 8 ? 10 : 5)} créditos</>
                         )}
                       </Button>
                     )}
