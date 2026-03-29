@@ -443,46 +443,71 @@ Sem texto adicional fora deste formato.`,
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData?.session?.access_token || "";
-
-      // Build prompt with character identity if available
-      let fullPrompt = scene.prompt;
-      if (pipeline.characterName && activeCharacter) {
-        // The identity block will be built by the video function
-      }
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
       const model = pipeline.sceneDuration <= 8 ? "veo3-fast" : (pipeline.referenceImageUrl ? "wan26-r2v-flash" : "wan26-t2v-flash");
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-        {
+      // Step 1: Submit job
+      const submitResp = await fetch(baseUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          prompt: scene.prompt,
+          aspectRatio: pipeline.aspectRatio,
+          duration: pipeline.sceneDuration,
+          model,
+          referenceImageUrl: pipeline.referenceImageUrl || undefined,
+          narrationUrl: narrationStorageUrl || undefined,
+        }),
+      });
+
+      const submitData = await submitResp.json();
+      if (submitData.error) throw new Error(submitData.error);
+      if (submitData.status !== "SUBMITTED") throw new Error("Falha ao submeter");
+
+      const { requestId, modelEndpoint } = submitData;
+
+      // Step 2: Poll for result (from frontend — no timeout issue)
+      const maxWait = 600000; // 10 min max
+      const pollInterval = 5000;
+      let elapsed = 0;
+
+      while (elapsed < maxWait) {
+        await new Promise((r) => setTimeout(r, pollInterval));
+        elapsed += pollInterval;
+
+        const pollResp = await fetch(baseUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            prompt: fullPrompt,
-            aspectRatio: pipeline.aspectRatio,
-            duration: pipeline.sceneDuration,
-            model,
-            referenceImageUrl: pipeline.referenceImageUrl || undefined,
-            narrationUrl: narrationStorageUrl || undefined,
-          }),
+          headers,
+          body: JSON.stringify({ action: "poll", requestId, modelEndpoint }),
+        });
+
+        const pollData = await pollResp.json();
+
+        if (pollData.status === "COMPLETED" && pollData.videoUrl) {
+          setPipeline((p) => ({
+            ...p,
+            scenes: p.scenes.map((s, i) =>
+              i === sceneIndex ? { ...s, videoUrl: pollData.videoUrl, generating: false } : s
+            ),
+          }));
+          toast.success(`Cena ${sceneIndex + 1} gerada! (${Math.round(elapsed / 1000)}s)`);
+          return;
         }
-      );
 
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error);
+        if (pollData.status === "FAILED") {
+          throw new Error(pollData.error || "Geração falhou no servidor");
+        }
 
-      const videoUrl = data.video?.uri || data.video?.url;
-      setPipeline((p) => ({
-        ...p,
-        scenes: p.scenes.map((s, i) =>
-          i === sceneIndex ? { ...s, videoUrl, generating: false } : s
-        ),
-      }));
-      toast.success(`Cena ${sceneIndex + 1} gerada!`);
+        // Still pending — continue polling
+      }
+
+      throw new Error("Timeout — o vídeo está a demorar mais de 10 minutos");
     } catch (e: any) {
       setPipeline((p) => ({
         ...p,

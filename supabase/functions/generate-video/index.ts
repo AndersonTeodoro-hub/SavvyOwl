@@ -18,9 +18,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const falApiKey = Deno.env.get("FAL_API_KEY");
 
-    if (!falApiKey) {
-      return json({ error: "Serviço de vídeo não configurado. Contacta o suporte." }, 503);
-    }
+    if (!falApiKey) return json({ error: "Serviço de vídeo não configurado." }, 503);
 
     const authHeader = req.headers.get("authorization") || "";
     const token = authHeader.replace("Bearer ", "");
@@ -34,14 +32,39 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { prompt, aspectRatio, duration, model, referenceImageUrl, narrationUrl } = body;
+    const { prompt, aspectRatio, duration, model, referenceImageUrl, narrationUrl, action, requestId: pollRequestId, modelEndpoint: pollEndpoint } = body;
+
+    // ── POLL ACTION — frontend polls for result ──
+    if (action === "poll" && pollRequestId && pollEndpoint) {
+      const statusResp = await fetch(
+        `https://queue.fal.run/${pollEndpoint}/requests/${pollRequestId}/status`,
+        { headers: { Authorization: `Key ${falApiKey}` } }
+      );
+      if (!statusResp.ok) return json({ status: "PENDING" });
+      const status = await statusResp.json();
+
+      if (status.status === "COMPLETED") {
+        const resultResp = await fetch(
+          `https://queue.fal.run/${pollEndpoint}/requests/${pollRequestId}`,
+          { headers: { Authorization: `Key ${falApiKey}` } }
+        );
+        const result = await resultResp.json();
+        const videoUrl = result.video?.url || result.video_url || result.output?.video?.url;
+        return json({ status: "COMPLETED", videoUrl });
+      }
+      if (status.status === "FAILED") {
+        return json({ status: "FAILED", error: JSON.stringify(status.error || status).substring(0, 300) });
+      }
+      return json({ status: status.status || "PENDING" });
+    }
+
+    // ── SUBMIT ACTION — submit job and return immediately ──
     if (!prompt) return json({ error: "Prompt is required" }, 400);
 
     const ar = aspectRatio || "9:16";
     const dur = parseInt(duration) || 8;
     const selectedModel = model || "veo3-fast";
 
-    // ── MODEL REGISTRY ──
     const FAL_MODELS: Record<string, { endpoint: string; credits: number; label: string }> = {
       "veo3-fast":       { endpoint: "fal-ai/veo3/fast",                  credits: 10, label: "Veo3 Fast" },
       "veo3":            { endpoint: "fal-ai/veo3",                       credits: 15, label: "Veo3" },
@@ -58,6 +81,7 @@ Deno.serve(async (req) => {
     const LIPSYNC_COST = narrationUrl ? 2 : 0;
     const CREDIT_COST = modelConfig.credits + LIPSYNC_COST;
 
+    // Check credits
     const profileResp = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance,plan`,
       { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
@@ -67,11 +91,7 @@ Deno.serve(async (req) => {
     const balance = profile?.credits_balance ?? 0;
 
     if (balance < CREDIT_COST) {
-      return json({
-        error: "insufficient_credits",
-        message: `Sem créditos suficientes (tens ${balance}, precisas de ${CREDIT_COST}).`,
-        balance, cost: CREDIT_COST,
-      }, 402);
+      return json({ error: "insufficient_credits", message: `Sem créditos (tens ${balance}, precisas ${CREDIT_COST}).`, balance, cost: CREDIT_COST }, 402);
     }
 
     const modelEndpoint = modelConfig.endpoint;
@@ -79,24 +99,20 @@ Deno.serve(async (req) => {
     const isR2V = selectedModel.includes("r2v");
     const isI2V = selectedModel.includes("i2v");
 
-    console.log(`[FAL] ${modelConfig.label} (${modelEndpoint}) ${dur}s ${ar}${referenceImageUrl ? " +ref" : ""}`);
+    console.log(`[FAL] Submit ${modelConfig.label} ${dur}s ${ar}`);
 
-    // ── BUILD FAL REQUEST ──
+    // Build request body
     const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar };
-
     if (isWan26) {
       falBody.duration = String(dur);
       falBody.resolution = "720p";
-      if ((isR2V || isI2V) && referenceImageUrl) {
-        falBody.image_url = referenceImageUrl;
-      }
+      if ((isR2V || isI2V) && referenceImageUrl) falBody.image_url = referenceImageUrl;
     } else {
       falBody.duration = dur;
-      if (referenceImageUrl) {
-        falBody.image_url = referenceImageUrl;
-      }
+      if (referenceImageUrl) falBody.image_url = referenceImageUrl;
     }
 
+    // Submit to fal.ai queue
     const submitResp = await fetch(`https://queue.fal.run/${modelEndpoint}`, {
       method: "POST",
       headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
@@ -111,134 +127,32 @@ Deno.serve(async (req) => {
     const submitData = await submitResp.json();
     const requestId = submitData.request_id;
     if (!requestId) throw new Error("No request_id from fal.ai");
-    console.log(`[FAL] Request ID: ${requestId}`);
 
-    const maxWait = 300000;
-    const pollInterval = 5000;
-    let elapsed = 0;
+    // Deduct credits immediately (before polling)
+    const newBalance = balance - CREDIT_COST;
+    await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ credits_balance: newBalance }),
+    });
+    await fetch(`${supabaseUrl}/rest/v1/credit_transactions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify({ user_id: userId, amount: -CREDIT_COST, type: "spend", description: `Vídeo ${dur}s ${modelConfig.label}` }),
+    });
 
-    while (elapsed < maxWait) {
-      await new Promise((r) => setTimeout(r, pollInterval));
-      elapsed += pollInterval;
+    console.log(`[FAL] Submitted ${requestId} | ${balance} → ${newBalance}`);
 
-      const statusResp = await fetch(
-        `https://queue.fal.run/${modelEndpoint}/requests/${requestId}/status`,
-        { headers: { Authorization: `Key ${falApiKey}` } }
-      );
-      if (!statusResp.ok) continue;
-      const status = await statusResp.json();
-      console.log(`[FAL] ${elapsed / 1000}s: ${status.status}`);
-
-      if (status.status === "COMPLETED") {
-        const resultResp = await fetch(
-          `https://queue.fal.run/${modelEndpoint}/requests/${requestId}`,
-          { headers: { Authorization: `Key ${falApiKey}` } }
-        );
-        const result = await resultResp.json();
-        let videoUrl = result.video?.url || result.video_url || result.output?.video?.url;
-        if (!videoUrl) throw new Error(`No video URL: ${JSON.stringify(result).substring(0, 300)}`);
-
-        // ── LIP-SYNC POST-PROCESSING ──
-        // If narration audio was provided, apply lip-sync via LatentSync
-        let lipsyncApplied = false;
-        if (narrationUrl && videoUrl) {
-          try {
-            console.log(`[FAL] Applying lip-sync via LatentSync...`);
-
-            // Submit lip-sync job
-            const lsSubmit = await fetch("https://queue.fal.run/fal-ai/latentsync", {
-              method: "POST",
-              headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ video_url: videoUrl, audio_url: narrationUrl }),
-            });
-
-            if (!lsSubmit.ok) {
-              const lsErr = await lsSubmit.text();
-              console.log(`[FAL] LatentSync submit failed: ${lsSubmit.status} ${lsErr.substring(0, 200)}`);
-            } else {
-              const lsData = await lsSubmit.json();
-              const lsRequestId = lsData.request_id;
-              console.log(`[FAL] LatentSync request: ${lsRequestId}`);
-
-              // Poll for lip-sync result (3 min max)
-              const lsMaxWait = 180000;
-              let lsElapsed = 0;
-              while (lsElapsed < lsMaxWait) {
-                await new Promise((r) => setTimeout(r, 5000));
-                lsElapsed += 5000;
-
-                const lsStatus = await fetch(
-                  `https://queue.fal.run/fal-ai/latentsync/requests/${lsRequestId}/status`,
-                  { headers: { Authorization: `Key ${falApiKey}` } }
-                );
-                if (!lsStatus.ok) continue;
-                const lsStat = await lsStatus.json();
-                console.log(`[FAL] LatentSync ${lsElapsed / 1000}s: ${lsStat.status}`);
-
-                if (lsStat.status === "COMPLETED") {
-                  const lsResult = await fetch(
-                    `https://queue.fal.run/fal-ai/latentsync/requests/${lsRequestId}`,
-                    { headers: { Authorization: `Key ${falApiKey}` } }
-                  );
-                  const lsRes = await lsResult.json();
-                  const syncedUrl = lsRes.video?.url || lsRes.output?.video?.url;
-                  if (syncedUrl) {
-                    videoUrl = syncedUrl;
-                    lipsyncApplied = true;
-                    console.log(`[FAL] LatentSync OK — lip-sync applied`);
-                  }
-                  break;
-                }
-                if (lsStat.status === "FAILED") {
-                  console.log(`[FAL] LatentSync failed: ${JSON.stringify(lsStat.error || lsStat).substring(0, 200)}`);
-                  break;
-                }
-              }
-              if (!lipsyncApplied) {
-                console.log(`[FAL] LatentSync did not complete — returning video without lip-sync`);
-              }
-            }
-          } catch (lsErr) {
-            console.error("[FAL] LatentSync error (non-blocking):", lsErr);
-          }
-        }
-
-        const newBalance = balance - CREDIT_COST;
-        await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ credits_balance: newBalance }),
-        });
-        await fetch(`${supabaseUrl}/rest/v1/credit_transactions`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ user_id: userId, amount: -CREDIT_COST, type: "spend", description: `Vídeo ${dur}s ${modelConfig.label}` }),
-        });
-        await fetch(`${supabaseUrl}/rest/v1/usage_logs`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
-          body: JSON.stringify({ user_id: userId, mode: "video_generation", model: `fal-${selectedModel}`, cost_eur: dur * 0.10 }),
-        });
-
-        console.log(`[FAL] OK ${modelConfig.label} ${Math.round(elapsed / 1000)}s | ${balance} → ${newBalance}${lipsyncApplied ? " +lipsync" : ""}`);
-        return json({
-          video: { uri: videoUrl, mimeType: "video/mp4" },
-          generationTime: Math.round(elapsed / 1000),
-          credits: { balance: newBalance, cost: CREDIT_COST },
-          backend: `fal-${selectedModel}`,
-          lipsync: lipsyncApplied,
-        });
-      }
-
-      if (status.status === "FAILED") {
-        throw new Error(`Falhou: ${JSON.stringify(status.error || status).substring(0, 300)}`);
-      }
-    }
-
-    throw new Error("Timeout (5 min)");
+    // Return immediately with request_id — frontend will poll
+    return json({
+      status: "SUBMITTED",
+      requestId,
+      modelEndpoint,
+      credits: { balance: newBalance, cost: CREDIT_COST },
+    });
 
   } catch (e) {
     console.error("[FAL] Error:", e);
-    return json({ error: "Erro ao gerar vídeo: " + (e as Error).message }, 500);
+    return json({ error: "Erro: " + (e as Error).message }, 500);
   }
 });

@@ -55,25 +55,25 @@ export function GenerateVideoButton({ prompt }: Props) {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
       const finalPrompt = buildFinalPrompt();
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: JSON.stringify({
-            prompt: finalPrompt,
-            aspectRatio,
-            duration,
-            model: resolvedModel,
-            referenceImageUrl: hasRef ? referenceImageUrl : undefined,
-          }),
-        }
-      );
+      // Step 1: Submit
+      const resp = await fetch(baseUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          aspectRatio,
+          duration,
+          model: resolvedModel,
+          referenceImageUrl: hasRef ? referenceImageUrl : undefined,
+        }),
+      });
 
       const data = await resp.json();
 
@@ -87,18 +87,41 @@ export function GenerateVideoButton({ prompt }: Props) {
         toast.error(data.error);
         return;
       }
-
-      if (data.video?.uri) {
-        setVideoUrl(data.video.uri);
-        if (data.credits) setCredits(data.credits);
-        toast.success(`Vídeo gerado em ${data.generationTime}s!`);
-      } else if (data.video?.data) {
-        setVideoUrl(`data:${data.video.mimeType};base64,${data.video.data}`);
-        if (data.credits) setCredits(data.credits);
-        toast.success(`Vídeo gerado em ${data.generationTime}s!`);
-      } else {
-        setError("Vídeo gerado mas sem dados. Tenta novamente.");
+      if (data.status !== "SUBMITTED") {
+        setError("Falha ao submeter vídeo");
+        return;
       }
+
+      const { requestId, modelEndpoint } = data;
+      if (data.credits) setCredits(data.credits);
+      setProgress(`A gerar vídeo de ${duration}s (pode demorar 1-3 min)...`);
+
+      // Step 2: Poll
+      const maxWait = 600000;
+      let elapsed = 0;
+      while (elapsed < maxWait) {
+        await new Promise((r) => setTimeout(r, 5000));
+        elapsed += 5000;
+
+        const pollResp = await fetch(baseUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ action: "poll", requestId, modelEndpoint }),
+        });
+        const pollData = await pollResp.json();
+
+        if (pollData.status === "COMPLETED" && pollData.videoUrl) {
+          setVideoUrl(pollData.videoUrl);
+          toast.success(`Vídeo gerado em ${Math.round(elapsed / 1000)}s!`);
+          return;
+        }
+        if (pollData.status === "FAILED") {
+          setError(pollData.error || "Geração falhou");
+          toast.error("Erro ao gerar vídeo");
+          return;
+        }
+      }
+      setError("Timeout — tenta novamente");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erro desconhecido";
       setError(msg);
