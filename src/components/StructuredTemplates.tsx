@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { ChevronRight, X, Loader2, ExternalLink, Eye, ThumbsUp, Play, Users, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +31,7 @@ type Props = {
 
 export function StructuredTemplates({ onSend, disabled }: Props) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { identityBlock, negativePrompt, activeCharacterName } = useCharacter();
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -542,83 +544,9 @@ AT THE END include:
       id: "dark-channel",
       emoji: "🌑",
       label: isPT ? "Canal Dark (Pipeline Pro)" : "Dark Channel (Pro Pipeline)",
-      description: isPT ? "Pipeline: Titulo -> Roteiro -> Cenas VEO3" : "Pipeline: Title -> Script -> VEO3 Scenes",
-      fields: [
-        { key: "step", label: isPT ? "Qual etapa?" : "Which step?", type: "select", options: isPT ? ["1 - Gerar Titulos", "2 - Criar Roteiro", "3 - Gerar Cenas VEO3"] : ["1 - Generate Titles", "2 - Create Script", "3 - Generate VEO3 Scenes"], placeholder: "" },
-        { key: "topic", label: isPT ? "Tema" : "Topic", placeholder: isPT ? "ex: A Peste Negra, O Colapso de Roma" : "e.g., The Black Plague, Fall of Rome" },
-        { key: "words", label: isPT ? "Palavras do roteiro (etapa 2)" : "Script words (step 2)", type: "select", options: ["800", "1200", "1800", "2500", "3500", "5000"], placeholder: "" },
-        { key: "scenes", label: isPT ? "Total de cenas (etapa 3)" : "Total scenes (step 3)", type: "select", options: ["10", "15", "20", "25", "30", "40", "50"], placeholder: "" },
-      ],
-      buildPrompt: (v) => {
-        const step = v.step?.charAt(0) || "1";
-        if (step === "1") {
-          return isPT
-            ? `Voce agora atua como Designer de Conceitos Narrativos para YouTube focado em historias atemporais com alto poder de retencao. Seu trabalho e desenvolver propostas de videos longos (10-25 min) construidos inteiramente com sequencias cinematograficas geradas por IA. Nao considere gravacoes reais.
-
-Principios: Temas atemporais (civilizacoes antigas, eventos historicos, fenomenos inexplicaveis, exploracoes extremas, tecnologias esquecidas, fraudes historicas, sociedades ocultas). Evite noticias recentes ou figuras publicas modernas. Cada proposta deve permitir divisao em micro-cenas visuais (5-10s cada). Titulos com curiosidade profunda.
-
-Crie 12 propostas${v.topic ? " relacionadas ao tema: " + v.topic : ""}. Cada proposta: Nome do video / Gatilho psicologico principal / Direcao visual sugerida / Transformacao prometida ao espectador. Sem listas numeradas. Ao final escreva: Selecione um dos titulos e utilize no proximo comando.`
-            : `You are a Narrative Concept Designer for YouTube, timeless stories with high retention. Develop 12 proposals for long videos (10-25 min) built with AI cinematic sequences.${v.topic ? " Topic: " + v.topic : ""} Each: Video name / Main psychological trigger / Visual direction / Transformation promised. No numbered lists. End with: Select one title for the next command.`;
-        }
-        if (step === "2") {
-          return isPT
-            ? `Palavras do roteiro: ${v.words || "1800"}. Tema: ${v.topic || "[COLE O TITULO ESCOLHIDO]"}
-
-Voce e um roteirista de documentarios historicos imersivos, estilo YouTube cinematografico. Escreva o roteiro completo com linguagem rica, fluida e cinematografica.
-
-ESTRUTURA OBRIGATORIA (nesta ordem exata):
-1. Abertura Impactante (Hook) - Comece no caos. Frases curtas visuais emocionais. Termine com grande pergunta.
-2. Revelacao do Evento - O que aconteceu e por que e extraordinario.
-3. Quebra de Expectativa - Auge antes da queda. Contraste forte.
-4. Contexto do Mundo - Sociedade, economia, comercio. Como o sucesso preparou a catastrofe.
-5. Origem do Evento - Local distante, invisivel, incompreendido. Riqueza sensorial.
-6. Ponto de Contato - Momento exato em que atinge a civilizacao.
-7. Propagacao - Disseminacao progressiva. Velocidade, impotencia.
-8. Reacao Humana - Crencas equivocadas, ciencia limitada.
-9. Colapso Social - Quebra de lacos, abandono, histeria.
-10. Radicalizacao - Extremismo, perseguicoes. Tom serio.
-11. Impacto Rural - Vilas abandonadas, colheitas perdidas.
-12. Recuo - Nao vitoria, esgotamento.
-13. Mundo Pos-Evento - Transformacao permanente.
-14. Fechamento - Paralelos modernos. Pergunta inquietante.
-15. Assinatura - CTA suave.
-
-REGRAS: Sem listas. Sem emojis. Narrativa cinematografica. Respeitar ${v.words || "1800"} palavras.`
-            : `Script words: ${v.words || "1800"}. Topic: ${v.topic || "[PASTE CHOSEN TITLE]"}
-Immersive historical documentary screenwriter. Write complete script, rich cinematic language.
-Structure: 1.Hook 2.Revelation 3.Expectation break 4.World context 5.Origin 6.Contact point 7.Propagation 8.Human reaction 9.Social collapse 10.Radicalization 11.Rural impact 12.Recession 13.Post-event 14.Reflective closing 15.Signature CTA. No lists, no emojis, cinematic tone. Respect ${v.words || "1800"} words.`;
-        }
-        return isPT
-          ? `Total de cenas: ${v.scenes || "20"}. Roteiro: [COLE O ROTEIRO DA ETAPA 2 AQUI]
-
-Voce e um diretor de cinema historico e storyboarder para documentarios imersivos com VEO 3.
-
-OBJETIVO: Selecionar cenas necessarias, evitar redundancia, progressao emocional, facilitar sincronizacao. Pipeline profissional.
-
-SELECAO: Cada cena = ponto-chave do roteiro, funciona sem narracao, unica acao, 6-8 segundos.
-
-PADRAO VISUAL (OBRIGATORIO): Realismo historico cinematografico. Pessoas comuns imperfeitas. Roupas e arquitetura corretas. Iluminacao natural (velas, ceu nublado). Paleta terrosa dessaturada. Atmosfera densa. ZERO elementos modernos. ZERO texto na imagem.
-
-ANIMACAO VEO 3: Movimento sutil (respiracao, gestos, tecidos, fumaca, chamas). Camera estatica ou push-in lento. Nunca brusco. Uma acao por cena.
-
-FORMATO - Blocos de 5 cenas. Para cada:
-
-Cena X - [Titulo]
-Trecho do roteiro: [copia exata]
-Por que existe: [1 linha]
-
-Prompt VEO 3 (em bloco de codigo):
-\`\`\`
-[Prompt em ingles tecnico cinematografico. Ambiente, personagens, acao, iluminacao, clima, camera, movimento. Sem modernismos. Sem texto na imagem.]
-\`\`\`
-
-Da Cena 2 em diante incluir: "Maintain the same visual style, lighting, realism level, historical accuracy and cinematic tone as previous scenes."
-
-Apos 5 cenas PARE. Aguarde: "Continue com o proximo bloco."`
-          : `Total scenes: ${v.scenes || "20"}. Script: [PASTE STEP 2 SCRIPT HERE]
-Historical cinema director + storyboarder for VEO 3 immersive docs.
-Deliver in blocks of 5. Each scene: Title, script excerpt, why it exists, VEO 3 prompt in code block (English, cinematic, historical realism, no modern elements, no text). From scene 2: add consistency line. After 5 scenes STOP, wait for "Continue."`;
-      },
+      description: isPT ? "Pipeline: Tema → Título → Roteiro → Personagem → Cenas → Vídeo" : "Pipeline: Theme → Title → Script → Character → Scenes → Video",
+      fields: [],
+      buildPrompt: () => "__REDIRECT__/dashboard/dark-pipeline",
     },
     {
       id: "viral-pipeline",
@@ -960,7 +888,16 @@ Negative: [negative prompt]
         {templates.map((tpl) => (
           <button
             key={tpl.id}
-            onClick={() => { setActiveTemplate(tpl); setFieldValues({}); }}
+            onClick={() => {
+              // Check if template is a redirect (e.g., Dark Pipeline Pro)
+              const testPrompt = tpl.buildPrompt({});
+              if (testPrompt.startsWith("__REDIRECT__")) {
+                navigate(testPrompt.replace("__REDIRECT__", ""));
+                return;
+              }
+              setActiveTemplate(tpl);
+              setFieldValues({});
+            }}
             disabled={disabled}
             className="flex items-start gap-2.5 p-3 rounded-xl border border-border/60 bg-secondary/20 hover:bg-secondary/50 hover:border-border transition-all text-left group"
           >

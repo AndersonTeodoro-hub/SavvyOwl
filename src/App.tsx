@@ -20,6 +20,7 @@ import Prompts from "./pages/Prompts";
 import Analytics from "./pages/Analytics";
 import SettingsPage from "./pages/SettingsPage";
 import CharactersPage from "./pages/CharactersPage";
+import DarkPipelinePage from "./pages/DarkPipelinePage";
 import NotFound from "./pages/NotFound";
 import { Navigate } from "react-router-dom";
 
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="prompts" element={<SafeComponent><Prompts /></SafeComponent>} />
                 <Route path="analytics" element={<SafeComponent><Analytics /></SafeComponent>} />
                 <Route path="characters" element={<SafeComponent><CharactersPage /></SafeComponent>} />
+                <Route path="dark-pipeline" element={<SafeComponent><DarkPipelinePage /></SafeComponent>} />
                 <Route path="settings" element={<SafeComponent><SettingsPage /></SafeComponent>} />
               </Route>
               <Route path="*" element={<NotFound />} />

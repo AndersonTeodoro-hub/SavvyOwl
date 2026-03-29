@@ -1,4 +1,4 @@
-import { Home, MessageSquare, BookOpen, BarChart3, Settings, LogOut, Share2, Users } from "lucide-react";
+import { Home, MessageSquare, BookOpen, BarChart3, Settings, LogOut, Share2, Users, Film } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +31,7 @@ export function DashboardSidebar() {
     { title: t("nav.promptLibrary"), url: "/dashboard/prompts", icon: BookOpen },
     { title: t("nav.analytics"), url: "/dashboard/analytics", icon: BarChart3 },
     { title: "Characters", url: "/dashboard/characters", icon: Users },
+    { title: "Dark Pipeline Pro", url: "/dashboard/dark-pipeline", icon: Film },
     { title: t("nav.settings"), url: "/dashboard/settings", icon: Settings },
   ];
 
