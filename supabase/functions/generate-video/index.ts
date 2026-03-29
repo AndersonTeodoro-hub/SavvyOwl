@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { prompt, aspectRatio, duration, model, referenceImageUrl } = body;
+    const { prompt, aspectRatio, duration, model, referenceImageUrl, narrationUrl } = body;
     if (!prompt) return json({ error: "Prompt is required" }, 400);
 
     const ar = aspectRatio || "9:16";
@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
     };
 
     const modelConfig = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
-    const CREDIT_COST = modelConfig.credits;
+    const LIPSYNC_COST = narrationUrl ? 2 : 0;
+    const CREDIT_COST = modelConfig.credits + LIPSYNC_COST;
 
     const profileResp = await fetch(
       `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance,plan`,
@@ -134,8 +135,73 @@ Deno.serve(async (req) => {
           { headers: { Authorization: `Key ${falApiKey}` } }
         );
         const result = await resultResp.json();
-        const videoUrl = result.video?.url || result.video_url || result.output?.video?.url;
+        let videoUrl = result.video?.url || result.video_url || result.output?.video?.url;
         if (!videoUrl) throw new Error(`No video URL: ${JSON.stringify(result).substring(0, 300)}`);
+
+        // ── LIP-SYNC POST-PROCESSING ──
+        // If narration audio was provided, apply lip-sync via LatentSync
+        let lipsyncApplied = false;
+        if (narrationUrl && videoUrl) {
+          try {
+            console.log(`[FAL] Applying lip-sync via LatentSync...`);
+
+            // Submit lip-sync job
+            const lsSubmit = await fetch("https://queue.fal.run/fal-ai/latentsync", {
+              method: "POST",
+              headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ video_url: videoUrl, audio_url: narrationUrl }),
+            });
+
+            if (!lsSubmit.ok) {
+              const lsErr = await lsSubmit.text();
+              console.log(`[FAL] LatentSync submit failed: ${lsSubmit.status} ${lsErr.substring(0, 200)}`);
+            } else {
+              const lsData = await lsSubmit.json();
+              const lsRequestId = lsData.request_id;
+              console.log(`[FAL] LatentSync request: ${lsRequestId}`);
+
+              // Poll for lip-sync result (3 min max)
+              const lsMaxWait = 180000;
+              let lsElapsed = 0;
+              while (lsElapsed < lsMaxWait) {
+                await new Promise((r) => setTimeout(r, 5000));
+                lsElapsed += 5000;
+
+                const lsStatus = await fetch(
+                  `https://queue.fal.run/fal-ai/latentsync/requests/${lsRequestId}/status`,
+                  { headers: { Authorization: `Key ${falApiKey}` } }
+                );
+                if (!lsStatus.ok) continue;
+                const lsStat = await lsStatus.json();
+                console.log(`[FAL] LatentSync ${lsElapsed / 1000}s: ${lsStat.status}`);
+
+                if (lsStat.status === "COMPLETED") {
+                  const lsResult = await fetch(
+                    `https://queue.fal.run/fal-ai/latentsync/requests/${lsRequestId}`,
+                    { headers: { Authorization: `Key ${falApiKey}` } }
+                  );
+                  const lsRes = await lsResult.json();
+                  const syncedUrl = lsRes.video?.url || lsRes.output?.video?.url;
+                  if (syncedUrl) {
+                    videoUrl = syncedUrl;
+                    lipsyncApplied = true;
+                    console.log(`[FAL] LatentSync OK — lip-sync applied`);
+                  }
+                  break;
+                }
+                if (lsStat.status === "FAILED") {
+                  console.log(`[FAL] LatentSync failed: ${JSON.stringify(lsStat.error || lsStat).substring(0, 200)}`);
+                  break;
+                }
+              }
+              if (!lipsyncApplied) {
+                console.log(`[FAL] LatentSync did not complete — returning video without lip-sync`);
+              }
+            }
+          } catch (lsErr) {
+            console.error("[FAL] LatentSync error (non-blocking):", lsErr);
+          }
+        }
 
         const newBalance = balance - CREDIT_COST;
         await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
@@ -154,12 +220,13 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ user_id: userId, mode: "video_generation", model: `fal-${selectedModel}`, cost_eur: dur * 0.10 }),
         });
 
-        console.log(`[FAL] OK ${modelConfig.label} ${Math.round(elapsed / 1000)}s | ${balance} → ${newBalance}`);
+        console.log(`[FAL] OK ${modelConfig.label} ${Math.round(elapsed / 1000)}s | ${balance} → ${newBalance}${lipsyncApplied ? " +lipsync" : ""}`);
         return json({
           video: { uri: videoUrl, mimeType: "video/mp4" },
           generationTime: Math.round(elapsed / 1000),
           credits: { balance: newBalance, cost: CREDIT_COST },
           backend: `fal-${selectedModel}`,
+          lipsync: lipsyncApplied,
         });
       }
 

@@ -114,6 +114,7 @@ export default function DarkPipelinePage() {
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [narrationStorageUrl, setNarrationStorageUrl] = useState<string | null>(null);
   const [showVoiceOptions, setShowVoiceOptions] = useState(false);
   const [selectedTtsVoice, setSelectedTtsVoice] = useState(() => {
     try {
@@ -268,6 +269,7 @@ ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
     setVoiceLoading(true);
     setVoiceError(null);
     setVoiceUrl(null);
+    setNarrationStorageUrl(null);
 
     try {
       const voiceBody: any = {
@@ -283,21 +285,47 @@ ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
 
       if (data?.audio) {
         const mimeType = data.mimeType || "audio/mpeg";
+        let blob: Blob;
+
         if (mimeType.includes("L16") || mimeType.includes("pcm")) {
           const raw = Uint8Array.from(atob(data.audio), c => c.charCodeAt(0));
           const wavHeader = createWavHeader(raw.length, 24000, 1, 16);
           const wavData = new Uint8Array(wavHeader.length + raw.length);
           wavData.set(wavHeader, 0);
           wavData.set(raw, wavHeader.length);
-          const blob = new Blob([wavData], { type: "audio/wav" });
-          setVoiceUrl(URL.createObjectURL(blob));
+          blob = new Blob([wavData], { type: "audio/wav" });
         } else {
           const byteChars = atob(data.audio);
           const byteArray = new Uint8Array(byteChars.length);
           for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-          const blob = new Blob([byteArray], { type: mimeType });
-          setVoiceUrl(URL.createObjectURL(blob));
+          blob = new Blob([byteArray], { type: mimeType });
         }
+
+        setVoiceUrl(URL.createObjectURL(blob));
+
+        // Upload to Supabase Storage for lip-sync pipeline
+        if (user?.id) {
+          try {
+            const ext = mimeType.includes("wav") ? "wav" : "mp3";
+            const storagePath = `narrations/${user.id}/${Date.now()}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+              .from("character-references")
+              .upload(storagePath, blob, { contentType: mimeType, upsert: true });
+
+            if (!uploadError) {
+              const { data: urlData } = supabase.storage
+                .from("character-references")
+                .getPublicUrl(storagePath);
+              if (urlData?.publicUrl) {
+                setNarrationStorageUrl(urlData.publicUrl);
+                console.log("[VOICE] Narration uploaded for lip-sync:", urlData.publicUrl);
+              }
+            }
+          } catch (uploadErr) {
+            console.log("[VOICE] Storage upload failed (non-blocking):", uploadErr);
+          }
+        }
+
         toast.success("Narração gerada!");
       }
     } catch (e: any) {
@@ -412,6 +440,7 @@ Sem texto adicional fora deste formato.`,
             duration: pipeline.sceneDuration,
             model,
             referenceImageUrl: pipeline.referenceImageUrl || undefined,
+            narrationUrl: narrationStorageUrl || undefined,
           }),
         }
       );
@@ -836,11 +865,11 @@ Sem texto adicional fora deste formato.`,
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Custo estimado:</span>
                     <span className="text-purple-500 font-bold">
-                      {pipeline.sceneCount * (pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5))} créditos
+                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + (narrationStorageUrl ? 2 : 0))} créditos
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-1">
-                    {pipeline.sceneCount} cenas × {pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
+                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + (narrationStorageUrl ? 2 : 0)} créd{narrationStorageUrl ? " (inclui lip-sync)" : ""} = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
                   </p>
                 </div>
               </div>
@@ -960,7 +989,7 @@ Sem texto adicional fora deste formato.`,
                         {scene.generating ? (
                           <><Loader2 className="h-3 w-3 animate-spin" />A gerar...</>
                         ) : (
-                          <><Video className="h-3 w-3" />Gerar Cena {scene.index} · {pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)} créditos</>
+                          <><Video className="h-3 w-3" />Gerar Cena {scene.index}{narrationStorageUrl ? " + Voz" : ""} · {(pipeline.sceneDuration <= 8 ? 10 : (pipeline.referenceImageUrl ? 7 : 5)) + (narrationStorageUrl ? 2 : 0)} créditos</>
                         )}
                       </Button>
                     )}
