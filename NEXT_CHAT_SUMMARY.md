@@ -64,10 +64,10 @@
 ## CREDENCIAIS E TOKENS
 
 - **Supabase Project**: kumnrldlzttsrgjlsspa
-- **Supabase Management API**: sbp_57db5a474a9a9f6a462dd4e144ab8a61e02751fa
+- **Supabase Management API**: [PROVIDE AT SESSION START — never commit]
 - **Anderson User ID**: 2652f4ca-8413-4ce9-bfed-07c0be76b987 (anderson.lteodoro1@gmail.com, plan: starter)
 - **Test User**: 620cddf1-bb09-4e65-a469-c1630853453c (andersonteodoroddn@gmail.com, plan: free)
-- **fal.ai key**: stored in Supabase secrets as FAL_API_KEY (69 chars, starts with f43e5187)
+- **fal.ai key**: stored in Supabase secrets as FAL_API_KEY [do not commit]
 - **Créditos Anderson**: 150 (restaurados após testes falhados)
 
 ## EDGE FUNCTIONS (11 total, all verify_jwt=false)
