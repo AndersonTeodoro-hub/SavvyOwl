@@ -106,7 +106,16 @@ Deno.serve(async (req) => {
     if (isWan26) {
       falBody.duration = String(dur);
       falBody.resolution = "720p";
-      if ((isR2V || isI2V) && referenceImageUrl) falBody.image_url = referenceImageUrl;
+      if (isR2V && referenceImageUrl) {
+        // R2V expects image_urls (array) and prompt with "Character1"
+        falBody.image_urls = [referenceImageUrl];
+        // Prepend character reference to prompt if not already there
+        if (!falBody.prompt?.toString().includes("Character1")) {
+          falBody.prompt = `Character1 ${prompt}`;
+        }
+      } else if (isI2V && referenceImageUrl) {
+        falBody.image_url = referenceImageUrl;
+      }
     } else {
       falBody.duration = dur;
       if (referenceImageUrl) falBody.image_url = referenceImageUrl;

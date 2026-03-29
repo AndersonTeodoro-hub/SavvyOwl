@@ -18,7 +18,7 @@ function resolveModel(duration: number, hasRef: boolean): { model: string; credi
   }
   // 15s
   if (hasRef) {
-    return { model: "wan26-r2v-flash", credits: 7 };
+    return { model: "wan26-i2v-flash", credits: 7 };
   }
   return { model: "wan26-t2v-flash", credits: 5 };
 }
