@@ -116,6 +116,7 @@ export default function DarkPipelinePage() {
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [narrationStorageUrl, setNarrationStorageUrl] = useState<string | null>(null);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [showVoiceOptions, setShowVoiceOptions] = useState(false);
   const [selectedTtsVoice, setSelectedTtsVoice] = useState(() => {
     try {
@@ -315,7 +316,19 @@ REGRA ABSOLUTA DE OUTPUT:
           blob = new Blob([byteArray], { type: mimeType });
         }
 
-        setVoiceUrl(URL.createObjectURL(blob));
+        const blobUrl = URL.createObjectURL(blob);
+        setVoiceUrl(blobUrl);
+
+        // Get audio duration to auto-calculate scene count
+        const audio = new Audio(blobUrl);
+        audio.addEventListener("loadedmetadata", () => {
+          const dur = Math.ceil(audio.duration);
+          setAudioDuration(dur);
+          // Auto-calculate scene count based on audio duration
+          const autoScenes = Math.ceil(dur / pipeline.sceneDuration);
+          setPipeline((p) => ({ ...p, sceneCount: autoScenes }));
+          console.log(`[VOICE] Audio duration: ${dur}s → ${autoScenes} cenas de ${pipeline.sceneDuration}s`);
+        });
 
         // Upload to Supabase Storage for lip-sync pipeline
         if (user?.id) {
@@ -745,7 +758,11 @@ Sem texto adicional fora deste formato.`,
                     <p className="text-[10px] text-muted-foreground mb-1">Duração por cena</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setPipeline((p) => ({ ...p, sceneDuration: 8 }))}
+                        onClick={() => setPipeline((p) => ({
+                          ...p,
+                          sceneDuration: 8,
+                          sceneCount: audioDuration ? Math.ceil(audioDuration / 8) : p.sceneCount,
+                        }))}
                         className={`flex-1 p-2 rounded-lg border text-center transition-all ${
                           pipeline.sceneDuration === 8 ? "border-purple-500 bg-purple-500/10" : "border-border/50"
                         }`}
@@ -754,7 +771,11 @@ Sem texto adicional fora deste formato.`,
                         <span className="text-[9px] text-muted-foreground">10 créd</span>
                       </button>
                       <button
-                        onClick={() => setPipeline((p) => ({ ...p, sceneDuration: 15 }))}
+                        onClick={() => setPipeline((p) => ({
+                          ...p,
+                          sceneDuration: 15,
+                          sceneCount: audioDuration ? Math.ceil(audioDuration / 15) : p.sceneCount,
+                        }))}
                         className={`flex-1 p-2 rounded-lg border text-center transition-all ${
                           pipeline.sceneDuration === 15 ? "border-purple-500 bg-purple-500/10" : "border-border/50"
                         }`}
@@ -766,19 +787,28 @@ Sem texto adicional fora deste formato.`,
                   </div>
                   <div className="flex-1">
                     <p className="text-[10px] text-muted-foreground mb-1">Total de cenas</p>
-                    <div className="flex gap-1">
-                      {[3, 5, 7, 10].map((n) => (
-                        <button
-                          key={n}
-                          onClick={() => setPipeline((p) => ({ ...p, sceneCount: n }))}
-                          className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
-                            pipeline.sceneCount === n ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground"
-                          }`}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
+                    {audioDuration ? (
+                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-2 text-center">
+                        <span className="text-lg font-bold text-purple-500">{pipeline.sceneCount}</span>
+                        <p className="text-[9px] text-muted-foreground">
+                          Auto · {Math.floor(audioDuration / 60)}:{String(audioDuration % 60).padStart(2, "0")} de áudio ÷ {pipeline.sceneDuration}s
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1">
+                        {[3, 5, 7, 10, 15, 20].map((n) => (
+                          <button
+                            key={n}
+                            onClick={() => setPipeline((p) => ({ ...p, sceneCount: n }))}
+                            className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${
+                              pipeline.sceneCount === n ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground"
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
