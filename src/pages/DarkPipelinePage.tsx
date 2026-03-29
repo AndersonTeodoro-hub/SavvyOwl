@@ -108,15 +108,36 @@ export default function DarkPipelinePage() {
   const { characters, activeCharacter, selectCharacter, referenceImageUrl } = useCharacter();
   const elevenLabs = useElevenLabsKey();
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("theme");
+
+  // Persist pipeline state in localStorage
+  const STORAGE_KEY = "savvyowl_dark_pipeline";
+  const [step, setStep] = useState<Step>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).step || "theme";
+    } catch {}
+    return "theme";
+  });
   const [loading, setLoading] = useState(false);
 
   // Voice generation state
   const [voiceLoading, setVoiceLoading] = useState(false);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [narrationStorageUrl, setNarrationStorageUrl] = useState<string | null>(null);
-  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [narrationStorageUrl, setNarrationStorageUrl] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).narrationStorageUrl || null;
+    } catch {}
+    return null;
+  });
+  const [audioDuration, setAudioDuration] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).audioDuration || null;
+    } catch {}
+    return null;
+  });
   const [showVoiceOptions, setShowVoiceOptions] = useState(false);
   const [selectedTtsVoice, setSelectedTtsVoice] = useState(() => {
     try {
@@ -136,21 +157,55 @@ export default function DarkPipelinePage() {
   ];
 
   const useElevenLabsVoice = elevenLabs.hasKey && elevenLabs.hasVoice;
-  const [pipeline, setPipeline] = useState<PipelineState>({
-    theme: "",
-    titles: [],
-    selectedTitle: "",
-    wordCount: 500,
-    script: "",
-    characterId: null,
-    characterName: null,
-    characterVoiceId: null,
-    referenceImageUrl: null,
-    sceneDuration: 8,
-    sceneCount: 5,
-    scenes: [],
-    aspectRatio: "9:16",
+  const [pipeline, setPipeline] = useState<PipelineState>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).pipeline;
+        if (parsed?.theme) return parsed;
+      }
+    } catch {}
+    return {
+      theme: "",
+      titles: [],
+      selectedTitle: "",
+      wordCount: 500,
+      script: "",
+      characterId: null,
+      characterName: null,
+      characterVoiceId: null,
+      referenceImageUrl: null,
+      sceneDuration: 8,
+      sceneCount: 5,
+      scenes: [],
+      aspectRatio: "9:16",
+    };
   });
+
+  // Save state to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      step,
+      pipeline,
+      narrationStorageUrl,
+      audioDuration,
+    }));
+  }, [step, pipeline, narrationStorageUrl, audioDuration]);
+
+  // Reset pipeline (new project)
+  const handleNewProject = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setStep("theme");
+    setPipeline({
+      theme: "", titles: [], selectedTitle: "", wordCount: 500, script: "",
+      characterId: null, characterName: null, characterVoiceId: null,
+      referenceImageUrl: null, sceneDuration: 8, sceneCount: 5, scenes: [], aspectRatio: "9:16",
+    });
+    setVoiceUrl(null);
+    setNarrationStorageUrl(null);
+    setAudioDuration(null);
+    toast.success("Novo projeto iniciado");
+  };
 
   const currentStepIndex = STEPS.findIndex((s) => s.key === step);
 
@@ -584,16 +639,23 @@ Sem texto adicional fora deste formato.`,
           <Film className="h-4 w-4 text-purple-500" />
           <span className="text-sm font-semibold text-foreground">Dark Pipeline Pro</span>
         </div>
-        {/* Step indicator */}
-        <div className="flex items-center gap-1">
-          {STEPS.map((s, i) => (
-            <div
-              key={s.key}
-              className={`h-1.5 rounded-full transition-all ${
-                i <= currentStepIndex ? "bg-purple-500 w-6" : "bg-border w-3"
-              }`}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          {step !== "theme" && (
+            <Button variant="ghost" size="sm" onClick={handleNewProject} className="text-[10px] text-muted-foreground">
+              <RefreshCw className="h-3 w-3 mr-1" />Novo Projeto
+            </Button>
+          )}
+          {/* Step indicator */}
+          <div className="flex items-center gap-1">
+            {STEPS.map((s, i) => (
+              <div
+                key={s.key}
+                className={`h-1.5 rounded-full transition-all ${
+                  i <= currentStepIndex ? "bg-purple-500 w-6" : "bg-border w-3"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </header>
 
