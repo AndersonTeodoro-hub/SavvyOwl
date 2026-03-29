@@ -229,10 +229,17 @@ export default function CharactersPage() {
     else if (ethLower.includes("american")) accent = "American";
     else if (ethLower.includes("british")) accent = "British";
 
-    // Build the CLEAN prompt — ONLY what goes into ElevenLabs Voice Design
-    const elevenLabsPrompt = `Perfect audio quality. ${genderEn}, ${ageNum} years old, ${accent} accent. ${voiceQuality || "Natural warm voice with clear articulation"}. ${emotional || "Calm and confident tone"}. Speaks with natural breathing pauses, subtle vocal fry on lower notes, slight pitch variation between sentences. Voice has authentic human micro-imperfections: occasional soft breath intake, natural rhythm changes, never robotic or monotone. Sounds like a real person recorded in a professional studio with a high-end condenser microphone.`;
+    // ElevenLabs Voice Design description limit: 500 characters max
+    // Keep it dense but under limit — every word counts
+    const voiceDesc = (voiceQuality || "Warm natural voice, clear articulation").split(",").slice(0, 2).join(",").substring(0, 80);
+    const emotionalDesc = (emotional || "Calm, confident").split(",").slice(0, 2).join(",").substring(0, 50);
 
-    setVoicePrompt(elevenLabsPrompt);
+    const elevenLabsPrompt = `Perfect audio quality. ${genderEn}, ${ageNum} years old, ${accent} accent. ${voiceDesc}. ${emotionalDesc}. Natural breathing pauses, subtle vocal fry on low notes, real pitch variation. Human micro-imperfections: soft breath intake, rhythm changes. Never robotic. Studio condenser mic quality.`;
+
+    // Safety: truncate to 500 chars if somehow still over
+    const finalPrompt = elevenLabsPrompt.length > 500 ? elevenLabsPrompt.substring(0, 497) + "..." : elevenLabsPrompt;
+
+    setVoicePrompt(finalPrompt);
     toast.success(isPT ? "Prompt de voz gerado!" : "Voice prompt generated!");
   };
 
@@ -705,7 +712,10 @@ export default function CharactersPage() {
                         {/* Clean prompt — ONLY this gets copied */}
                         <div>
                           <p className="text-[10px] font-semibold text-orange-500 uppercase tracking-wider mb-1">
-                            {isPT ? "Prompt para colar no ElevenLabs:" : "Prompt to paste in ElevenLabs:"}
+                            {isPT ? "Prompt para colar no ElevenLabs" : "Prompt to paste in ElevenLabs"}{" "}
+                            <span className={`font-mono ${(voicePrompt?.length || 0) > 500 ? "text-destructive" : "text-muted-foreground"}`}>
+                              ({voicePrompt?.length || 0}/500)
+                            </span>
                           </p>
                           <pre className="p-3 bg-orange-500/5 border border-orange-400/20 rounded-lg text-xs text-foreground whitespace-pre-wrap break-words">
                             {voicePrompt}
