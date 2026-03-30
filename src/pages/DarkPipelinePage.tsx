@@ -1124,20 +1124,22 @@ Sem texto adicional fora deste formato.`,
 
                 {voiceError && <p className="text-[10px] text-destructive">{voiceError}</p>}
 
-                {/* Audio player */}
-                {voiceUrl && (
+                {/* Audio player — voiceUrl (session blob) or narrationStorageUrl (persists on reload) */}
+                {(voiceUrl || narrationStorageUrl) && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 p-2 rounded-lg bg-orange-500/10 border border-orange-400/20">
                       <Volume2 className="h-4 w-4 text-orange-400 shrink-0" />
-                      <audio controls src={voiceUrl} className="flex-1 h-8" />
+                      <audio controls src={voiceUrl || narrationStorageUrl!} className="flex-1 h-8" />
                     </div>
                     <div className="flex gap-2">
-                      <a href={voiceUrl} download={`${pipeline.selectedTitle || "narracao"}-savvyowl.mp3`}>
-                        <Button variant="outline" size="sm" className="gap-1 text-xs text-orange-400 border-orange-400/30">
-                          <Download className="h-3 w-3" />Download MP3
-                        </Button>
-                      </a>
-                      <Button variant="ghost" size="sm" onClick={() => { setVoiceUrl(null); setVoiceError(null); }} className="text-xs text-muted-foreground">
+                      {voiceUrl && (
+                        <a href={voiceUrl} download={`${pipeline.selectedTitle || "narracao"}-savvyowl.mp3`}>
+                          <Button variant="outline" size="sm" className="gap-1 text-xs text-orange-400 border-orange-400/30">
+                            <Download className="h-3 w-3" />Download MP3
+                          </Button>
+                        </a>
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => { setVoiceUrl(null); setVoiceError(null); setNarrationStorageUrl(null); setAudioDuration(null); }} className="text-xs text-muted-foreground">
                         <RefreshCw className="h-3 w-3 mr-1" />Gerar nova
                       </Button>
                     </div>
@@ -1209,7 +1211,8 @@ Sem texto adicional fora deste formato.`,
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        const fullPrompt = identityBlock
+                        const alreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
+                        const fullPrompt = identityBlock && !alreadyHasIdentity
                           ? `${identityBlock}\n\nSCENE: ${scene.prompt}`
                           : scene.prompt;
                         navigator.clipboard.writeText(fullPrompt);
@@ -1285,7 +1288,8 @@ Sem texto adicional fora deste formato.`,
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        const fullPrompt = identityBlock
+                        const alreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
+                        const fullPrompt = identityBlock && !alreadyHasIdentity
                           ? `${identityBlock}\n\nSCENE: ${scene.prompt}`
                           : scene.prompt;
                         navigator.clipboard.writeText(fullPrompt);

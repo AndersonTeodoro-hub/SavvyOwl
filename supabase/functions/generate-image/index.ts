@@ -54,7 +54,13 @@ Deno.serve(async (req) => {
         const imgResp = await fetch(referenceImageUrl);
         if (imgResp.ok) {
           const buffer = await imgResp.arrayBuffer();
-          referenceImageBase64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+          const bytes = new Uint8Array(buffer);
+          let binary = "";
+          const chunkSize = 8192;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + chunkSize, bytes.length)));
+          }
+          referenceImageBase64 = btoa(binary);
           referenceImageMime = imgResp.headers.get("content-type") || "image/png";
           console.log(`[IMG] Reference image loaded (${Math.round(buffer.byteLength / 1024)}KB)`);
         }
