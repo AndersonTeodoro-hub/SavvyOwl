@@ -575,7 +575,13 @@ Sem texto adicional fora deste formato.`,
       }
 
       // ── BUILD PROMPT per model ──
-      const hasNarration = !!narrationStorageUrl || !!voiceUrl;
+      // Detect if user has narration: check all possible indicators
+      // - voiceUrl: blob URL from current session (lost on reload)
+      // - narrationStorageUrl: Supabase storage URL (persisted in localStorage)
+      // - audioDuration: set when voice was generated (persisted in localStorage)
+      // - scene prompt already contains "Silent cinematic footage" (added by Claude when narration existed at scene generation time)
+      const hasNarration = !!narrationStorageUrl || !!voiceUrl || !!audioDuration
+        || scene.prompt.includes("Silent cinematic footage");
       const silentSuffix = hasNarration && model.startsWith("veo3")
         ? "\n\nNo dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."
         : "";
@@ -614,7 +620,8 @@ Sem texto adicional fora deste formato.`,
           duration: pipeline.sceneDuration,
           model,
           referenceImageUrl: model === "veo3-fast-i2v" ? pipeline.referenceImageUrl : undefined,
-          narrationUrl: undefined, // lip-sync disabled — user joins audio in editor
+          silentVideo: hasNarration, // tells backend to set generate_audio: false for Veo3
+          narrationUrl: undefined,
         }),
       });
 

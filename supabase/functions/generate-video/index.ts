@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     if (!userId) return json({ error: "Unauthorized" }, 401);
 
     const body = await req.json();
-    const { prompt, aspectRatio, duration, model, referenceImageUrl, narrationUrl, action, requestId: pollRequestId, modelEndpoint: pollEndpoint } = body;
+    const { prompt, aspectRatio, duration, model, referenceImageUrl, narrationUrl, silentVideo, action, requestId: pollRequestId, modelEndpoint: pollEndpoint } = body;
 
     // ── POLL ACTION — frontend polls for result ──
     if (action === "poll" && pollRequestId) {
@@ -126,6 +126,12 @@ Deno.serve(async (req) => {
     } else {
       falBody.duration = dur;
       if (referenceImageUrl) falBody.image_url = referenceImageUrl;
+      // Veo3: control audio generation via API parameter (not just prompt text)
+      // silentVideo=true means user has narration → disable native audio
+      // silentVideo=false or absent → enable native audio (Veo3 generates dialogue/ambient)
+      if (selectedModel.startsWith("veo3")) {
+        falBody.generate_audio = silentVideo ? false : true;
+      }
     }
 
     // Submit to fal.ai queue
