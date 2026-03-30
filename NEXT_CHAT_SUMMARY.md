@@ -89,14 +89,14 @@
 - **Payments**: Stripe live (Starter €14.99/mo, Pro €34.99/mo, Packs S/M/L)
 - **Repo**: https://github.com/AndersonTeodoro-hub/SavvyOwl
 
-## CREDENCIAIS E TOKENS
+## REFERÊNCIAS DO PROJETO
 
-- **Supabase Project**: kumnrldlzttsrgjlsspa
-- **Supabase Management API**: [PROVIDE AT SESSION START — never commit]
-- **Anderson User ID**: 2652f4ca-8413-4ce9-bfed-07c0be76b987 (anderson.lteodoro1@gmail.com, plan: starter)
-- **Test User**: 620cddf1-bb09-4e65-a469-c1630853453c (andersonteodoroddn@gmail.com, plan: free)
-- **fal.ai key**: stored in Supabase secrets as FAL_API_KEY [do not commit]
-- **Créditos Anderson**: 150 (restaurados após testes falhados)
+- **Supabase Project ID**: [fornecer no início da sessão — nunca commitar]
+- **Supabase Management API Key**: [fornecer no início da sessão — nunca commitar]
+- **fal.ai key**: guardada nos Supabase secrets como FAL_API_KEY
+- **Anderson**: anderson.lteodoro1@gmail.com, plan: starter
+- **Test User**: andersonteodoroddn@gmail.com, plan: free
+- **Créditos Anderson**: verificar em runtime
 
 ## EDGE FUNCTIONS (11 total, all verify_jwt=false)
 
