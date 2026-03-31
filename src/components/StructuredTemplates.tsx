@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -116,6 +116,10 @@ interface SceneData {
   videoUrl?: string;
   generating?: boolean;
   error?: string;
+  narrationText?: string;
+  audioUrl?: string;
+  lipsyncVideoUrl?: string;
+  lipsyncStatus?: "pending" | "processing" | "done" | "error";
 }
 
 interface VPState {
@@ -192,8 +196,13 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const [narrationStorageUrl, setNarrationStorageUrl] = useState<string | null>(null);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [selectedTtsVoice, setSelectedTtsVoice] = useState(TTS_VOICES[0]);
+  const [sceneAudiosGenerating, setSceneAudiosGenerating] = useState(false);
 
   const useElevenLabsVoice = elevenLabs.hasKey && elevenLabs.hasVoice;
+
+  // Ref to always read latest vp in async callbacks (avoids stale closure)
+  const vpRef = useRef(vp);
+  useEffect(() => { vpRef.current = vp; }, [vp]);
 
   // Re-select character after navigation (same pattern as DarkPipelinePage)
   useEffect(() => {
@@ -274,7 +283,7 @@ REGRAS DE ESTRUTURA:
 
 ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
 
-1. HOOK (primeiros 5-8 segundos / ~30 palavras):
+1. HOOK (primeiros 5-8 segundos / ~${Math.round(vp.wordCount * 0.15)} palavras):
    Frase de abertura que PRENDE imediatamente. Deve criar urgência, curiosidade ou emoção forte.
 
 2. DESENVOLVIMENTO (corpo principal):
@@ -292,7 +301,7 @@ ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
 
    REGRA CRÍTICA: Os CTAs NÃO podem parecer genéricos. Devem fluir naturalmente como parte da mensagem.
 
-4. CONCLUSÃO (últimos ~50 palavras):
+4. CONCLUSÃO (últimos ~${Math.round(vp.wordCount * 0.15)} palavras):
    Encerramento emocional forte que conecta com o início.
    Termina com uma frase de impacto que fica na mente do espectador.
 
@@ -390,6 +399,73 @@ REGRA ABSOLUTA DE OUTPUT:
     }
   };
 
+  // ── Per-scene audio generation ──
+  const generateSceneAudios = async (scenes: SceneData[]) => {
+    if (!user?.id) return;
+    const scenesWithText = scenes.filter((s) => s.narrationText?.trim());
+    if (scenesWithText.length === 0) return;
+
+    setSceneAudiosGenerating(true);
+    const hasCharVoice = !!vp.characterVoiceId && elevenLabs.hasKey;
+    const useEL = hasCharVoice || useElevenLabsVoice;
+
+    for (const scene of scenesWithText) {
+      try {
+        const voiceBody: any = {
+          text: scene.narrationText,
+          voiceId: hasCharVoice ? vp.characterVoiceId : (useElevenLabsVoice ? elevenLabs.voiceId : selectedTtsVoice.id),
+          provider: useEL ? "elevenlabs" : "gemini",
+        };
+        if (useEL) voiceBody.elevenLabsKey = elevenLabs.apiKey;
+
+        const { data, error: fnError } = await supabase.functions.invoke("generate-voice", { body: voiceBody });
+        if (fnError || data?.error) {
+          console.warn(`[SCENE AUDIO] Cena ${scene.index} falhou:`, fnError?.message || data?.error);
+          continue;
+        }
+        if (!data?.audio) continue;
+
+        const mimeType = data.mimeType || "audio/mpeg";
+        let blob: Blob;
+        if (mimeType.includes("L16") || mimeType.includes("pcm")) {
+          const raw = Uint8Array.from(atob(data.audio), (c) => c.charCodeAt(0));
+          const wavHeader = createWavHeader(raw.length, 24000, 1, 16);
+          const wavData = new Uint8Array(wavHeader.length + raw.length);
+          wavData.set(wavHeader, 0);
+          wavData.set(raw, wavHeader.length);
+          blob = new Blob([wavData], { type: "audio/wav" });
+        } else {
+          const byteChars = atob(data.audio);
+          const byteArray = new Uint8Array(byteChars.length);
+          for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+          blob = new Blob([byteArray], { type: mimeType });
+        }
+
+        const ext = mimeType.includes("wav") ? "wav" : "mp3";
+        const storagePath = `narrations/${user.id}/scene_${scene.index}_${Date.now()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("character-references")
+          .upload(storagePath, blob, { contentType: mimeType, upsert: true });
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage.from("character-references").getPublicUrl(storagePath);
+          if (urlData?.publicUrl) {
+            const audioUrl = urlData.publicUrl;
+            setVp((p) => ({
+              ...p,
+              scenes: p.scenes.map((s) => s.index === scene.index ? { ...s, audioUrl } : s),
+            }));
+            console.log(`[SCENE AUDIO] Cena ${scene.index} pronta:`, audioUrl);
+          }
+        }
+      } catch (err) {
+        console.warn(`[SCENE AUDIO] Erro cena ${scene.index}:`, err);
+      }
+    }
+    setSceneAudiosGenerating(false);
+    toast.success("Áudios das cenas prontos — lip-sync disponível!");
+  };
+
   // ── STEP 7: Generate scenes ──
   const handleGenerateScenes = async () => {
     if (!vp.script) return;
@@ -415,10 +491,9 @@ REGRAS DE USO DO PERSONAGEM NOS PROMPTS:
           ? `O personagem principal é: ${vp.characterName}. Mantém a mesma pessoa em todas as cenas.`
           : "";
 
-      const hasNarrationForScenes = !!narrationStorageUrl || !!voiceUrl;
-      const silentRule = hasNarrationForScenes
-        ? `   - OBRIGATÓRIO no final de CADA prompt: "No dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."`
-        : `   - O vídeo DEVE ter áudio nativo: sons ambiente, diálogos em português do Brasil se o personagem falar, sons naturais da cena.`;
+      // Narration is always intended in this pipeline (step 6 = voice selection)
+      const hasNarrationForScenes = true;
+      const silentRule = `   - OBRIGATÓRIO no final de CADA prompt: "No dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."`;
 
       const reply = await callChat(
         `Analisa este roteiro e divide-o em exatamente ${vp.sceneCount} cenas visuais para geração de vídeo IA.
@@ -472,8 +547,25 @@ Sem texto adicional fora deste formato.`,
       while (scenes.length < vp.sceneCount) {
         scenes.push({ index: scenes.length + 1, description: `Cena ${scenes.length + 1}`, prompt: "Atmospheric cinematic scene with available light" });
       }
+
+      // Divide narration text proportionally across scenes
+      if (vp.script && scenes.length > 0) {
+        const sentences = vp.script
+          .split(/(?<=[.!?])\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const perScene = Math.ceil(sentences.length / scenes.length);
+        for (let i = 0; i < scenes.length; i++) {
+          const start = i * perScene;
+          scenes[i].narrationText = sentences.slice(start, Math.min(start + perScene, sentences.length)).join(" ");
+        }
+      }
+
       setVp((p) => ({ ...p, scenes }));
       setVpStep("scenes");
+
+      // Generate per-scene audio in background (fire-and-forget)
+      generateSceneAudios(scenes);
     } catch (e: any) {
       toast.error(e.message || "Erro ao gerar cenas");
     } finally {
@@ -509,8 +601,8 @@ Sem texto adicional fora deste formato.`,
         model = "wan26-t2v-flash";
       }
 
-      const hasNarration = !!narrationStorageUrl || !!voiceUrl || !!audioDuration
-        || scene.prompt.includes("Silent cinematic footage");
+      // Scene has audio if audioUrl is set or prompt already has silent rule
+      const hasNarration = !!scene.audioUrl || scene.prompt.includes("Silent cinematic footage");
       const silentSuffix = hasNarration && model.startsWith("veo3")
         ? "\n\nNo dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."
         : "";
@@ -568,9 +660,81 @@ Sem texto adicional fora deste formato.`,
         const pollData = await pollResp.json();
 
         if (pollData.status === "COMPLETED" && pollData.videoUrl) {
+          const rawVideoUrl = pollData.videoUrl;
+          const audioUrl = vpRef.current.scenes[sceneIndex]?.audioUrl;
+
+          if (audioUrl) {
+            setVp((p) => ({
+              ...p,
+              scenes: p.scenes.map((s, i) =>
+                i === sceneIndex ? { ...s, videoUrl: rawVideoUrl, generating: true, lipsyncStatus: "processing" } : s
+              ),
+            }));
+            toast.info(`Cena ${sceneIndex + 1}: a sincronizar voz...`);
+
+            const lsSubmitResp = await fetch(baseUrl, {
+              method: "POST",
+              headers,
+              body: JSON.stringify({ action: "lipsync", videoUrl: rawVideoUrl, audioUrl }),
+            });
+            const lsSubmitData = await lsSubmitResp.json();
+            if (lsSubmitData.error) throw new Error(lsSubmitData.error);
+            if (lsSubmitData.status !== "SUBMITTED") throw new Error("Falha ao submeter lip-sync");
+
+            const { requestId: lsRequestId, statusUrl: lsStatusUrl, responseUrl: lsResponseUrl } = lsSubmitData;
+
+            let lsElapsed = 0;
+            while (lsElapsed < maxWait) {
+              await new Promise((r) => setTimeout(r, pollInterval));
+              lsElapsed += pollInterval;
+
+              const lsPollResp = await fetch(baseUrl, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ action: "poll", requestId: lsRequestId, statusUrl: lsStatusUrl, responseUrl: lsResponseUrl }),
+              });
+              const lsPollData = await lsPollResp.json();
+
+              if (lsPollData.status === "COMPLETED" && lsPollData.videoUrl) {
+                setVp((p) => ({
+                  ...p,
+                  scenes: p.scenes.map((s, i) =>
+                    i === sceneIndex
+                      ? { ...s, videoUrl: lsPollData.videoUrl, lipsyncVideoUrl: lsPollData.videoUrl, generating: false, lipsyncStatus: "done" }
+                      : s
+                  ),
+                }));
+                toast.success(`Cena ${sceneIndex + 1} com voz sincronizada! (${Math.round((elapsed + lsElapsed) / 1000)}s)`);
+                refreshProfile();
+                return;
+              }
+              if (lsPollData.status === "FAILED") {
+                setVp((p) => ({
+                  ...p,
+                  scenes: p.scenes.map((s, i) =>
+                    i === sceneIndex ? { ...s, generating: false, lipsyncStatus: "error" } : s
+                  ),
+                }));
+                toast.warning(`Cena ${sceneIndex + 1}: lip-sync falhou — vídeo sem sincronização mantido.`);
+                refreshProfile();
+                return;
+              }
+            }
+            setVp((p) => ({
+              ...p,
+              scenes: p.scenes.map((s, i) =>
+                i === sceneIndex ? { ...s, generating: false, lipsyncStatus: "error" } : s
+              ),
+            }));
+            toast.warning(`Cena ${sceneIndex + 1}: lip-sync timeout — vídeo sem sincronização mantido.`);
+            refreshProfile();
+            return;
+          }
+
+          // No audioUrl — set video normally
           setVp((p) => ({
             ...p,
-            scenes: p.scenes.map((s, i) => i === sceneIndex ? { ...s, videoUrl: pollData.videoUrl, generating: false } : s),
+            scenes: p.scenes.map((s, i) => i === sceneIndex ? { ...s, videoUrl: rawVideoUrl, generating: false } : s),
           }));
           toast.success(`Cena ${sceneIndex + 1} gerada! (${Math.round(elapsed / 1000)}s)`);
           refreshProfile();
@@ -1527,20 +1691,24 @@ Negative: [negative prompt]
           <div className="space-y-3">
             <div className="text-center">
               <Mic className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-              <h3 className="text-sm font-bold text-foreground">Etapa 6 — Narração</h3>
-              <p className="text-[11px] text-muted-foreground">Gera a narração ou avança sem áudio</p>
+              <h3 className="text-sm font-bold text-foreground">Etapa 6 — Escolher Voz</h3>
+              <p className="text-[11px] text-muted-foreground">O áudio de cada cena é gerado automaticamente após gerar as cenas</p>
             </div>
 
             <div className="rounded-xl border border-orange-400/20 bg-orange-500/5 p-3 space-y-2">
               {vp.characterVoiceId ? (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-xs">
                   <p className="text-green-700 dark:text-green-400">
-                    <strong>{vp.characterName}</strong> tem voz ElevenLabs configurada.
+                    <Mic className="h-3 w-3 inline mr-1" />
+                    <strong>{vp.characterName}</strong> tem voz ElevenLabs configurada — será usada por cena.
                   </p>
                 </div>
               ) : useElevenLabsVoice ? (
                 <div className="bg-orange-500/10 border border-orange-400/20 rounded-lg p-2 text-xs">
-                  <p className="text-orange-700 dark:text-orange-400">Voz ElevenLabs: <strong>{elevenLabs.voiceName}</strong></p>
+                  <p className="text-orange-700 dark:text-orange-400">
+                    <Mic className="h-3 w-3 inline mr-1" />
+                    Voz ElevenLabs: <strong>{elevenLabs.voiceName}</strong>
+                  </p>
                 </div>
               ) : (
                 <div>
@@ -1553,40 +1721,9 @@ Negative: [negative prompt]
                       </button>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {!(voiceUrl || narrationStorageUrl) && (
-                <Button onClick={handleGenerateVoice} disabled={voiceLoading} size="sm" className="gap-1.5 text-xs bg-orange-500 hover:bg-orange-600 text-white w-full">
-                  {voiceLoading ? <><Loader2 className="h-3 w-3 animate-spin" />A gerar...</> : <><Mic className="h-3 w-3" />Gerar Narração</>}
-                </Button>
-              )}
-
-              {voiceError && <p className="text-[10px] text-destructive">{voiceError}</p>}
-
-              {(voiceUrl || narrationStorageUrl) && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-500/10 border border-orange-400/20">
-                    <Volume2 className="h-4 w-4 text-orange-400 shrink-0" />
-                    <audio controls src={voiceUrl || narrationStorageUrl!} className="flex-1 h-7" />
-                  </div>
-                  <div className="flex gap-2">
-                    {voiceUrl && (
-                      <a href={voiceUrl} download={`${vp.selectedTitle || "narracao"}-savvyowl.mp3`}>
-                        <Button variant="outline" size="sm" className="gap-1 text-xs text-orange-400 border-orange-400/30">
-                          <Download className="h-3 w-3" />Download
-                        </Button>
-                      </a>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => { setVoiceUrl(null); setVoiceError(null); setNarrationStorageUrl(null); setAudioDuration(null); }} className="text-xs text-muted-foreground">
-                      <RefreshCw className="h-3 w-3 mr-1" />Gerar nova
-                    </Button>
-                  </div>
-                  {audioDuration && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Duração: {Math.floor(audioDuration / 60)}:{String(audioDuration % 60).padStart(2, "0")} · {vp.sceneCount} cenas auto-calculadas
-                    </p>
-                  )}
+                  <p className="text-[9px] text-muted-foreground mt-1.5">
+                    Para voz personalizada, configura o ElevenLabs nas <button onClick={() => navigate("/dashboard/settings")} className="text-orange-400 underline">Definições</button>
+                  </p>
                 </div>
               )}
             </div>
@@ -1667,19 +1804,56 @@ Negative: [negative prompt]
               </div>
             )}
 
+            {sceneAudiosGenerating && (
+              <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 text-[10px] text-orange-400 flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                A gerar áudios das cenas em background para lip-sync automático...
+              </div>
+            )}
+
             {vp.scenes.map((scene, i) => (
               <div key={i} className="rounded-xl border border-border/60 overflow-hidden">
+                {/* Header */}
                 <div className="flex items-center justify-between px-3 py-2 bg-secondary/30">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-semibold text-purple-500">Cena {scene.index}</span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">{scene.description}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">{scene.description}</span>
                   </div>
-                  {scene.videoUrl && <Check className="h-3.5 w-3.5 text-green-500" />}
+                  <div className="flex items-center gap-1.5">
+                    {scene.audioUrl && (
+                      <span className="text-[9px] text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <Mic className="h-2.5 w-2.5" />áudio
+                      </span>
+                    )}
+                    {scene.lipsyncStatus === "done" ? (
+                      <span className="text-[9px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        <Mic className="h-2.5 w-2.5" /><Check className="h-2.5 w-2.5" />lip-sync
+                      </span>
+                    ) : scene.videoUrl && !scene.generating ? (
+                      <Check className="h-3.5 w-3.5 text-green-500" />
+                    ) : null}
+                  </div>
                 </div>
+                {/* Body */}
                 <div className="p-3">
-                  {scene.videoUrl ? (
+                  {scene.generating ? (
+                    <div className="flex items-center gap-2 py-1">
+                      <Loader2 className="h-4 w-4 animate-spin text-purple-400 shrink-0" />
+                      <span className="text-xs text-muted-foreground">
+                        {scene.lipsyncStatus === "processing" ? "A sincronizar voz..." : "A gerar vídeo..."}
+                      </span>
+                    </div>
+                  ) : scene.videoUrl ? (
                     <div className="space-y-2">
                       <video src={scene.videoUrl} controls className="rounded-lg max-w-full max-h-[200px] border border-border/50" />
+                      {scene.lipsyncStatus === "done" && (
+                        <div className="flex items-center gap-1 text-[10px] text-green-500">
+                          <Mic className="h-3 w-3" />Voz sincronizada com o vídeo
+                        </div>
+                      )}
+                      {scene.lipsyncStatus === "error" && (
+                        <div className="text-[10px] text-amber-500">Lip-sync falhou — vídeo sem sincronização</div>
+                      )}
                       <a href={scene.videoUrl} download={`${vp.selectedTitle}-cena${scene.index}.mp4`}
                         className="inline-flex items-center gap-1 text-[10px] text-purple-500 hover:underline">
                         <Download className="h-3 w-3" />Download
@@ -1687,9 +1861,11 @@ Negative: [negative prompt]
                     </div>
                   ) : (
                     <Button onClick={() => handleGenerateVideo(i)} disabled={scene.generating} size="sm" className="gap-1.5 text-xs bg-purple-600 hover:bg-purple-700">
-                      {scene.generating
-                        ? <><Loader2 className="h-3 w-3 animate-spin" />A gerar...</>
-                        : <><Video className="h-3 w-3" />Gerar Cena {scene.index} · {vp.sceneDuration <= 8 ? 10 : 5} créditos</>}
+                      <Video className="h-3 w-3" />
+                      Gerar Cena {scene.index}
+                      {scene.audioUrl
+                        ? ` · ${(vp.sceneDuration <= 8 ? 10 : 5) + 2} créditos (+ lip-sync)`
+                        : ` · ${vp.sceneDuration <= 8 ? 10 : 5} créditos`}
                     </Button>
                   )}
                   {scene.error && <p className="text-[10px] text-destructive mt-1">{scene.error}</p>}
