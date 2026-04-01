@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         return json({ error: "videoUrl e audioUrl são obrigatórios para lip-sync" }, 400);
       }
 
-      const LIPSYNC_COST = 2;
+      const LIPSYNC_COST = 3;
 
       const lsProfileResp = await fetch(
         `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance`,
@@ -128,20 +128,20 @@ Deno.serve(async (req) => {
     const selectedModel = model || "veo3-fast";
 
     const FAL_MODELS: Record<string, { endpoint: string; credits: number; label: string }> = {
-      "veo3-fast":       { endpoint: "fal-ai/veo3/fast",                  credits: 10, label: "Veo3 Fast" },
-      "veo3-fast-i2v":   { endpoint: "fal-ai/veo3/fast/image-to-video",  credits: 10, label: "Veo3 Fast I2V" },
-      "veo3":            { endpoint: "fal-ai/veo3",                       credits: 15, label: "Veo3" },
-      "wan26-t2v-flash": { endpoint: "wan/v2.6/text-to-video",            credits: 5,  label: "Wan 2.6 T2V" },
+      "veo3-fast":       { endpoint: "fal-ai/veo3/fast",                  credits: 15, label: "Veo3 Fast" },
+      "veo3-fast-i2v":   { endpoint: "fal-ai/veo3/fast/image-to-video",  credits: 15, label: "Veo3 Fast I2V" },
+      "veo3":            { endpoint: "fal-ai/veo3",                       credits: 20, label: "Veo3" },
+      "wan26-t2v-flash": { endpoint: "wan/v2.6/text-to-video",            credits: 8,  label: "Wan 2.6 T2V" },
       "wan26-t2v":       { endpoint: "wan/v2.6/text-to-video",            credits: 8,  label: "Wan 2.6 T2V" },
-      "wan26-i2v-flash": { endpoint: "wan/v2.6/image-to-video",           credits: 5,  label: "Wan 2.6 I2V" },
+      "wan26-i2v-flash": { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
       "wan26-i2v":       { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
-      "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 7,  label: "Wan 2.6 R2V Flash" },
-      "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 10, label: "Wan 2.6 R2V" },
+      "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 8,  label: "Wan 2.6 R2V Flash" },
+      "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 8,  label: "Wan 2.6 R2V" },
       "kling":           { endpoint: "fal-ai/kling-video/v2.1/pro",       credits: 10, label: "Kling 2.1 Pro" },
     };
 
     const modelConfig = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
-    const LIPSYNC_COST = narrationUrl ? 2 : 0;
+    const LIPSYNC_COST = narrationUrl ? 3 : 0;
     const CREDIT_COST = modelConfig.credits + LIPSYNC_COST;
 
     // Check credits

@@ -1227,17 +1227,17 @@ Sem texto adicional fora deste formato.`,
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Custo estimado:</span>
                     <span className="text-purple-500 font-bold">
-                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 10 : 5))} créditos
+                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 15 : 8))} créditos
                     </span>
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-muted-foreground">Teu saldo:</span>
-                    <span className={`font-bold ${(profile?.credits_balance ?? 0) >= pipeline.sceneCount * (pipeline.sceneDuration <= 8 ? 10 : 5) ? "text-green-500" : "text-destructive"}`}>
+                    <span className={`font-bold ${(profile?.credits_balance ?? 0) >= pipeline.sceneCount * (pipeline.sceneDuration <= 8 ? 15 : 8) ? "text-green-500" : "text-destructive"}`}>
                       {profile?.credits_balance ?? 0} créditos
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-1">
-                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 10 : 5)} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
+                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 15 : 8)} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
                   </p>
                 </div>
               </div>
@@ -1515,8 +1515,8 @@ Sem texto adicional fora deste formato.`,
                         <Video className="h-3 w-3" />
                         Gerar Cena {scene.index}
                         {scene.audioUrl
-                          ? ` · ${(pipeline.sceneDuration <= 8 ? 10 : 5) + 2} créditos (+ lip-sync)`
-                          : ` · ${pipeline.sceneDuration <= 8 ? 10 : 5} créditos`}
+                          ? ` · ${(pipeline.sceneDuration <= 8 ? 15 : 8) + 3} créditos (+ lip-sync)`
+                          : ` · ${pipeline.sceneDuration <= 8 ? 15 : 8} créditos`}
                       </Button>
                     )}
 

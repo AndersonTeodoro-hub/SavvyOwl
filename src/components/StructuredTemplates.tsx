@@ -386,11 +386,12 @@ REGRA ABSOLUTA DE OUTPUT:
         // Upload to Supabase Storage
         if (user?.id) {
           try {
-            const ext = mimeType.includes("wav") ? "wav" : "mp3";
+            const uploadContentType = blob.type || "audio/mpeg";
+            const ext = uploadContentType.includes("wav") ? "wav" : "mp3";
             const storagePath = `narrations/${user.id}/${Date.now()}.${ext}`;
             const { error: uploadError } = await supabase.storage
               .from("character-references")
-              .upload(storagePath, blob, { contentType: mimeType, upsert: true });
+              .upload(storagePath, blob, { contentType: uploadContentType, upsert: true });
             if (!uploadError) {
               const { data: urlData } = supabase.storage.from("character-references").getPublicUrl(storagePath);
               if (urlData?.publicUrl) setNarrationStorageUrl(urlData.publicUrl);
@@ -571,11 +572,12 @@ NARRAÇÃO: [texto exacto da narração em ${lang}]
           blob = new Blob([byteArray], { type: mimeType });
         }
 
-        const ext = mimeType.includes("wav") ? "wav" : "mp3";
+        const uploadContentType = blob.type || "audio/mpeg";
+        const ext = uploadContentType.includes("wav") ? "wav" : "mp3";
         const storagePath = `narrations/${user.id}/scene_${scene.index}_${Date.now()}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("character-references")
-          .upload(storagePath, blob, { contentType: mimeType, upsert: true });
+          .upload(storagePath, blob, { contentType: uploadContentType, upsert: true });
 
         if (!uploadError) {
           const { data: urlData } = supabase.storage.from("character-references").getPublicUrl(storagePath);
@@ -1736,11 +1738,11 @@ Negative: [negative prompt]
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Custo estimado:</span>
-                <span className="text-purple-500 font-bold">{vp.sceneCount * (vp.sceneDuration <= 8 ? 10 : 5)} créditos</span>
+                <span className="text-purple-500 font-bold">{vp.sceneCount * (vp.sceneDuration <= 8 ? 15 : 8)} créditos</span>
               </div>
               <div className="flex justify-between mt-0.5">
                 <span className="text-muted-foreground">Teu saldo:</span>
-                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * (vp.sceneDuration <= 8 ? 10 : 5) ? "text-green-500" : "text-destructive"}`}>
+                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * (vp.sceneDuration <= 8 ? 15 : 8) ? "text-green-500" : "text-destructive"}`}>
                   {profile?.credits_balance ?? 0} créditos
                 </span>
               </div>
@@ -2005,8 +2007,8 @@ Negative: [negative prompt]
                       <Video className="h-3 w-3" />
                       Gerar Cena {scene.index}
                       {scene.audioUrl
-                        ? ` · ${(vp.sceneDuration <= 8 ? 10 : 5) + 2} créditos (+ lip-sync)`
-                        : ` · ${vp.sceneDuration <= 8 ? 10 : 5} créditos`}
+                        ? ` · ${(vp.sceneDuration <= 8 ? 15 : 8) + 3} créditos (+ lip-sync)`
+                        : ` · ${vp.sceneDuration <= 8 ? 15 : 8} créditos`}
                     </Button>
                   )}
                   {scene.error && <p className="text-[10px] text-destructive mt-1">{scene.error}</p>}
