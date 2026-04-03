@@ -120,6 +120,65 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── CREATE VOICE ACTION — register voice for Kling Motion Control ──
+    if (action === "create-voice") {
+      const { voiceUrl } = body;
+      if (!voiceUrl) return json({ error: "voiceUrl is required for create-voice" }, 400);
+
+      console.log(`[VOICE] Creating Kling voice from ${voiceUrl.substring(0, 60)}...`);
+
+      const cvResp = await fetch("https://queue.fal.run/fal-ai/kling-video/create-voice", {
+        method: "POST",
+        headers: { Authorization: `Key ${falApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ voice_url: voiceUrl }),
+      });
+
+      if (!cvResp.ok) {
+        const err = await cvResp.text();
+        throw new Error(`create-voice ${cvResp.status}: ${err.substring(0, 400)}`);
+      }
+
+      const cvData = await cvResp.json();
+
+      // fal.ai queue — need to poll for result
+      if (cvData.request_id) {
+        const maxWait = 60000;
+        const interval = 3000;
+        let elapsed = 0;
+        while (elapsed < maxWait) {
+          await new Promise((r) => setTimeout(r, interval));
+          elapsed += interval;
+
+          const pollResp = await fetch(cvData.status_url, {
+            headers: { Authorization: `Key ${falApiKey}` },
+          });
+          if (!pollResp.ok) continue;
+          const pollStatus = await pollResp.json();
+
+          if (pollStatus.status === "COMPLETED") {
+            const resultResp = await fetch(cvData.response_url, {
+              headers: { Authorization: `Key ${falApiKey}` },
+            });
+            const result = await resultResp.json();
+            const voiceId = result.voice_id || result.id;
+            if (!voiceId) throw new Error("No voice_id in result");
+            console.log(`[VOICE] ✅ Created voice: ${voiceId}`);
+            return json({ voiceId });
+          }
+          if (pollStatus.status === "FAILED") {
+            throw new Error(`create-voice failed: ${JSON.stringify(pollStatus.error || pollStatus).substring(0, 300)}`);
+          }
+        }
+        throw new Error("create-voice timeout");
+      }
+
+      // Synchronous response (some endpoints return directly)
+      const voiceId = cvData.voice_id || cvData.id;
+      if (!voiceId) throw new Error("No voice_id in response");
+      console.log(`[VOICE] ✅ Created voice: ${voiceId}`);
+      return json({ voiceId });
+    }
+
     // ── SUBMIT ACTION — submit job and return immediately ──
     if (!prompt) return json({ error: "Prompt is required" }, 400);
 
@@ -137,7 +196,9 @@ Deno.serve(async (req) => {
       "wan26-i2v":       { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
       "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 8,  label: "Wan 2.6 R2V Flash" },
       "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 8,  label: "Wan 2.6 R2V" },
-      "kling":           { endpoint: "fal-ai/kling-video/v2.1/pro",       credits: 10, label: "Kling 2.1 Pro" },
+      "kling":                  { endpoint: "fal-ai/kling-video/v2.1/pro",                credits: 10, label: "Kling 2.1 Pro" },
+      "kling-motion-standard":  { endpoint: "fal-ai/kling-video/v3/standard/motion-control", credits: 20, label: "Kling v3 Motion Standard" },
+      "kling-motion-pro":       { endpoint: "fal-ai/kling-video/v3/pro/motion-control",      credits: 30, label: "Kling v3 Motion Pro" },
     };
 
     const modelConfig = FAL_MODELS[selectedModel] || FAL_MODELS["veo3-fast"];
@@ -161,18 +222,25 @@ Deno.serve(async (req) => {
     const isWan26 = selectedModel.startsWith("wan26");
     const isR2V = selectedModel.includes("r2v");
     const isI2V = selectedModel.includes("i2v");
+    const isKlingMotion = selectedModel.startsWith("kling-motion");
 
     console.log(`[FAL] Submit ${modelConfig.label} ${dur}s ${ar}`);
 
     // Build request body
     const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar };
-    if (isWan26) {
+    if (isKlingMotion) {
+      // Kling Motion Control: image_url (character photo) + reference_video_url (viral video)
+      falBody.duration = String(dur);
+      if (referenceImageUrl) falBody.image_url = referenceImageUrl;
+      if (body.referenceVideoUrl) falBody.reference_video_url = body.referenceVideoUrl;
+      if (body.voiceIds?.length) falBody.voice_ids = body.voiceIds;
+      if (body.generate_audio) falBody.generate_audio = true;
+      falBody.character_orientation = "video";
+    } else if (isWan26) {
       falBody.duration = String(dur);
       falBody.resolution = "720p";
       if (isR2V && referenceImageUrl) {
-        // R2V expects image_urls (array) and prompt with "Character1"
         falBody.image_urls = [referenceImageUrl];
-        // Prepend character reference to prompt if not already there
         if (!falBody.prompt?.toString().includes("Character1")) {
           falBody.prompt = `Character1 ${prompt}`;
         }
@@ -182,8 +250,6 @@ Deno.serve(async (req) => {
     } else {
       falBody.duration = dur;
       if (referenceImageUrl) falBody.image_url = referenceImageUrl;
-      // Veo3: always generate with audio so the character produces natural lip/speech movements.
-      // Sync Lipsync 2.0 will replace the generic audio with ElevenLabs voice when available.
       if (selectedModel.startsWith("veo3")) {
         falBody.generate_audio = true;
       }
