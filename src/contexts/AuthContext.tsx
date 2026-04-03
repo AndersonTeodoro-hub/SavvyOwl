@@ -73,52 +73,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Detect tokens in URL hash from Google OAuth redirect
-    const handleHashTokens = async () => {
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const init = async () => {
+      // 1) Handle OAuth hash tokens FIRST (Google redirect lands with #access_token=...)
       const hash = window.location.hash;
       if (hash && hash.includes("access_token=")) {
         const params = new URLSearchParams(hash.substring(1));
         const accessToken = params.get("access_token");
         const refreshToken = params.get("refresh_token");
         if (accessToken && refreshToken) {
-          // Clear hash immediately
           window.history.replaceState(null, "", window.location.pathname + window.location.search);
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-          if (error) {
-            console.error("Error setting session from OAuth:", error);
+          if (error) console.error("Error setting session from OAuth:", error);
+        }
+      }
+
+      // 2) Subscribe to future auth changes (token refresh, sign-out, etc.)
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+        (_event, newSession) => {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          if (newSession?.user) {
+            setTimeout(() => fetchProfile(newSession.user.id), 0);
+          } else {
+            setProfile(null);
           }
         }
+      );
+      subscription = sub;
+
+      // 3) Read persisted session from localStorage AFTER hash is processed
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      if (existingSession?.user) {
+        await fetchProfile(existingSession.user.id);
       }
+
+      // 4) Single point of setLoading(false) — everything is resolved
+      setLoading(false);
     };
 
-    handleHashTokens();
+    init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
-        } else {
-          setProfile(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => { subscription?.unsubscribe(); };
   }, []);
 
   const signOut = async () => {
