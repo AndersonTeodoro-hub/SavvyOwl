@@ -802,7 +802,15 @@ Sem texto adicional fora deste formato.`,
           refreshProfile();
           return;
         }
-        if (pollData.status === "FAILED") throw new Error(pollData.error || "Geração falhou");
+        if (pollData.status === "FAILED") {
+          // Refund credits
+          try {
+            await fetch(baseUrl, { method: "POST", headers, body: JSON.stringify({ action: "refund", model }) });
+            refreshProfile();
+            toast.warning(`Cena ${sceneIndex + 1}: geração falhou — 12 créditos devolvidos`);
+          } catch {}
+          throw new Error(pollData.error || "Geração falhou");
+        }
       }
       throw new Error("Timeout — vídeo a demorar mais de 10 minutos");
     } catch (e: any) {

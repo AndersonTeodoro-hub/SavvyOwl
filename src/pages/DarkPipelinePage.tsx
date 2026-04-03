@@ -1072,6 +1072,12 @@ Sem texto adicional fora deste formato.`,
         }
 
         if (pollData.status === "FAILED") {
+          // Refund credits
+          try {
+            await fetch(baseUrl, { method: "POST", headers, body: JSON.stringify({ action: "refund", model }) });
+            refreshProfile();
+            toast.warning(`Cena ${sceneIndex + 1}: geração falhou — 8 créditos devolvidos`);
+          } catch {}
           throw new Error(pollData.error || "Geração falhou no servidor");
         }
 

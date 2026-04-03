@@ -23,7 +23,7 @@ const STEPS: { key: Step; label: string }[] = [
 ];
 
 export default function DubbingPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { characters } = useCharacter();
   const navigate = useNavigate();
 
@@ -321,6 +321,12 @@ export default function DubbingPage() {
           return;
         }
         if (pollData.status === "FAILED") {
+          // Refund credits
+          try {
+            await fetch(baseUrl, { method: "POST", headers, body: JSON.stringify({ action: "refund", model: "kling-motion-pro" }) });
+            refreshProfile();
+            toast.warning("Dublagem falhou — 30 créditos devolvidos");
+          } catch {}
           throw new Error(pollData.error || "Geração falhou");
         }
         setProgress(`A gerar dublagem... ${Math.round(elapsed / 1000)}s`);

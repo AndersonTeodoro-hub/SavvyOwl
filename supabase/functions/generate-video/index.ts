@@ -120,6 +120,45 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── REFUND ACTION — return credits when fal.ai job fails ──
+    if (action === "refund") {
+      const { model: refundModel } = body;
+      if (!refundModel) return json({ error: "model is required for refund" }, 400);
+
+      const FAL_MODELS_REF: Record<string, number> = {
+        "veo3-fast": 15, "veo3-fast-i2v": 15, "veo3": 20,
+        "wan26-t2v-flash": 8, "wan26-t2v": 8, "wan26-i2v-flash": 8, "wan26-i2v": 8,
+        "wan26-r2v-flash": 8, "wan26-r2v": 8,
+        "seedance-t2v": 12, "seedance-i2v": 12,
+        "kling": 10, "kling-motion-standard": 20, "kling-motion-pro": 30,
+      };
+      const refundAmount = FAL_MODELS_REF[refundModel];
+      if (!refundAmount) return json({ error: `Unknown model: ${refundModel}` }, 400);
+
+      // Credit back
+      const refProfileResp = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=credits_balance`,
+        { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
+      );
+      const refProfiles = await refProfileResp.json();
+      const refBalance = refProfiles?.[0]?.credits_balance ?? 0;
+      const newRefBalance = refBalance + refundAmount;
+
+      await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ credits_balance: newRefBalance }),
+      });
+      await fetch(`${supabaseUrl}/rest/v1/credit_transactions`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: userId, amount: refundAmount, type: "refund", description: `Falha na geração - ${refundModel}` }),
+      });
+
+      console.log(`[REFUND] +${refundAmount} credits for ${refundModel} | ${refBalance} → ${newRefBalance}`);
+      return json({ refunded: true, amount: refundAmount, balance: newRefBalance });
+    }
+
     // ── CREATE VOICE ACTION — register voice for Kling Motion Control ──
     if (action === "create-voice") {
       const { voiceUrl } = body;
