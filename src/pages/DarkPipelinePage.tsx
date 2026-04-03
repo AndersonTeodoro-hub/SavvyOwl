@@ -22,6 +22,7 @@ interface StyleCharacter {
   id: string;
   name: string;
   physicalDescription: string;
+  isPrimary?: boolean;
 }
 
 interface StyleProfile {
@@ -270,6 +271,8 @@ export default function DarkPipelinePage() {
   const [charFormOpen, setCharFormOpen] = useState(false);
   const [charEditIndex, setCharEditIndex] = useState<number | null>(null);
   const [charForm, setCharForm] = useState({ name: "", physicalDescription: "" });
+  const [charImageGenerating, setCharImageGenerating] = useState<Record<string, boolean>>({});
+  const [charImageUrls, setCharImageUrls] = useState<Record<string, string>>({});
 
   // Load style profiles when niche changes
   useEffect(() => {
@@ -365,6 +368,110 @@ export default function DarkPipelinePage() {
     setCharFormOpen(false);
     setCharForm({ name: "", physicalDescription: "" });
     setCharEditIndex(null);
+  };
+
+  const handleTogglePrimary = (idx: number) => {
+    setStyleFormChars((prev) => prev.map((c, i) => ({
+      ...c,
+      isPrimary: i === idx ? !c.isPrimary : false,
+    })));
+  };
+
+  const handleGenerateCharImage = async (charIdx: number) => {
+    const char = styleFormChars[charIdx];
+    if (!char || !user?.id) return;
+
+    setCharImageGenerating((prev) => ({ ...prev, [char.id]: true }));
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token || "";
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      };
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`;
+
+      // Build prompt with style context
+      const styleCtx = styleForm.visual_description
+        ? `Visual style: ${styleForm.visual_description}. ${styleForm.color_palette ? `Colors: ${styleForm.color_palette}.` : ""} ${styleForm.atmosphere ? `Atmosphere: ${styleForm.atmosphere}.` : ""}`
+        : "";
+      const imgPrompt = `${styleCtx} ${char.physicalDescription}. Character reference sheet, full body, front view, neutral pose, cinematic lighting, photorealistic, highly detailed, 4K.`.trim();
+
+      // Submit to Flux
+      const submitResp = await fetch(baseUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ prompt: imgPrompt, engine: "flux" }),
+      });
+      const submitData = await submitResp.json();
+      if (submitData.error) throw new Error(submitData.error === "insufficient_credits" ? submitData.message : submitData.error);
+      if (submitData.status !== "SUBMITTED") throw new Error("Falha ao submeter");
+
+      const { statusUrl, responseUrl } = submitData;
+      toast.info(`A gerar imagem de ${char.name}...`);
+
+      // Poll for result
+      const maxWait = 120000;
+      const pollInterval = 3000;
+      let elapsed = 0;
+      while (elapsed < maxWait) {
+        await new Promise((r) => setTimeout(r, pollInterval));
+        elapsed += pollInterval;
+
+        const pollResp = await fetch(baseUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ engine: "flux", action: "poll", requestId: "poll", statusUrl, responseUrl }),
+        });
+        const pollData = await pollResp.json();
+
+        if (pollData.status === "COMPLETED" && pollData.imageUrl) {
+          // Upload to Supabase Storage
+          const imgResp = await fetch(pollData.imageUrl);
+          const imgBlob = await imgResp.blob();
+          const safeName = char.name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+          const profileId = pipeline.styleProfileId || "draft";
+          const storagePath = `style-references/${user.id}/${profileId}/${safeName}.png`;
+
+          await supabase.storage
+            .from("character-references")
+            .upload(storagePath, imgBlob, { contentType: "image/png", upsert: true });
+
+          const { data: urlData } = supabase.storage
+            .from("character-references")
+            .getPublicUrl(storagePath);
+
+          const publicUrl = urlData?.publicUrl || pollData.imageUrl;
+          setCharImageUrls((prev) => ({ ...prev, [char.id]: publicUrl }));
+
+          // Update character_images in DB if profile already exists
+          if (pipeline.styleProfileId && pipeline.styleProfileId !== "draft") {
+            const currentImages = pipeline.styleProfile?.character_images || {};
+            const updatedImages = { ...currentImages, [char.id]: publicUrl };
+            await supabase
+              .from("style_profiles" as any)
+              .update({ character_images: updatedImages } as any)
+              .eq("id", pipeline.styleProfileId);
+            setPipeline((p) => ({
+              ...p,
+              styleProfile: p.styleProfile ? { ...p.styleProfile, character_images: updatedImages } : p.styleProfile,
+            }));
+          }
+
+          toast.success(`Imagem de ${char.name} gerada!`);
+          setCharImageGenerating((prev) => ({ ...prev, [char.id]: false }));
+          return;
+        }
+        if (pollData.status === "FAILED") {
+          throw new Error(pollData.error || "Geração falhou");
+        }
+      }
+      throw new Error("Timeout — tenta novamente");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao gerar imagem");
+      setCharImageGenerating((prev) => ({ ...prev, [char.id]: false }));
+    }
   };
 
   const handleRemoveChar = (idx: number) => {
@@ -800,8 +907,13 @@ Sem texto adicional fora deste formato.`,
       };
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      // ── MODEL SELECTION — always Wan 2.6 T2V (15s) ──
-      const model = "wan26-t2v-flash";
+      // ── MODEL SELECTION — R2V if primary character has reference image, otherwise T2V ──
+      const primaryChar = pipeline.styleProfile?.characters?.find((c: StyleCharacter) => c.isPrimary);
+      const primaryCharImageUrl = primaryChar
+        ? (pipeline.styleProfile?.character_images as any)?.[primaryChar.id] || charImageUrls[primaryChar.id]
+        : null;
+      const model = primaryCharImageUrl ? "wan26-r2v-flash" : "wan26-t2v-flash";
+      const videoDuration = primaryCharImageUrl ? 10 : pipeline.sceneDuration;
 
       // ── BUILD PROMPT — always Wan 2.6 T2V (dense prose identity) ──
       const promptAlreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
@@ -825,15 +937,19 @@ Sem texto adicional fora deste formato.`,
       }
 
       // Step 1: Submit job
+      const submitBody: Record<string, unknown> = {
+        prompt: finalPrompt,
+        aspectRatio: pipeline.aspectRatio,
+        duration: videoDuration,
+        model,
+      };
+      if (primaryCharImageUrl && model === "wan26-r2v-flash") {
+        submitBody.referenceImageUrl = primaryCharImageUrl;
+      }
       const submitResp = await fetch(baseUrl, {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          prompt: finalPrompt,
-          aspectRatio: pipeline.aspectRatio,
-          duration: pipeline.sceneDuration,
-          model,
-        }),
+        body: JSON.stringify(submitBody),
       });
 
       const submitData = await submitResp.json();
@@ -1242,21 +1358,64 @@ Sem texto adicional fora deste formato.`,
 
                     {/* Character list */}
                     {styleFormChars.length > 0 && !charFormOpen && (
-                      <div className="space-y-1.5 mb-2">
+                      <div className="space-y-2 mb-2">
                         {styleFormChars.map((c, i) => (
-                          <div key={c.id} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 border border-border/50">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-foreground">{c.name}</p>
-                              <p className="text-[10px] text-muted-foreground line-clamp-1">{c.physicalDescription}</p>
+                          <div key={c.id} className="p-2.5 rounded-lg bg-secondary/30 border border-border/50 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-xs font-medium text-foreground">{c.name}</p>
+                                  {c.isPrimary && <span className="text-[9px] bg-purple-600 text-white px-1.5 py-0.5 rounded-full">Principal</span>}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground line-clamp-1">{c.physicalDescription}</p>
+                              </div>
+                              <div className="flex items-center gap-1 ml-2 shrink-0">
+                                <button onClick={() => handleTogglePrimary(i)} title="Marcar como principal"
+                                  className={`p-1 rounded transition-colors ${c.isPrimary ? "text-purple-500" : "text-muted-foreground hover:text-purple-500"}`}>
+                                  <Users className="h-3 w-3" />
+                                </button>
+                                <button onClick={() => handleOpenCharForm(i)} className="p-1 text-muted-foreground hover:text-purple-500">
+                                  <Pencil className="h-3 w-3" />
+                                </button>
+                                <button onClick={() => handleRemoveChar(i)} className="p-1 text-muted-foreground hover:text-destructive">
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 ml-2 shrink-0">
-                              <button onClick={() => handleOpenCharForm(i)} className="p-1 text-muted-foreground hover:text-purple-500">
-                                <Pencil className="h-3 w-3" />
-                              </button>
-                              <button onClick={() => handleRemoveChar(i)} className="p-1 text-muted-foreground hover:text-destructive">
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
+                            {/* Image preview or generate button */}
+                            {charImageUrls[c.id] || (pipeline.styleProfile?.character_images as any)?.[c.id] ? (
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={charImageUrls[c.id] || (pipeline.styleProfile?.character_images as any)?.[c.id]}
+                                  alt={c.name}
+                                  className="h-16 w-16 rounded-lg object-cover border border-border/50"
+                                />
+                                <div className="flex-1">
+                                  <p className="text-[9px] text-green-500">Imagem de referência gerada</p>
+                                  <button
+                                    onClick={() => handleGenerateCharImage(i)}
+                                    disabled={charImageGenerating[c.id]}
+                                    className="text-[9px] text-muted-foreground hover:text-purple-500 mt-0.5"
+                                  >
+                                    {charImageGenerating[c.id] ? "A gerar..." : "Regenerar"}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleGenerateCharImage(i)}
+                                disabled={charImageGenerating[c.id]}
+                                className="gap-1.5 text-[10px] w-full"
+                              >
+                                {charImageGenerating[c.id] ? (
+                                  <><Loader2 className="h-3 w-3 animate-spin" />A gerar imagem...</>
+                                ) : (
+                                  <><Image className="h-3 w-3" />Gerar Imagem de Referência · 2 créd</>
+                                )}
+                              </Button>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1519,8 +1678,12 @@ Sem texto adicional fora deste formato.`,
                     <p className="text-[10px] text-muted-foreground mb-1">Duração por cena</p>
                     <div className="flex gap-2">
                       <div className="flex-1 p-2 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
-                        <span className="text-sm font-bold block">15s</span>
-                        <span className="text-[9px] text-muted-foreground">Wan 2.6 · 8 créd</span>
+                        <span className="text-sm font-bold block">
+                          {pipeline.styleProfile?.characters?.some((c: StyleCharacter) => c.isPrimary && ((pipeline.styleProfile?.character_images as any)?.[c.id] || charImageUrls[c.id])) ? "10s" : "15s"}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">
+                          {pipeline.styleProfile?.characters?.some((c: StyleCharacter) => c.isPrimary && ((pipeline.styleProfile?.character_images as any)?.[c.id] || charImageUrls[c.id])) ? "Wan R2V · 8 créd" : "Wan T2V · 8 créd"}
+                        </span>
                       </div>
                     </div>
                   </div>
