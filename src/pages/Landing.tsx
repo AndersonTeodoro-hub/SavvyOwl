@@ -255,12 +255,12 @@ export default function Landing() {
           playsInline
           preload="metadata"
           poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3Crect fill='%23080808' width='1' height='1'/%3E%3C/svg%3E"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, opacity: 0.35 }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, opacity: 0.55 }}
         >
           <source src="https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_30fps.mp4" type="video/mp4" />
         </video>
         {/* Dark overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,8,8,0.7) 0%, rgba(8,8,8,0.85) 50%, rgba(8,8,8,0.95) 100%)", zIndex: 0 }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,8,8,0.5) 0%, rgba(8,8,8,0.7) 50%, rgba(8,8,8,0.85) 100%)", zIndex: 0 }} />
         {/* Background grid */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(${C.border} 1px, transparent 1px), linear-gradient(90deg, ${C.border} 1px, transparent 1px)`, backgroundSize: "80px 80px", opacity: 0.4, zIndex: 0 }} />
         {/* Gradient orb */}
