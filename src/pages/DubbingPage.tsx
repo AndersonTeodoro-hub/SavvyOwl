@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ArrowLeft, ArrowRight, Check, Loader2, Video, Download,
   Users, Sparkles, Mic, Upload, FileText, Film, Coins, Play,
@@ -13,19 +14,15 @@ import {
 
 type Step = "upload" | "character" | "voice" | "text" | "generate" | "result";
 
-const STEPS: { key: Step; label: string }[] = [
-  { key: "upload", label: "Vídeo" },
-  { key: "character", label: "Personagem" },
-  { key: "voice", label: "Voz" },
-  { key: "text", label: "Texto" },
-  { key: "generate", label: "Gerar" },
-  { key: "result", label: "Resultado" },
-];
+const STEP_KEYS: Step[] = ["upload", "character", "voice", "text", "generate", "result"];
 
 export default function DubbingPage() {
   const { user, profile, refreshProfile } = useAuth();
   const { characters } = useCharacter();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const STEPS = STEP_KEYS.map((key) => ({ key, label: t(`dubbing.steps.${key}`) }));
 
   const [step, setStep] = useState<Step>("upload");
   const [loading, setLoading] = useState(false);
@@ -75,7 +72,7 @@ export default function DubbingPage() {
     if (!file) return;
 
     if (file.size > 100 * 1024 * 1024) {
-      toast.error("Ficheiro muito grande (máx 100MB)");
+      toast.error(t("dubbing.upload.fileTooLarge"));
       return;
     }
 
@@ -88,7 +85,7 @@ export default function DubbingPage() {
     video.onloadedmetadata = () => {
       const dur = Math.round(video.duration);
       if (dur > 30) {
-        toast.error("Vídeo muito longo (máx 30s)");
+        toast.error(t("dubbing.upload.tooLong"));
         setVideoFile(null);
         setVideoPreviewUrl(null);
         return;
@@ -113,10 +110,10 @@ export default function DubbingPage() {
         .getPublicUrl(storagePath);
 
       setVideoUrl(urlData?.publicUrl || null);
-      toast.success("Vídeo uploaded!");
+      toast.success(t("dubbing.upload.uploaded"));
       setStep("character");
     } catch (e: any) {
-      toast.error(e.message || "Erro no upload");
+      toast.error(e.message || t("dubbing.upload.uploadError"));
     } finally {
       setLoading(false);
     }
@@ -136,7 +133,7 @@ export default function DubbingPage() {
       .single();
 
     if (data?.elevenlabs_voice_id) {
-      toast.success(`Voz de ${charName} detectada!`);
+      toast.success(t("dubbing.character.voiceDetected", { name: charName }));
     }
 
     setStep("voice");
@@ -158,7 +155,7 @@ export default function DubbingPage() {
         .single();
 
       if (!charData?.elevenlabs_voice_id) {
-        toast.error("Personagem não tem voz configurada no ElevenLabs");
+        toast.error(t("dubbing.voice.noVoiceConfigured"));
         setVoiceLoading(false);
         return;
       }
@@ -203,10 +200,10 @@ export default function DubbingPage() {
 
       setVoiceId(cvData.voiceId);
       setVoiceMode("character");
-      toast.success("Voz registada no Kling!");
+      toast.success(t("dubbing.voice.voiceCreated"));
       setStep("text");
     } catch (e: any) {
-      toast.error(e.message || "Erro ao criar voz");
+      toast.error(e.message || t("dubbing.voice.voiceError"));
     } finally {
       setVoiceLoading(false);
     }
@@ -251,10 +248,10 @@ export default function DubbingPage() {
 
       setVoiceId(cvData.voiceId);
       setVoiceMode("upload");
-      toast.success("Voz registada no Kling!");
+      toast.success(t("dubbing.voice.voiceCreated"));
       setStep("text");
     } catch (e: any) {
-      toast.error(e.message || "Erro ao criar voz");
+      toast.error(e.message || t("dubbing.voice.voiceError"));
     } finally {
       setVoiceLoading(false);
     }
@@ -264,7 +261,7 @@ export default function DubbingPage() {
   const handleGenerate = async () => {
     if (!videoUrl || !selectedCharImageUrl || !dubText.trim()) return;
     setGenerating(true);
-    setProgress("A submeter dublagem...");
+    setProgress(t("dubbing.generate.generating"));
     try {
       const headers = await getHeaders();
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
@@ -298,7 +295,7 @@ export default function DubbingPage() {
       if (submitData.status !== "SUBMITTED") throw new Error("Falha ao submeter");
 
       const { statusUrl, responseUrl } = submitData;
-      setProgress("A gerar dublagem (pode demorar 2-5 min)...");
+      setProgress(t("dubbing.generate.generatingProgress"));
 
       // Poll
       const maxWait = 600000;
@@ -317,7 +314,7 @@ export default function DubbingPage() {
         if (pollData.status === "COMPLETED" && pollData.videoUrl) {
           setResultVideoUrl(pollData.videoUrl);
           setStep("result");
-          toast.success(`Dublagem gerada em ${Math.round(elapsed / 1000)}s!`);
+          toast.success(t("dubbing.generate.success", { seconds: Math.round(elapsed / 1000) }));
           return;
         }
         if (pollData.status === "FAILED") {
@@ -325,15 +322,15 @@ export default function DubbingPage() {
           try {
             await fetch(baseUrl, { method: "POST", headers, body: JSON.stringify({ action: "refund", model: "kling-motion-pro" }) });
             refreshProfile();
-            toast.warning("Dublagem falhou — 30 créditos devolvidos");
+            toast.warning(t("dubbing.generate.refunded"));
           } catch {}
-          throw new Error(pollData.error || "Geração falhou");
+          throw new Error(pollData.error || t("dubbing.generate.failed"));
         }
-        setProgress(`A gerar dublagem... ${Math.round(elapsed / 1000)}s`);
+        setProgress(t("dubbing.generate.generatingElapsed", { seconds: Math.round(elapsed / 1000) }));
       }
-      throw new Error("Timeout — tenta novamente");
+      throw new Error(t("dubbing.generate.timeout"));
     } catch (e: any) {
-      toast.error(e.message || "Erro na dublagem");
+      toast.error(e.message || t("dubbing.generate.error"));
     } finally {
       setGenerating(false);
       setProgress("");
@@ -354,10 +351,10 @@ export default function DubbingPage() {
       <header className="h-12 flex items-center justify-between border-b border-border px-4 shrink-0">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/chat")} className="gap-1.5 text-xs">
-            <ArrowLeft className="h-3.5 w-3.5" />Voltar
+            <ArrowLeft className="h-3.5 w-3.5" />{t("dubbing.back")}
           </Button>
           <Mic className="h-4 w-4 text-orange-500" />
-          <span className="text-sm font-semibold text-foreground">Dublagem IA</span>
+          <span className="text-sm font-semibold text-foreground">{t("dubbing.title")}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-orange-500/10 border border-orange-500/20 rounded-full px-2.5 py-0.5">
@@ -389,8 +386,8 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-6">
                 <Upload className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Upload do Vídeo Viral</h2>
-                <p className="text-xs text-muted-foreground">Até 30 segundos, máx 100MB</p>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.upload.title")}</h2>
+                <p className="text-xs text-muted-foreground">{t("dubbing.upload.subtitle")}</p>
               </div>
 
               {videoPreviewUrl ? (
@@ -405,11 +402,11 @@ export default function DubbingPage() {
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={() => { setVideoFile(null); setVideoPreviewUrl(null); }} className="text-xs">
-                      Trocar vídeo
+                      {t("dubbing.upload.changeVideo")}
                     </Button>
                     <Button onClick={handleUploadVideo} disabled={loading} className="flex-1 gap-2 bg-orange-600 hover:bg-orange-700 text-sm">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                      {loading ? "A enviar..." : "Upload e Avançar"}
+                      {loading ? t("dubbing.upload.uploading") : t("dubbing.upload.uploadAndNext")}
                     </Button>
                   </div>
                 </div>
@@ -419,8 +416,8 @@ export default function DubbingPage() {
                   className="w-full p-8 rounded-xl border-2 border-dashed border-border hover:border-orange-400/40 transition-colors text-center"
                 >
                   <Video className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Clica para seleccionar vídeo</p>
-                  <p className="text-[10px] text-muted-foreground/60 mt-1">MP4, MOV, WebM</p>
+                  <p className="text-sm text-muted-foreground">{t("dubbing.upload.selectVideo")}</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-1">{t("dubbing.upload.formats")}</p>
                 </button>
               )}
 
@@ -439,8 +436,8 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <Users className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Escolhe o Personagem</h2>
-                <p className="text-xs text-muted-foreground">Precisa ter imagem de referência</p>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.character.title")}</h2>
+                <p className="text-xs text-muted-foreground">{t("dubbing.character.subtitle")}</p>
               </div>
 
               <div className="space-y-2">
@@ -468,9 +465,9 @@ export default function DubbingPage() {
 
               {characters.filter((c) => c.referenceImageUrl).length === 0 && (
                 <div className="text-center py-6">
-                  <p className="text-sm text-muted-foreground mb-3">Nenhum personagem com imagem de referência</p>
+                  <p className="text-sm text-muted-foreground mb-3">{t("dubbing.character.noCharacters")}</p>
                   <Button variant="outline" onClick={() => navigate("/dashboard/characters")} className="gap-2 text-xs">
-                    <Sparkles className="h-3.5 w-3.5" />Criar Personagem
+                    <Sparkles className="h-3.5 w-3.5" />{t("dubbing.character.createCharacter")}
                   </Button>
                 </div>
               )}
@@ -482,8 +479,8 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <Mic className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Voz do Personagem</h2>
-                <p className="text-xs text-muted-foreground">Escolhe como o personagem vai falar</p>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.voice.title")}</h2>
+                <p className="text-xs text-muted-foreground">{t("dubbing.voice.subtitle")}</p>
               </div>
 
               {/* Option 1: Character voice */}
@@ -495,8 +492,8 @@ export default function DubbingPage() {
                 <div className="flex items-center gap-3">
                   <Users className="h-5 w-5 text-orange-400 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Usar voz do personagem</p>
-                    <p className="text-[10px] text-muted-foreground">Gera amostra via ElevenLabs e regista no Kling</p>
+                    <p className="text-sm font-medium text-foreground">{t("dubbing.voice.useCharacterVoice")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("dubbing.voice.useCharacterVoiceDesc")}</p>
                   </div>
                   {voiceLoading && voiceMode !== "upload" && <Loader2 className="h-4 w-4 animate-spin text-orange-500 ml-auto" />}
                 </div>
@@ -507,18 +504,18 @@ export default function DubbingPage() {
                 <div className="flex items-center gap-3">
                   <Upload className="h-5 w-5 text-orange-400 shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-foreground">Upload amostra de voz</p>
-                    <p className="text-[10px] text-muted-foreground">MP3 ou WAV, 5-30 segundos</p>
+                    <p className="text-sm font-medium text-foreground">{t("dubbing.voice.uploadVoice")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("dubbing.voice.uploadVoiceDesc")}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => voiceInputRef.current?.click()} className="text-xs gap-1.5">
-                    <Upload className="h-3 w-3" />{voiceAudioFile ? voiceAudioFile.name : "Seleccionar ficheiro"}
+                    <Upload className="h-3 w-3" />{voiceAudioFile ? voiceAudioFile.name : t("dubbing.voice.selectFile")}
                   </Button>
                   {voiceAudioFile && (
                     <Button size="sm" onClick={handleSubmitVoiceUpload} disabled={voiceLoading} className="text-xs gap-1.5 bg-orange-600 hover:bg-orange-700">
                       {voiceLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowRight className="h-3 w-3" />}
-                      Registar voz
+                      {t("dubbing.voice.registerVoice")}
                     </Button>
                   )}
                 </div>
@@ -533,12 +530,12 @@ export default function DubbingPage() {
 
               {/* Skip */}
               <Button variant="ghost" size="sm" onClick={() => setStep("text")} className="w-full text-xs text-muted-foreground">
-                Avançar sem voz personalizada
+                {t("dubbing.voice.skipVoice")}
               </Button>
 
               {voiceId && (
                 <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
-                  <p className="text-xs text-green-500">Voz registada com sucesso!</p>
+                  <p className="text-xs text-green-500">{t("dubbing.voice.voiceRegistered")}</p>
                 </div>
               )}
             </div>
@@ -549,31 +546,31 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <FileText className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Texto da Dublagem</h2>
-                <p className="text-xs text-muted-foreground">O que o personagem vai dizer</p>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.text.title")}</h2>
+                <p className="text-xs text-muted-foreground">{t("dubbing.text.subtitle")}</p>
               </div>
 
               <textarea
                 value={dubText}
                 onChange={(e) => setDubText(e.target.value)}
-                placeholder="Escreve aqui o que o influencer vai dizer no vídeo..."
+                placeholder={t("dubbing.text.placeholder")}
                 rows={5}
                 className="w-full rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-orange-400/40 resize-y"
               />
 
               <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Custo:</span>
-                  <span className="text-orange-500 font-bold">30 créditos</span>
+                  <span className="text-muted-foreground">{t("dubbing.text.cost")}:</span>
+                  <span className="text-orange-500 font-bold">30 {t("dubbing.text.credits")}</span>
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="text-muted-foreground">Teu saldo:</span>
+                  <span className="text-muted-foreground">{t("dubbing.text.balance")}:</span>
                   <span className={`font-bold ${(profile?.credits_balance ?? 0) >= 30 ? "text-green-500" : "text-destructive"}`}>
-                    {profile?.credits_balance ?? 0} créditos
+                    {profile?.credits_balance ?? 0} {t("dubbing.text.credits")}
                   </span>
                 </div>
                 <p className="text-[9px] text-muted-foreground mt-1">
-                  Kling Motion Pro · {videoDuration}s · {selectedCharName} · {voiceId ? "Voz personalizada" : "Sem voz"}
+                  Kling Motion Pro · {videoDuration}s · {selectedCharName} · {voiceId ? t("dubbing.text.customVoice") : t("dubbing.text.noVoice")}
                 </p>
               </div>
 
@@ -582,7 +579,7 @@ export default function DubbingPage() {
                 disabled={!dubText.trim()}
                 className="w-full gap-2 bg-orange-600 hover:bg-orange-700"
               >
-                <ArrowRight className="h-4 w-4" />Avançar para Geração
+                <ArrowRight className="h-4 w-4" />{t("dubbing.text.nextStep")}
               </Button>
             </div>
           )}
@@ -592,31 +589,31 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <Film className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Gerar Dublagem</h2>
-                <p className="text-xs text-muted-foreground">Confirma e gera</p>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.generate.title")}</h2>
+                <p className="text-xs text-muted-foreground">{t("dubbing.generate.subtitle")}</p>
               </div>
 
               {/* Summary */}
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between p-2 rounded-lg bg-secondary/30">
-                  <span className="text-muted-foreground">Vídeo:</span>
+                  <span className="text-muted-foreground">{t("dubbing.generate.video")}:</span>
                   <span className="text-foreground">{videoDuration}s</span>
                 </div>
                 <div className="flex justify-between p-2 rounded-lg bg-secondary/30">
-                  <span className="text-muted-foreground">Personagem:</span>
+                  <span className="text-muted-foreground">{t("dubbing.generate.character")}:</span>
                   <span className="text-foreground">{selectedCharName}</span>
                 </div>
                 <div className="flex justify-between p-2 rounded-lg bg-secondary/30">
-                  <span className="text-muted-foreground">Voz:</span>
-                  <span className="text-foreground">{voiceId ? "Personalizada" : "Sem voz"}</span>
+                  <span className="text-muted-foreground">{t("dubbing.generate.voice")}:</span>
+                  <span className="text-foreground">{voiceId ? t("dubbing.generate.custom") : t("dubbing.generate.noVoice")}</span>
                 </div>
                 <div className="flex justify-between p-2 rounded-lg bg-secondary/30">
-                  <span className="text-muted-foreground">Modelo:</span>
+                  <span className="text-muted-foreground">{t("dubbing.generate.model")}:</span>
                   <span className="text-foreground">Kling Motion Pro</span>
                 </div>
                 <div className="flex justify-between p-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                  <span className="text-muted-foreground">Custo:</span>
-                  <span className="text-orange-500 font-bold">30 créditos</span>
+                  <span className="text-muted-foreground">{t("dubbing.generate.cost")}:</span>
+                  <span className="text-orange-500 font-bold">30 {t("dubbing.text.credits")}</span>
                 </div>
               </div>
 
@@ -631,7 +628,7 @@ export default function DubbingPage() {
                   disabled={!videoUrl || !selectedCharImageUrl || !dubText.trim()}
                   className="w-full gap-2 bg-orange-600 hover:bg-orange-700 text-sm"
                 >
-                  <Play className="h-4 w-4" />Gerar Dublagem · 30 créditos
+                  <Play className="h-4 w-4" />{t("dubbing.generate.generateButton")}
                 </Button>
               )}
             </div>
@@ -642,7 +639,7 @@ export default function DubbingPage() {
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <Check className="h-10 w-10 text-green-500 mx-auto mb-3" />
-                <h2 className="text-lg font-bold text-foreground">Dublagem Pronta!</h2>
+                <h2 className="text-lg font-bold text-foreground">{t("dubbing.result.title")}</h2>
               </div>
 
               {resultVideoUrl && (
@@ -656,10 +653,10 @@ export default function DubbingPage() {
 
               <div className="flex gap-2">
                 <Button onClick={handleDownload} className="flex-1 gap-2 bg-orange-600 hover:bg-orange-700">
-                  <Download className="h-4 w-4" />Download
+                  <Download className="h-4 w-4" />{t("dubbing.result.download")}
                 </Button>
                 <Button variant="outline" onClick={() => { setStep("upload"); setResultVideoUrl(null); setVideoFile(null); setVideoPreviewUrl(null); setVideoUrl(null); }}>
-                  Nova Dublagem
+                  {t("dubbing.result.newDubbing")}
                 </Button>
               </div>
             </div>

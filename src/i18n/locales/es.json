@@ -332,5 +332,16 @@
     "title": "404",
     "message": "¡Ups! Página no encontrada",
     "goHome": "Volver al Inicio"
+  },
+  "dubbing": {
+    "title": "Doblaje IA",
+    "back": "Volver",
+    "steps": { "upload": "Vídeo", "character": "Personaje", "voice": "Voz", "text": "Texto", "generate": "Generar", "result": "Resultado" },
+    "upload": { "title": "Subir vídeo viral", "subtitle": "Hasta 30 segundos, máx 100MB", "fileTooLarge": "Archivo demasiado grande (máx 100MB)", "tooLong": "Vídeo demasiado largo (máx 30s)", "selectVideo": "Haz clic para seleccionar vídeo", "formats": "MP4, MOV, WebM", "changeVideo": "Cambiar vídeo", "uploading": "Subiendo...", "uploadAndNext": "Subir y continuar", "uploaded": "¡Vídeo subido!", "uploadError": "Error al subir" },
+    "character": { "title": "Elige el personaje", "subtitle": "Necesita tener imagen de referencia", "noCharacters": "Ningún personaje con imagen de referencia", "createCharacter": "Crear personaje", "voiceDetected": "¡Voz de {{name}} detectada!" },
+    "voice": { "title": "Voz del personaje", "subtitle": "Elige cómo hablará el personaje", "useCharacterVoice": "Usar voz del personaje", "useCharacterVoiceDesc": "Genera muestra vía ElevenLabs y registra en Kling", "uploadVoice": "Subir muestra de voz", "uploadVoiceDesc": "MP3 o WAV, 5-30 segundos", "selectFile": "Seleccionar archivo", "registerVoice": "Registrar voz", "skipVoice": "Continuar sin voz personalizada", "voiceRegistered": "¡Voz registrada con éxito!", "voiceCreated": "¡Voz registrada en Kling!", "noVoiceConfigured": "El personaje no tiene voz configurada en ElevenLabs", "voiceError": "Error al crear la voz" },
+    "text": { "title": "Texto del doblaje", "subtitle": "Lo que dirá el personaje", "placeholder": "Escribe aquí lo que el influencer dirá en el vídeo...", "cost": "Coste", "balance": "Tu saldo", "credits": "créditos", "customVoice": "Voz personalizada", "noVoice": "Sin voz", "nextStep": "Continuar a generación" },
+    "generate": { "title": "Generar doblaje", "subtitle": "Confirma y genera", "video": "Vídeo", "character": "Personaje", "voice": "Voz", "model": "Modelo", "cost": "Coste", "custom": "Personalizada", "noVoice": "Sin voz", "generating": "Enviando doblaje...", "generatingProgress": "Generando doblaje (puede tardar 2-5 min)...", "generatingElapsed": "Generando doblaje... {{seconds}}s", "generateButton": "Generar doblaje · 30 créditos", "success": "¡Doblaje generado en {{seconds}}s!", "refunded": "Doblaje falló — 30 créditos devueltos", "failed": "La generación falló", "timeout": "Tiempo agotado — inténtalo de nuevo", "error": "Error de doblaje" },
+    "result": { "title": "¡Doblaje listo!", "download": "Descargar", "newDubbing": "Nuevo doblaje" }
   }
 }

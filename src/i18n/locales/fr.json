@@ -332,5 +332,16 @@
     "title": "404",
     "message": "Oups ! Page non trouvée",
     "goHome": "Retour à l'Accueil"
+  },
+  "dubbing": {
+    "title": "Doublage IA",
+    "back": "Retour",
+    "steps": { "upload": "Vidéo", "character": "Personnage", "voice": "Voix", "text": "Texte", "generate": "Générer", "result": "Résultat" },
+    "upload": { "title": "Télécharger la vidéo virale", "subtitle": "Jusqu'à 30 secondes, max 100 Mo", "fileTooLarge": "Fichier trop volumineux (max 100 Mo)", "tooLong": "Vidéo trop longue (max 30s)", "selectVideo": "Cliquez pour sélectionner une vidéo", "formats": "MP4, MOV, WebM", "changeVideo": "Changer de vidéo", "uploading": "Envoi en cours...", "uploadAndNext": "Envoyer et continuer", "uploaded": "Vidéo envoyée !", "uploadError": "Erreur d'envoi" },
+    "character": { "title": "Choisir le personnage", "subtitle": "Doit avoir une image de référence", "noCharacters": "Aucun personnage avec image de référence", "createCharacter": "Créer un personnage", "voiceDetected": "Voix de {{name}} détectée !" },
+    "voice": { "title": "Voix du personnage", "subtitle": "Choisissez comment le personnage parlera", "useCharacterVoice": "Utiliser la voix du personnage", "useCharacterVoiceDesc": "Génère un échantillon via ElevenLabs et l'enregistre sur Kling", "uploadVoice": "Télécharger un échantillon vocal", "uploadVoiceDesc": "MP3 ou WAV, 5-30 secondes", "selectFile": "Sélectionner un fichier", "registerVoice": "Enregistrer la voix", "skipVoice": "Continuer sans voix personnalisée", "voiceRegistered": "Voix enregistrée avec succès !", "voiceCreated": "Voix enregistrée sur Kling !", "noVoiceConfigured": "Le personnage n'a pas de voix configurée sur ElevenLabs", "voiceError": "Erreur lors de la création de la voix" },
+    "text": { "title": "Texte du doublage", "subtitle": "Ce que le personnage va dire", "placeholder": "Écrivez ici ce que l'influenceur va dire dans la vidéo...", "cost": "Coût", "balance": "Votre solde", "credits": "crédits", "customVoice": "Voix personnalisée", "noVoice": "Sans voix", "nextStep": "Passer à la génération" },
+    "generate": { "title": "Générer le doublage", "subtitle": "Confirmez et générez", "video": "Vidéo", "character": "Personnage", "voice": "Voix", "model": "Modèle", "cost": "Coût", "custom": "Personnalisée", "noVoice": "Sans voix", "generating": "Envoi du doublage...", "generatingProgress": "Génération du doublage (peut prendre 2-5 min)...", "generatingElapsed": "Génération du doublage... {{seconds}}s", "generateButton": "Générer le doublage · 30 crédits", "success": "Doublage généré en {{seconds}}s !", "refunded": "Doublage échoué — 30 crédits remboursés", "failed": "La génération a échoué", "timeout": "Délai expiré — réessayez", "error": "Erreur de doublage" },
+    "result": { "title": "Doublage prêt !", "download": "Télécharger", "newDubbing": "Nouveau doublage" }
   }
 }

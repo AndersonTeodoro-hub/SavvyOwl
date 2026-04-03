@@ -450,5 +450,88 @@
     "button": "Share SavvyOwl",
     "text": "Try SavvyOwl — create social media content 3x faster. Free to start!",
     "copied": "Link copied!"
+  },
+  "dubbing": {
+    "title": "AI Dubbing",
+    "back": "Back",
+    "steps": {
+      "upload": "Video",
+      "character": "Character",
+      "voice": "Voice",
+      "text": "Text",
+      "generate": "Generate",
+      "result": "Result"
+    },
+    "upload": {
+      "title": "Upload Viral Video",
+      "subtitle": "Up to 30 seconds, max 100MB",
+      "fileTooLarge": "File too large (max 100MB)",
+      "tooLong": "Video too long (max 30s)",
+      "selectVideo": "Click to select video",
+      "formats": "MP4, MOV, WebM",
+      "changeVideo": "Change video",
+      "uploading": "Uploading...",
+      "uploadAndNext": "Upload & Continue",
+      "uploaded": "Video uploaded!",
+      "uploadError": "Upload error"
+    },
+    "character": {
+      "title": "Choose Character",
+      "subtitle": "Must have a reference image",
+      "noCharacters": "No characters with reference image",
+      "createCharacter": "Create Character",
+      "voiceDetected": "Voice for {{name}} detected!"
+    },
+    "voice": {
+      "title": "Character Voice",
+      "subtitle": "Choose how the character will speak",
+      "useCharacterVoice": "Use character voice",
+      "useCharacterVoiceDesc": "Generate sample via ElevenLabs and register on Kling",
+      "uploadVoice": "Upload voice sample",
+      "uploadVoiceDesc": "MP3 or WAV, 5-30 seconds",
+      "selectFile": "Select file",
+      "registerVoice": "Register voice",
+      "skipVoice": "Continue without custom voice",
+      "voiceRegistered": "Voice registered successfully!",
+      "voiceCreated": "Voice registered on Kling!",
+      "noVoiceConfigured": "Character has no voice configured on ElevenLabs",
+      "voiceError": "Error creating voice"
+    },
+    "text": {
+      "title": "Dubbing Text",
+      "subtitle": "What the character will say",
+      "placeholder": "Write here what the influencer will say in the video...",
+      "cost": "Cost",
+      "balance": "Your balance",
+      "credits": "credits",
+      "customVoice": "Custom voice",
+      "noVoice": "No voice",
+      "nextStep": "Continue to Generation"
+    },
+    "generate": {
+      "title": "Generate Dubbing",
+      "subtitle": "Confirm and generate",
+      "video": "Video",
+      "character": "Character",
+      "voice": "Voice",
+      "model": "Model",
+      "cost": "Cost",
+      "custom": "Custom",
+      "noVoice": "No voice",
+      "generating": "Submitting dubbing...",
+      "generatingProgress": "Generating dubbing (may take 2-5 min)...",
+      "generatingElapsed": "Generating dubbing... {{seconds}}s",
+      "generateButton": "Generate Dubbing · 30 credits",
+      "success": "Dubbing generated in {{seconds}}s!",
+      "refunded": "Dubbing failed — 30 credits refunded",
+      "failed": "Generation failed",
+      "timeout": "Timeout — try again",
+      "error": "Dubbing error"
+    },
+    "result": {
+      "title": "Dubbing Ready!",
+      "download": "Download",
+      "newDubbing": "New Dubbing"
+    }
   }
 }

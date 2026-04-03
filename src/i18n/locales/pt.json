@@ -450,5 +450,88 @@
     "button": "Partilhar SavvyOwl",
     "text": "Experimenta a SavvyOwl — cria conteúdo para redes sociais 3x mais rápido. Grátis para começar!",
     "copied": "Link copiado!"
+  },
+  "dubbing": {
+    "title": "Dublagem IA",
+    "back": "Voltar",
+    "steps": {
+      "upload": "Vídeo",
+      "character": "Personagem",
+      "voice": "Voz",
+      "text": "Texto",
+      "generate": "Gerar",
+      "result": "Resultado"
+    },
+    "upload": {
+      "title": "Upload do Vídeo Viral",
+      "subtitle": "Até 30 segundos, máx 100MB",
+      "fileTooLarge": "Ficheiro muito grande (máx 100MB)",
+      "tooLong": "Vídeo muito longo (máx 30s)",
+      "selectVideo": "Clica para seleccionar vídeo",
+      "formats": "MP4, MOV, WebM",
+      "changeVideo": "Trocar vídeo",
+      "uploading": "A enviar...",
+      "uploadAndNext": "Upload e Avançar",
+      "uploaded": "Vídeo uploaded!",
+      "uploadError": "Erro no upload"
+    },
+    "character": {
+      "title": "Escolhe o Personagem",
+      "subtitle": "Precisa ter imagem de referência",
+      "noCharacters": "Nenhum personagem com imagem de referência",
+      "createCharacter": "Criar Personagem",
+      "voiceDetected": "Voz de {{name}} detectada!"
+    },
+    "voice": {
+      "title": "Voz do Personagem",
+      "subtitle": "Escolhe como o personagem vai falar",
+      "useCharacterVoice": "Usar voz do personagem",
+      "useCharacterVoiceDesc": "Gera amostra via ElevenLabs e regista no Kling",
+      "uploadVoice": "Upload amostra de voz",
+      "uploadVoiceDesc": "MP3 ou WAV, 5-30 segundos",
+      "selectFile": "Seleccionar ficheiro",
+      "registerVoice": "Registar voz",
+      "skipVoice": "Avançar sem voz personalizada",
+      "voiceRegistered": "Voz registada com sucesso!",
+      "voiceCreated": "Voz registada no Kling!",
+      "noVoiceConfigured": "Personagem não tem voz configurada no ElevenLabs",
+      "voiceError": "Erro ao criar voz"
+    },
+    "text": {
+      "title": "Texto da Dublagem",
+      "subtitle": "O que o personagem vai dizer",
+      "placeholder": "Escreve aqui o que o influencer vai dizer no vídeo...",
+      "cost": "Custo",
+      "balance": "Teu saldo",
+      "credits": "créditos",
+      "customVoice": "Voz personalizada",
+      "noVoice": "Sem voz",
+      "nextStep": "Avançar para Geração"
+    },
+    "generate": {
+      "title": "Gerar Dublagem",
+      "subtitle": "Confirma e gera",
+      "video": "Vídeo",
+      "character": "Personagem",
+      "voice": "Voz",
+      "model": "Modelo",
+      "cost": "Custo",
+      "custom": "Personalizada",
+      "noVoice": "Sem voz",
+      "generating": "A submeter dublagem...",
+      "generatingProgress": "A gerar dublagem (pode demorar 2-5 min)...",
+      "generatingElapsed": "A gerar dublagem... {{seconds}}s",
+      "generateButton": "Gerar Dublagem · 30 créditos",
+      "success": "Dublagem gerada em {{seconds}}s!",
+      "refunded": "Dublagem falhou — 30 créditos devolvidos",
+      "failed": "Geração falhou",
+      "timeout": "Timeout — tenta novamente",
+      "error": "Erro na dublagem"
+    },
+    "result": {
+      "title": "Dublagem Pronta!",
+      "download": "Download",
+      "newDubbing": "Nova Dublagem"
+    }
   }
 }
