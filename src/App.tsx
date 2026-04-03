@@ -21,6 +21,7 @@ import Analytics from "./pages/Analytics";
 import SettingsPage from "./pages/SettingsPage";
 import CharactersPage from "./pages/CharactersPage";
 import DarkPipelinePage from "./pages/DarkPipelinePage";
+import DubbingPage from "./pages/DubbingPage";
 import NotFound from "./pages/NotFound";
 import { Navigate } from "react-router-dom";
 
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="analytics" element={<SafeComponent><Analytics /></SafeComponent>} />
                 <Route path="characters" element={<SafeComponent><CharactersPage /></SafeComponent>} />
                 <Route path="dark-pipeline" element={<SafeComponent><DarkPipelinePage /></SafeComponent>} />
+                <Route path="dubbing" element={<SafeComponent><DubbingPage /></SafeComponent>} />
                 <Route path="settings" element={<SafeComponent><SettingsPage /></SafeComponent>} />
               </Route>
               <Route path="*" element={<NotFound />} />
