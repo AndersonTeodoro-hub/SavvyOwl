@@ -129,7 +129,7 @@ interface VPState {
   titles: string[];
   selectedTitle: string;
   wordCount: number;
-  sceneDuration: 8 | 15;
+  sceneDuration: 8;
   sceneCount: number;
   aspectRatio: string;
   script: string;
@@ -450,10 +450,7 @@ REGRA ABSOLUTA DE OUTPUT:
         ? `PERSONAGEM PRINCIPAL:\n"""\n${identityBlock}\n"""\n- Usa "The character" ou "He/She" nos prompts, nunca descrição física.`
         : "";
 
-      const isVeo3_SG = vp.sceneDuration <= 8;
-      const dialogueRule_SG = isVeo3_SG
-        ? `   - No PROMPT inclui OBRIGATORIAMENTE: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures`
-        : silentRule;
+      const dialogueRule_SG = `   - No PROMPT inclui OBRIGATORIAMENTE: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures`;
 
       const reply = await callChat(
         `Cria exatamente ${vp.sceneCount} cenas visuais para geração de vídeo IA.
@@ -503,10 +500,7 @@ ${dialogueRule_SG}
         ? `PERSONAGEM PRINCIPAL:\n"""\n${identityBlock}\n"""\n- Usa "The character" nos prompts.`
         : "";
 
-      const isVeo3_VM = vp.sceneDuration <= 8;
-      const promptRule_VM = isVeo3_VM
-        ? `PROMPT: [prompt em inglês ${vp.sceneDuration}s: ação + câmera + iluminação + cenário. Inclui: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures]`
-        : `PROMPT: [prompt em inglês ${vp.sceneDuration}s: ação + câmera + iluminação + cenário. Silent cinematic footage only. Audio will be added separately.]`;
+      const promptRule_VM = `PROMPT: [prompt em inglês ${vp.sceneDuration}s: ação + câmera + iluminação + cenário. Inclui: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures]`;
 
       const reply = await callChat(
         `Adapta este vídeo viral ao meu contexto e gera ${sceneCount} cenas prontas para vídeo IA.
@@ -645,10 +639,7 @@ REGRAS DE USO DO PERSONAGEM NOS PROMPTS:
           : "";
 
       // Narration is always intended in this pipeline (step 6 = voice selection)
-      const isVeo3_VP = vp.sceneDuration <= 8;
-      const silentRule_VP = isVeo3_VP
-        ? `   - No PROMPT inclui OBRIGATORIAMENTE: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures`
-        : `   - OBRIGATÓRIO no final de CADA prompt: "No dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."`;
+      const silentRule_VP = `   - No PROMPT inclui OBRIGATORIAMENTE: character saying "[texto do DIALOGUE]" with appropriate emotion and gestures`;
 
       const reply = await callChat(
         `Analisa este roteiro e divide-o em exatamente ${vp.sceneCount} cenas visuais para geração de vídeo IA.
@@ -753,40 +744,19 @@ Sem texto adicional fora deste formato.`,
       };
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      // Model selection — same logic as DarkPipelinePage
-      let model: string;
-      if (vp.sceneDuration <= 8) {
-        model = vp.referenceImageUrl ? "veo3-fast-i2v" : "veo3-fast";
-      } else {
-        model = "wan26-t2v-flash";
-      }
-
-      // Veo3: generate_audio=true so the character produces natural lip/speech movements.
-      // Wan 2.6: b-roll without character speech, generate_audio=false.
-      const generateAudio = model.startsWith("veo3");
-
-      // Veo3 uses generate_audio=true (character speaks), so no silent suffix needed.
-      // Wan 2.6 is ambient b-roll — also no silent suffix required.
-      const hasNarration = !!scene.audioUrl || scene.prompt.includes("Silent cinematic footage");
-      const silentSuffix = hasNarration && !generateAudio
-        ? "\n\nNo dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."
-        : "";
+      // Model selection — always Veo3 (8s)
+      const model = vp.referenceImageUrl ? "veo3-fast-i2v" : "veo3-fast";
+      const generateAudio = true;
 
       const promptAlreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
 
       let finalPrompt: string;
-      if (model.startsWith("wan26")) {
-        finalPrompt = promptAlreadyHasIdentity
-          ? scene.prompt
-          : wanT2VBlock ? `${wanT2VBlock} SCENE: ${scene.prompt}` : scene.prompt;
+      if (promptAlreadyHasIdentity) {
+        finalPrompt = scene.prompt;
       } else {
-        if (promptAlreadyHasIdentity) {
-          finalPrompt = `${scene.prompt}${silentSuffix}`;
-        } else {
-          finalPrompt = identityBlock
-            ? `${identityBlock}\n\nSCENE: ${scene.prompt}${silentSuffix}`
-            : `${scene.prompt}${silentSuffix}`;
-        }
+        finalPrompt = identityBlock
+          ? `${identityBlock}\n\nSCENE: ${scene.prompt}`
+          : scene.prompt;
       }
 
       // Submit
@@ -799,9 +769,6 @@ Sem texto adicional fora deste formato.`,
           duration: vp.sceneDuration,
           model,
           referenceImageUrl: model === "veo3-fast-i2v" ? vp.referenceImageUrl : undefined,
-          // Veo3 always uses generate_audio=true (handled in edge function).
-          // silentVideo only relevant for Wan 2.6 when narration audio is added separately.
-          silentVideo: !generateAudio && hasNarration,
         }),
       });
 
@@ -961,10 +928,9 @@ Sem texto adicional fora deste formato.`,
   const handleViralVideoSelect = (vid: any) => {
     // Activate pipeline for video generation instead of sending to chat
     const fv = { ...fieldValues };
-    const dur: 8 | 15 = fv.videoTool?.includes("15s") ? 15 : 8;
     setVmSelectedVideo(vid);
     setVmFieldValues(fv);
-    setVp((p) => ({ ...p, sceneDuration: dur, sceneCount: 5, aspectRatio: "9:16" }));
+    setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16" }));
     setPipelineMode("viral-model");
     setPipelineActive(true);
     setVpStep("vm-adapt");
@@ -1220,7 +1186,7 @@ I need:
       label: isPT ? "Prompt Vídeo IA" : "AI Video Prompt",
       description: isPT ? "Prompt para gerar vídeo com IA" : "Prompt to generate AI video",
       fields: [
-        { key: "tool", label: isPT ? "Ferramenta" : "Tool", type: "select", options: ["SavvyOwl Video 8s", "SavvyOwl Video 15s"], placeholder: "" },
+        { key: "tool", label: isPT ? "Ferramenta" : "Tool", type: "select", options: ["SavvyOwl Video 8s (Veo3)"], placeholder: "" },
         { key: "concept", label: isPT ? "Conceito do vídeo" : "Video concept", placeholder: isPT ? "ex: influencer apresentando produto de skincare" : "e.g., influencer presenting skincare product" },
         { key: "duration", label: isPT ? "Duração" : "Duration", type: "select", options: ["5s", "10s", "15s", "30s"], placeholder: "" },
         { key: "style", label: isPT ? "Estilo" : "Style", type: "select", options: isPT ? ["UGC realista", "Cinematográfico", "Animação", "Produto em destaque", "Lifestyle"] : ["Realistic UGC", "Cinematic", "Animation", "Product showcase", "Lifestyle"], placeholder: "" },
@@ -1262,7 +1228,7 @@ RULE: The negative prompt ALWAYS goes inside the main prompt code block (line "N
       label: isPT ? "Gerador de Cenas (Vídeo Longo)" : "Scene Generator (Long Video)",
       description: isPT ? "Cenas prontas para vídeo IA, CapCut, etc." : "Ready scenes for AI video, CapCut, etc.",
       fields: [
-        { key: "tool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["SavvyOwl Video 8s", "SavvyOwl Video 15s", "CapCut AI"], placeholder: "" },
+        { key: "tool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["SavvyOwl Video 8s (Veo3)", "CapCut AI"], placeholder: "" },
         { key: "scenes", label: isPT ? "Nº de cenas" : "Number of scenes", type: "select", options: ["3", "4", "5", "6", "8", "10", "12", "15"], placeholder: "" },
         { key: "maxDuration", label: isPT ? "Duração máx. por cena" : "Max duration per scene", type: "select", options: ["5s", "8s", "10s", "15s", "30s"], placeholder: "" },
         { key: "videoType", label: isPT ? "Tipo de vídeo" : "Video type", type: "select", options: isPT ? ["Influencer UGC", "Vídeo Dark / Narração", "Review de produto", "Tutorial passo a passo", "Storytelling emocional", "Antes e Depois", "Vlog / Day in my life"] : ["UGC Influencer", "Dark Video / Narration", "Product Review", "Step-by-step Tutorial", "Emotional Storytelling", "Before & After", "Vlog / Day in my life"], placeholder: "" },
@@ -1360,7 +1326,7 @@ AT THE END include:
         { key: "audience", label: isPT ? "Teu público-alvo" : "Your target audience", placeholder: isPT ? "ex: mulheres 25-40 interessadas em skincare" : "e.g., women 25-40 interested in skincare" },
         { key: "brand", label: isPT ? "Teu produto/marca (opcional)" : "Your product/brand (optional)", placeholder: isPT ? "ex: curso online de marketing, loja de roupa, app de meditação" : "e.g., online marketing course, clothing store, meditation app" },
         { key: "imageTool", label: isPT ? "Ferramenta de imagem" : "Image tool", type: "select", options: ["SavvyOwl"], placeholder: "" },
-        { key: "videoTool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["SavvyOwl Video 8s", "SavvyOwl Video 15s"], placeholder: "" },
+        { key: "videoTool", label: isPT ? "Ferramenta de vídeo" : "Video tool", type: "select", options: ["SavvyOwl Video 8s (Veo3)"], placeholder: "" },
         { key: "videoLang", label: isPT ? "Idioma do vídeo" : "Video language", type: "select", options: isPT ? ["Português (BR)", "Português (PT)", "Inglês", "Espanhol"] : ["Portuguese (BR)", "Portuguese (PT)", "English", "Spanish"], placeholder: "" },
       ],
       buildPrompt: (v) => isPT
@@ -1441,11 +1407,10 @@ STEP 3 — EXECUTION PLAN: Which to do first, weekly calendar, how to iterate.`,
 
     // ── Scene Generator: activate pipeline instead of sending to chat ──
     if (activeTemplate.id === "scene-generator") {
-      const dur: 8 | 15 = fieldValues.tool?.includes("15s") ? 15 : 8;
       const count = parseInt(fieldValues.scenes) || 5;
       const ar = fieldValues.aspect?.startsWith("16:9") ? "16:9" : fieldValues.aspect?.startsWith("1:1") ? "1:1" : "9:16";
       setSgFields({ ...fieldValues });
-      setVp((p) => ({ ...p, sceneDuration: dur, sceneCount: count, aspectRatio: ar }));
+      setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: count, aspectRatio: ar }));
       setPipelineMode("scene-gen");
       setPipelineActive(true);
       setVpStep("sg-form");
@@ -1737,13 +1702,10 @@ Negative: [negative prompt]
             <div>
               <p className="text-[10px] text-muted-foreground mb-1">Duração por cena</p>
               <div className="flex gap-2">
-                {([8, 15] as const).map((d) => (
-                  <button key={d} onClick={() => setVp((p) => ({ ...p, sceneDuration: d }))}
-                    className={`flex-1 p-2 rounded-lg border text-center transition-all ${vp.sceneDuration === d ? "border-purple-500 bg-purple-500/10" : "border-border/50"}`}>
-                    <span className="text-sm font-bold block">{d}s</span>
-                    <span className="text-[9px] text-muted-foreground">{d <= 8 ? "Veo3 · 10 créd" : "Wan 2.6 · 5 créd"}</span>
-                  </button>
-                ))}
+                <div className="flex-1 p-2 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
+                  <span className="text-sm font-bold block">8s</span>
+                  <span className="text-[9px] text-muted-foreground">Veo3 · 15 créd</span>
+                </div>
               </div>
             </div>
 
@@ -1774,11 +1736,11 @@ Negative: [negative prompt]
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Custo estimado:</span>
-                <span className="text-purple-500 font-bold">{vp.sceneCount * (vp.sceneDuration <= 8 ? 15 : 8)} créditos</span>
+                <span className="text-purple-500 font-bold">{vp.sceneCount * 15} créditos</span>
               </div>
               <div className="flex justify-between mt-0.5">
                 <span className="text-muted-foreground">Teu saldo:</span>
-                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * (vp.sceneDuration <= 8 ? 15 : 8) ? "text-green-500" : "text-destructive"}`}>
+                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * 15 ? "text-green-500" : "text-destructive"}`}>
                   {profile?.credits_balance ?? 0} créditos
                 </span>
               </div>
@@ -2043,8 +2005,8 @@ Negative: [negative prompt]
                       <Video className="h-3 w-3" />
                       Gerar Cena {scene.index}
                       {scene.audioUrl
-                        ? ` · ${(vp.sceneDuration <= 8 ? 15 : 8) + 3} créditos (+ lip-sync)`
-                        : ` · ${vp.sceneDuration <= 8 ? 15 : 8} créditos`}
+                        ? ` · ${15 + 3} créditos (+ lip-sync)`
+                        : ` · 15 créditos`}
                     </Button>
                   )}
                   {scene.error && <p className="text-[10px] text-destructive mt-1">{scene.error}</p>}

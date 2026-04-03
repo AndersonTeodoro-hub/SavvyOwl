@@ -38,7 +38,7 @@ interface PipelineState {
   characterName: string | null;
   characterVoiceId: string | null;
   referenceImageUrl: string | null;
-  sceneDuration: 8 | 15;
+  sceneDuration: 15;
   sceneCount: number;
   scenes: SceneData[];
   aspectRatio: string;
@@ -189,7 +189,7 @@ export default function DarkPipelinePage() {
       characterName: null,
       characterVoiceId: null,
       referenceImageUrl: null,
-      sceneDuration: 8,
+      sceneDuration: 15,
       sceneCount: 5,
       scenes: [],
       aspectRatio: "9:16",
@@ -229,7 +229,7 @@ export default function DarkPipelinePage() {
     setPipeline({
       theme: "", titles: [], selectedTitle: "", wordCount: 500, script: "",
       characterId: null, characterName: null, characterVoiceId: null,
-      referenceImageUrl: null, sceneDuration: 8, sceneCount: 5, scenes: [], aspectRatio: "9:16",
+      referenceImageUrl: null, sceneDuration: 15, sceneCount: 5, scenes: [], aspectRatio: "9:16",
     });
     setVoiceUrl(null);
     setNarrationStorageUrl(null);
@@ -675,51 +675,19 @@ Sem texto adicional fora deste formato.`,
       };
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      // ── MODEL SELECTION ──
-      // 8s + reference image → Veo3 Fast I2V (image guarantees character consistency)
-      // 8s without reference → Veo3 Fast T2V (text-only, identityBlock for consistency)
-      // 15s → Wan 2.6 T2V (always text-only, wanT2VBlock for max consistency)
-      let model: string;
-      if (pipeline.sceneDuration <= 8) {
-        model = pipeline.referenceImageUrl ? "veo3-fast-i2v" : "veo3-fast";
-      } else {
-        model = "wan26-t2v-flash";
-      }
+      // ── MODEL SELECTION — always Wan 2.6 T2V (15s) ──
+      const model = "wan26-t2v-flash";
 
-      // ── BUILD PROMPT per model ──
-      // Detect if user has narration: check all possible indicators
-      // - voiceUrl: blob URL from current session (lost on reload)
-      // - narrationStorageUrl: Supabase storage URL (persisted in localStorage)
-      // - audioDuration: set when voice was generated (persisted in localStorage)
-      // - scene prompt already contains "Silent cinematic footage" (added by Claude when narration existed at scene generation time)
-      const hasNarration = !!narrationStorageUrl || !!voiceUrl || !!audioDuration
-        || scene.prompt.includes("Silent cinematic footage");
-      const silentSuffix = hasNarration && model.startsWith("veo3")
-        ? "\n\nNo dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."
-        : "";
-
-      // Check if scene prompt already contains identity block (from Claude's output)
+      // ── BUILD PROMPT — always Wan 2.6 T2V (dense prose identity) ──
       const promptAlreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
 
       let finalPrompt: string;
-      if (model.startsWith("wan26")) {
-        // Wan 2.6 T2V: dense prose identity + scene action
-        if (promptAlreadyHasIdentity) {
-          finalPrompt = scene.prompt;
-        } else {
-          finalPrompt = wanT2VBlock
-            ? `${wanT2VBlock} SCENE: ${scene.prompt}`
-            : scene.prompt;
-        }
+      if (promptAlreadyHasIdentity) {
+        finalPrompt = scene.prompt;
       } else {
-        // Veo3: identity block + scene (only prepend if not already present)
-        if (promptAlreadyHasIdentity) {
-          finalPrompt = `${scene.prompt}${silentSuffix}`;
-        } else {
-          finalPrompt = identityBlock
-            ? `${identityBlock}\n\nSCENE: ${scene.prompt}${silentSuffix}`
-            : `${scene.prompt}${silentSuffix}`;
-        }
+        finalPrompt = wanT2VBlock
+          ? `${wanT2VBlock} SCENE: ${scene.prompt}`
+          : scene.prompt;
       }
 
       // Step 1: Submit job
@@ -731,9 +699,6 @@ Sem texto adicional fora deste formato.`,
           aspectRatio: pipeline.aspectRatio,
           duration: pipeline.sceneDuration,
           model,
-          referenceImageUrl: model === "veo3-fast-i2v" ? pipeline.referenceImageUrl : undefined,
-          silentVideo: hasNarration, // tells backend to set generate_audio: false for Veo3
-          narrationUrl: undefined,
         }),
       });
 
@@ -1152,32 +1117,10 @@ Sem texto adicional fora deste formato.`,
                   <div className="flex-1">
                     <p className="text-[10px] text-muted-foreground mb-1">Duração por cena</p>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => setPipeline((p) => ({
-                          ...p,
-                          sceneDuration: 8,
-                          sceneCount: audioDuration ? Math.ceil(audioDuration / 8) : p.sceneCount,
-                        }))}
-                        className={`flex-1 p-2 rounded-lg border text-center transition-all ${
-                          pipeline.sceneDuration === 8 ? "border-purple-500 bg-purple-500/10" : "border-border/50"
-                        }`}
-                      >
-                        <span className="text-sm font-bold block">8s</span>
-                        <span className="text-[9px] text-muted-foreground">10 créd</span>
-                      </button>
-                      <button
-                        onClick={() => setPipeline((p) => ({
-                          ...p,
-                          sceneDuration: 15,
-                          sceneCount: audioDuration ? Math.ceil(audioDuration / 15) : p.sceneCount,
-                        }))}
-                        className={`flex-1 p-2 rounded-lg border text-center transition-all ${
-                          pipeline.sceneDuration === 15 ? "border-purple-500 bg-purple-500/10" : "border-border/50"
-                        }`}
-                      >
+                      <div className="flex-1 p-2 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
                         <span className="text-sm font-bold block">15s</span>
-                        <span className="text-[9px] text-muted-foreground">5 créd</span>
-                      </button>
+                        <span className="text-[9px] text-muted-foreground">Wan 2.6 · 8 créd</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex-1">
@@ -1233,17 +1176,17 @@ Sem texto adicional fora deste formato.`,
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Custo estimado:</span>
                     <span className="text-purple-500 font-bold">
-                      {pipeline.sceneCount * ((pipeline.sceneDuration <= 8 ? 15 : 8))} créditos
+                      {pipeline.sceneCount * 8} créditos
                     </span>
                   </div>
                   <div className="flex justify-between mt-1">
                     <span className="text-muted-foreground">Teu saldo:</span>
-                    <span className={`font-bold ${(profile?.credits_balance ?? 0) >= pipeline.sceneCount * (pipeline.sceneDuration <= 8 ? 15 : 8) ? "text-green-500" : "text-destructive"}`}>
+                    <span className={`font-bold ${(profile?.credits_balance ?? 0) >= pipeline.sceneCount * 8 ? "text-green-500" : "text-destructive"}`}>
                       {profile?.credits_balance ?? 0} créditos
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-1">
-                    {pipeline.sceneCount} cenas × {(pipeline.sceneDuration <= 8 ? 15 : 8)} créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
+                    {pipeline.sceneCount} cenas × 8 créd = vídeo total de ~{pipeline.sceneCount * pipeline.sceneDuration}s
                   </p>
                 </div>
               </div>
@@ -1521,8 +1464,8 @@ Sem texto adicional fora deste formato.`,
                         <Video className="h-3 w-3" />
                         Gerar Cena {scene.index}
                         {scene.audioUrl
-                          ? ` · ${(pipeline.sceneDuration <= 8 ? 15 : 8) + 3} créditos (+ lip-sync)`
-                          : ` · ${pipeline.sceneDuration <= 8 ? 15 : 8} créditos`}
+                          ? ` · ${8 + 3} créditos (+ lip-sync)`
+                          : ` · 8 créditos`}
                       </Button>
                     )}
 

@@ -8,19 +8,13 @@ import { useNavigate } from "react-router-dom";
 
 type Props = { prompt: string };
 
-// Duration → backend model mapping (hidden from user)
-// 8s → Veo3 Fast (best for short dialogue/action)
-// 15s → Wan 2.6 (best for longer UGC, stories, products)
-// With reference image: auto-upgrades to R2V/I2V for character consistency
-function resolveModel(duration: number, hasRef: boolean): { model: string; credits: number } {
-  if (duration <= 8) {
-    return { model: "veo3-fast", credits: 10 };
-  }
-  // 15s
+// Always Veo3 Fast — 8s, 10 credits
+// With reference image: I2V variant for character consistency
+function resolveModel(hasRef: boolean): { model: string; credits: number } {
   if (hasRef) {
-    return { model: "wan26-i2v-flash", credits: 7 };
+    return { model: "veo3-fast-i2v", credits: 15 };
   }
-  return { model: "wan26-t2v-flash", credits: 5 };
+  return { model: "veo3-fast", credits: 15 };
 }
 
 export function GenerateVideoButton({ prompt }: Props) {
@@ -32,12 +26,12 @@ export function GenerateVideoButton({ prompt }: Props) {
   const [progress, setProgress] = useState("");
   const [showOptions, setShowOptions] = useState(false);
   const [aspectRatio, setAspectRatio] = useState("9:16");
-  const [duration, setDuration] = useState(8);
+  const duration = 8;
   const [credits, setCredits] = useState<{ balance: number; cost: number } | null>(null);
   const [noCredits, setNoCredits] = useState(false);
 
   const hasRef = !!referenceImageUrl;
-  const { model: resolvedModel, credits: creditCost } = resolveModel(duration, hasRef);
+  const { model: resolvedModel, credits: creditCost } = resolveModel(hasRef);
 
   const buildFinalPrompt = (): string => {
     if (!identityBlock) return prompt;
@@ -168,30 +162,10 @@ export function GenerateVideoButton({ prompt }: Props) {
           <div>
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Duração</p>
             <div className="flex gap-2">
-              <button
-                onClick={() => setDuration(8)}
-                className={`flex-1 p-2.5 rounded-lg border text-center transition-all ${
-                  duration === 8
-                    ? "border-purple-500 bg-purple-500/10"
-                    : "border-border/50 hover:border-purple-400/40"
-                }`}
-              >
+              <div className="flex-1 p-2.5 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
                 <span className="text-lg font-bold text-foreground block">8s</span>
-                <span className="text-[10px] text-muted-foreground">Rápido · 10 créditos</span>
-              </button>
-              <button
-                onClick={() => setDuration(15)}
-                className={`flex-1 p-2.5 rounded-lg border text-center transition-all ${
-                  duration === 15
-                    ? "border-purple-500 bg-purple-500/10"
-                    : "border-border/50 hover:border-purple-400/40"
-                }`}
-              >
-                <span className="text-lg font-bold text-foreground block">15s</span>
-                <span className="text-[10px] text-muted-foreground">
-                  Longo · {hasRef ? "7" : "5"} créditos
-                </span>
-              </button>
+                <span className="text-[10px] text-muted-foreground">Veo3 · 15 créditos</span>
+              </div>
             </div>
           </div>
 
@@ -220,7 +194,7 @@ export function GenerateVideoButton({ prompt }: Props) {
           </div>
 
           {/* Character reference info */}
-          {activeCharacterName && hasRef && duration === 15 && (
+          {activeCharacterName && hasRef && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-[10px] text-green-700 dark:text-green-400 flex items-center gap-1.5">
               <Users className="h-3 w-3 shrink-0" />
               Vídeo com consistência visual de <strong>{activeCharacterName}</strong>
