@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCharacter } from "@/contexts/CharacterContext";
 import { useElevenLabsKey } from "@/hooks/useElevenLabsKey";
 import { supabase } from "@/integrations/supabase/client";
+import { buildStyleBlock } from "@/lib/dark-pipeline/style-engine";
+import { getNicheScriptPrompt } from "@/lib/dark-pipeline/niche-prompts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
@@ -434,8 +436,16 @@ Regras:
     setLoading(true);
     try {
       const token = await getToken();
-      const reply = await callChat(
-        `Escreve um roteiro completo para vídeo com o título: "${pipeline.selectedTitle}".
+
+      // Use niche-specific prompt if available, fallback to generic
+      const nichePrompt = getNicheScriptPrompt(
+        pipeline.niche,
+        pipeline.selectedTitle,
+        pipeline.theme,
+        pipeline.wordCount,
+      );
+
+      const genericPrompt = `Escreve um roteiro completo para vídeo com o título: "${pipeline.selectedTitle}".
 Tema original: "${pipeline.theme}"
 
 REGRAS DE ESTRUTURA:
@@ -444,60 +454,17 @@ REGRAS DE ESTRUTURA:
 - Apenas o texto de narração puro — SEM indicações de cena, SEM timestamps, SEM [corte], SEM (pausa)
 
 ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
-
-1. HOOK (primeiros 5-8 segundos / ~30 palavras):
-   Frase de abertura que PRENDE imediatamente. Deve criar urgência, curiosidade ou emoção forte.
-   Exemplos de padrão: "O que você vai ouvir agora pode mudar...", "Existe algo que poucos sabem sobre...", "Pare tudo o que está fazendo e preste atenção..."
-
-2. DESENVOLVIMENTO (corpo principal):
-   Narração imersiva, envolvente, com ritmo emocional.
-   Adapta o tom ao nicho:
-   · Religioso/Espiritual: tom de autoridade espiritual, conexão com Deus, linguagem de fé e esperança
-   · Dark/Mistério: tom misterioso, suspense, revelações graduais
-   · Educação: tom de autoridade, dados surpreendentes, explicações claras
-   · Motivação: tom inspirador, história de superação, virada emocional
-   · Outro: adapta naturalmente
-
-3. CTAs NATIVOS (distribuídos dentro do roteiro — NÃO no final como bloco separado):
-   Insere 2-3 CTAs ao longo do roteiro de forma NATURAL, como se fosse parte da narração.
-   Os CTAs devem ser adaptados ao nicho:
-   
-   · Se RELIGIOSO: CTAs em forma de missão espiritual / bênção:
-     "Eu quero que você compartilhe esse vídeo com 7 pessoas que precisam dessa oração. Cada uma delas será abençoada, e em nome de Jesus, essas bênçãos retornarão em dobro para sua vida."
-     "Se essa palavra tocou seu coração, se inscreva nesse canal. Deus tem uma mensagem nova para você todos os dias."
-     "Deixe nos comentários 'eu recebo' para que essa oração se manifeste na sua vida."
-   
-   · Se DARK/MISTÉRIO: CTAs em forma de pacto com o espectador:
-     "Se você está acompanhando até aqui, deixe seu like — isso me ajuda a trazer mais histórias como essa."
-     "Compartilhe com alguém que gosta de mistérios — mas cuidado, depois de saber isso, não dá para voltar atrás."
-     "Nos comentários, me diz: você acredita que isso realmente aconteceu?"
-   
-   · Se EDUCAÇÃO: CTAs em forma de comunidade de conhecimento:
-     "Se você aprendeu algo novo, compartilhe com alguém que precisa saber disso."
-     "Inscreva-se para não perder as próximas descobertas que vão mudar sua forma de ver o mundo."
-   
-   · Se MOTIVAÇÃO: CTAs em forma de compromisso pessoal:
-     "Compartilhe esse vídeo com alguém que está passando por um momento difícil. Às vezes uma mensagem muda tudo."
-     "Se inscreva e ative o sininho — nosso compromisso é trazer uma palavra de transformação todos os dias."
-   
-   · Se OUTRO nicho: adapta o CTA ao tema de forma criativa e emocional.
-   
-   REGRA CRÍTICA: Os CTAs NÃO podem parecer genéricos ou robotizados. Devem fluir naturalmente dentro da narração como se fossem parte da história/mensagem. O espectador deve sentir que compartilhar é um ATO DE VALOR, não uma obrigação.
-
-4. CONCLUSÃO (últimos ~50 palavras):
-   Encerramento emocional forte que conecta com o início.
-   Inclui o último CTA mais poderoso — o pedido de compartilhamento como missão.
-   Termina com uma frase de impacto que fica na mente do espectador.
+1. HOOK (primeiros 5-8 segundos / ~30 palavras): Frase de abertura que PRENDE imediatamente.
+2. DESENVOLVIMENTO (corpo principal): Narração imersiva, envolvente, com ritmo emocional.
+3. CTAs NATIVOS (2-3, distribuídos dentro do roteiro de forma NATURAL).
+4. CONCLUSÃO (últimos ~50 palavras): Encerramento emocional forte.
 
 REGRA ABSOLUTA DE OUTPUT:
 - Retorna APENAS o texto de narração. NADA MAIS.
-- SEM título, SEM cabeçalho, SEM "## Roteiro", SEM "---"
-- SEM "Próximos Passos", SEM dicas de produção, SEM sugestões de ferramentas
-- SEM menções a Veo3, Sora, ElevenLabs, Gemini, CapCut ou qualquer ferramenta
-- SEM prompts de vídeo, SEM exemplos de cena, SEM markdown
-- O output deve ser EXCLUSIVAMENTE o texto que será narrado em voz alta, do início ao fim, sem mais nada.`,
-        token
-      );
+- SEM título, SEM cabeçalho, SEM markdown, SEM menções a ferramentas.
+- O output deve ser EXCLUSIVAMENTE o texto que será narrado em voz alta.`;
+
+      const reply = await callChat(nichePrompt || genericPrompt, token);
       setPipeline((p) => ({ ...p, script: reply }));
       setStep("script");
     } catch (e: any) {
@@ -709,6 +676,15 @@ REGRAS DE USO DO PERSONAGEM NOS PROMPTS:
       const silentRule = hasNarrationForScenes
         ? `   - OBRIGATÓRIO no final de CADA prompt: "No dialogue, no speech, no voiceover, no narration, no text on screen. Silent cinematic footage only. Audio will be added separately."`
         : `   - O vídeo DEVE ter áudio nativo: sons ambiente, diálogos em português do Brasil se o personagem falar, sons naturais da cena. O áudio faz parte do vídeo.`;
+
+      // Build style block from style profile (if selected)
+      const styleBlock = pipeline.styleProfile
+        ? buildStyleBlock(pipeline.styleProfile)
+        : "";
+      const styleSection = styleBlock
+        ? `\nESTILO VISUAL OBRIGATÓRIO:\n"""\n${styleBlock}\n"""\n- Cada prompt de cena DEVE seguir este estilo visual. Iluminação, cores, atmosfera e composição devem reflectir o estilo definido acima.\n`
+        : "";
+
       const reply = await callChat(
         `Analisa este roteiro e divide-o em exatamente ${pipeline.sceneCount} cenas visuais para geração de vídeo IA.
 
@@ -716,7 +692,7 @@ ROTEIRO:
 ${pipeline.script}
 
 ${charSection}
-
+${styleSection}
 Para cada cena, gera:
 1. Descrição curta da cena (1 frase em PT)
 2. Prompt completo em inglês para geração de vídeo IA (3-5 frases). O prompt deve descrever:
@@ -726,6 +702,7 @@ Para cada cena, gera:
    - Movimento de câmera (close-up, medium shot, wide, etc.)
    - "Photorealistic, shot on iPhone 15 Pro, handheld, available light, UGC aesthetic"
    - NÃO incluas a descrição física do personagem no prompt (é adicionada automaticamente)
+${styleBlock ? "   - OBRIGATÓRIO: segue o estilo visual definido acima (paleta de cores, atmosfera, composição)" : ""}
 ${silentRule}
 
 Formato OBRIGATÓRIO (uma cena por bloco):
@@ -741,7 +718,7 @@ PROMPT: [prompt em inglês]
 Sem texto adicional fora deste formato.`,
         token,
         identityBlock,
-        identityBlock ? "deep" : "quick" // Claude Sonnet for character identity accuracy, Gemini Flash otherwise
+        identityBlock ? "deep" : "quick"
       );
 
       // Parse scenes — split on "CENA N:" pattern, filter only blocks with DESC/PROMPT
@@ -829,13 +806,22 @@ Sem texto adicional fora deste formato.`,
       // ── BUILD PROMPT — always Wan 2.6 T2V (dense prose identity) ──
       const promptAlreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
 
+      // Style block from style profile (prepended for visual consistency)
+      const videoStyleBlock = pipeline.styleProfile
+        ? buildStyleBlock(pipeline.styleProfile)
+        : "";
+
       let finalPrompt: string;
       if (promptAlreadyHasIdentity) {
-        finalPrompt = scene.prompt;
-      } else {
-        finalPrompt = wanT2VBlock
-          ? `${wanT2VBlock} SCENE: ${scene.prompt}`
+        finalPrompt = videoStyleBlock
+          ? `${videoStyleBlock} ${scene.prompt}`
           : scene.prompt;
+      } else {
+        const identity = wanT2VBlock || "";
+        const style = videoStyleBlock ? `${videoStyleBlock} ` : "";
+        finalPrompt = identity
+          ? `${identity} ${style}SCENE: ${scene.prompt}`
+          : `${style}${scene.prompt}`;
       }
 
       // Step 1: Submit job
