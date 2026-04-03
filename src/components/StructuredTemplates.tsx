@@ -744,9 +744,8 @@ Sem texto adicional fora deste formato.`,
       };
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-video`;
 
-      // Model selection — always Veo3 (8s)
-      const model = vp.referenceImageUrl ? "veo3-fast-i2v" : "veo3-fast";
-      const generateAudio = true;
+      // Model selection — always Seedance 1.5 Pro (8s, native lip-sync)
+      const model = vp.referenceImageUrl ? "seedance-i2v" : "seedance-t2v";
 
       const promptAlreadyHasIdentity = scene.prompt.includes("FIXED CHARACTER") || scene.prompt.includes("same person in every frame");
 
@@ -768,7 +767,7 @@ Sem texto adicional fora deste formato.`,
           aspectRatio: vp.aspectRatio,
           duration: vp.sceneDuration,
           model,
-          referenceImageUrl: model === "veo3-fast-i2v" ? vp.referenceImageUrl : undefined,
+          referenceImageUrl: model === "seedance-i2v" ? vp.referenceImageUrl : undefined,
         }),
       });
 
@@ -794,82 +793,10 @@ Sem texto adicional fora deste formato.`,
         const pollData = await pollResp.json();
 
         if (pollData.status === "COMPLETED" && pollData.videoUrl) {
-          const rawVideoUrl = pollData.videoUrl;
-          const audioUrl = vpRef.current.scenes[sceneIndex]?.audioUrl;
-
-          // Lipsync: only for Veo3 (has natural speech movements) + ElevenLabs audio ready
-          if (generateAudio && audioUrl) {
-            setVp((p) => ({
-              ...p,
-              scenes: p.scenes.map((s, i) =>
-                i === sceneIndex ? { ...s, videoUrl: rawVideoUrl, generating: true, lipsyncStatus: "processing" } : s
-              ),
-            }));
-            toast.info(`Cena ${sceneIndex + 1}: a sincronizar voz...`);
-
-            const lsSubmitResp = await fetch(baseUrl, {
-              method: "POST",
-              headers,
-              body: JSON.stringify({ action: "lipsync", videoUrl: rawVideoUrl, audioUrl }),
-            });
-            const lsSubmitData = await lsSubmitResp.json();
-            if (lsSubmitData.error) throw new Error(lsSubmitData.error);
-            if (lsSubmitData.status !== "SUBMITTED") throw new Error("Falha ao submeter lip-sync");
-
-            const { requestId: lsRequestId, statusUrl: lsStatusUrl, responseUrl: lsResponseUrl } = lsSubmitData;
-
-            let lsElapsed = 0;
-            while (lsElapsed < maxWait) {
-              await new Promise((r) => setTimeout(r, pollInterval));
-              lsElapsed += pollInterval;
-
-              const lsPollResp = await fetch(baseUrl, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({ action: "poll", requestId: lsRequestId, statusUrl: lsStatusUrl, responseUrl: lsResponseUrl }),
-              });
-              const lsPollData = await lsPollResp.json();
-
-              if (lsPollData.status === "COMPLETED" && lsPollData.videoUrl) {
-                setVp((p) => ({
-                  ...p,
-                  scenes: p.scenes.map((s, i) =>
-                    i === sceneIndex
-                      ? { ...s, videoUrl: lsPollData.videoUrl, lipsyncVideoUrl: lsPollData.videoUrl, generating: false, lipsyncStatus: "done" }
-                      : s
-                  ),
-                }));
-                toast.success(`Cena ${sceneIndex + 1} com voz sincronizada! (${Math.round((elapsed + lsElapsed) / 1000)}s)`);
-                refreshProfile();
-                return;
-              }
-              if (lsPollData.status === "FAILED") {
-                setVp((p) => ({
-                  ...p,
-                  scenes: p.scenes.map((s, i) =>
-                    i === sceneIndex ? { ...s, generating: false, lipsyncStatus: "error" } : s
-                  ),
-                }));
-                toast.warning(`Cena ${sceneIndex + 1}: lip-sync falhou — vídeo sem sincronização mantido.`);
-                refreshProfile();
-                return;
-              }
-            }
-            setVp((p) => ({
-              ...p,
-              scenes: p.scenes.map((s, i) =>
-                i === sceneIndex ? { ...s, generating: false, lipsyncStatus: "error" } : s
-              ),
-            }));
-            toast.warning(`Cena ${sceneIndex + 1}: lip-sync timeout — vídeo sem sincronização mantido.`);
-            refreshProfile();
-            return;
-          }
-
-          // No audioUrl — set video normally
+          // Seedance has native lip-sync — no external lipsync needed
           setVp((p) => ({
             ...p,
-            scenes: p.scenes.map((s, i) => i === sceneIndex ? { ...s, videoUrl: rawVideoUrl, generating: false } : s),
+            scenes: p.scenes.map((s, i) => i === sceneIndex ? { ...s, videoUrl: pollData.videoUrl, generating: false } : s),
           }));
           toast.success(`Cena ${sceneIndex + 1} gerada! (${Math.round(elapsed / 1000)}s)`);
           refreshProfile();
@@ -1704,7 +1631,7 @@ Negative: [negative prompt]
               <div className="flex gap-2">
                 <div className="flex-1 p-2 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
                   <span className="text-sm font-bold block">8s</span>
-                  <span className="text-[9px] text-muted-foreground">Veo3 · 15 créd</span>
+                  <span className="text-[9px] text-muted-foreground">Seedance · 12 créd</span>
                 </div>
               </div>
             </div>
@@ -1736,11 +1663,11 @@ Negative: [negative prompt]
             <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-2.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Custo estimado:</span>
-                <span className="text-purple-500 font-bold">{vp.sceneCount * 15} créditos</span>
+                <span className="text-purple-500 font-bold">{vp.sceneCount * 12} créditos</span>
               </div>
               <div className="flex justify-between mt-0.5">
                 <span className="text-muted-foreground">Teu saldo:</span>
-                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * 15 ? "text-green-500" : "text-destructive"}`}>
+                <span className={`font-bold ${(profile?.credits_balance ?? 0) >= vp.sceneCount * 12 ? "text-green-500" : "text-destructive"}`}>
                   {profile?.credits_balance ?? 0} créditos
                 </span>
               </div>
@@ -2004,9 +1931,7 @@ Negative: [negative prompt]
                     <Button onClick={() => handleGenerateVideo(i)} disabled={scene.generating} size="sm" className="gap-1.5 text-xs bg-purple-600 hover:bg-purple-700">
                       <Video className="h-3 w-3" />
                       Gerar Cena {scene.index}
-                      {scene.audioUrl
-                        ? ` · ${15 + 3} créditos (+ lip-sync)`
-                        : ` · 15 créditos`}
+                      {` · 12 créditos`}
                     </Button>
                   )}
                   {scene.error && <p className="text-[10px] text-destructive mt-1">{scene.error}</p>}

@@ -8,13 +8,13 @@ import { useNavigate } from "react-router-dom";
 
 type Props = { prompt: string };
 
-// Always Veo3 Fast — 8s, 10 credits
+// Always Seedance 1.5 Pro — 8s, 12 credits, native lip-sync
 // With reference image: I2V variant for character consistency
 function resolveModel(hasRef: boolean): { model: string; credits: number } {
   if (hasRef) {
-    return { model: "veo3-fast-i2v", credits: 15 };
+    return { model: "seedance-i2v", credits: 12 };
   }
-  return { model: "veo3-fast", credits: 15 };
+  return { model: "seedance-t2v", credits: 12 };
 }
 
 export function GenerateVideoButton({ prompt }: Props) {
@@ -164,7 +164,7 @@ export function GenerateVideoButton({ prompt }: Props) {
             <div className="flex gap-2">
               <div className="flex-1 p-2.5 rounded-lg border border-purple-500 bg-purple-500/10 text-center">
                 <span className="text-lg font-bold text-foreground block">8s</span>
-                <span className="text-[10px] text-muted-foreground">Veo3 · 15 créditos</span>
+                <span className="text-[10px] text-muted-foreground">Seedance · 12 créditos</span>
               </div>
             </div>
           </div>

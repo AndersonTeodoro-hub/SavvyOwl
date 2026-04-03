@@ -196,6 +196,8 @@ Deno.serve(async (req) => {
       "wan26-i2v":       { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
       "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 8,  label: "Wan 2.6 R2V Flash" },
       "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 8,  label: "Wan 2.6 R2V" },
+      "seedance-t2v":           { endpoint: "fal-ai/bytedance/seedance/v1.5/pro/text-to-video",  credits: 12, label: "Seedance 1.5 Pro T2V" },
+      "seedance-i2v":           { endpoint: "fal-ai/bytedance/seedance/v1.5/pro/image-to-video", credits: 12, label: "Seedance 1.5 Pro I2V" },
       "kling":                  { endpoint: "fal-ai/kling-video/v2.1/pro",                credits: 10, label: "Kling 2.1 Pro" },
       "kling-motion-standard":  { endpoint: "fal-ai/kling-video/v3/standard/motion-control", credits: 20, label: "Kling v3 Motion Standard" },
       "kling-motion-pro":       { endpoint: "fal-ai/kling-video/v3/pro/motion-control",      credits: 30, label: "Kling v3 Motion Pro" },
@@ -223,12 +225,20 @@ Deno.serve(async (req) => {
     const isR2V = selectedModel.includes("r2v");
     const isI2V = selectedModel.includes("i2v");
     const isKlingMotion = selectedModel.startsWith("kling-motion");
+    const isSeedance = selectedModel.startsWith("seedance");
 
     console.log(`[FAL] Submit ${modelConfig.label} ${dur}s ${ar}`);
 
     // Build request body
     const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar };
-    if (isKlingMotion) {
+    if (isSeedance) {
+      falBody.duration = "8";
+      falBody.resolution = "720p";
+      falBody.generate_audio = true;
+      if (selectedModel === "seedance-i2v" && referenceImageUrl) {
+        falBody.image_url = referenceImageUrl;
+      }
+    } else if (isKlingMotion) {
       // Kling Motion Control: image_url (character photo) + reference_video_url (viral video)
       falBody.duration = String(dur);
       if (referenceImageUrl) falBody.image_url = referenceImageUrl;
