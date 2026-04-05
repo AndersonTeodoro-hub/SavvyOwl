@@ -1625,17 +1625,33 @@ Negative: [negative prompt]
               <h3 className="text-sm font-bold text-foreground">Etapa 2 — Título</h3>
               <p className="text-[11px] text-muted-foreground">{vp.theme}</p>
             </div>
-            <div className="space-y-1.5">
-              {vp.titles.map((title, i) => (
-                <button key={i} onClick={() => setVp((p) => ({ ...p, selectedTitle: title }))}
-                  className={`w-full text-left p-2.5 rounded-xl border transition-all text-xs ${vp.selectedTitle === title ? "border-purple-500 bg-purple-500/10 text-foreground" : "border-border/50 bg-secondary/20 text-muted-foreground hover:bg-secondary/40"}`}>
-                  <span className="text-purple-500 font-mono mr-1.5">{i + 1}.</span>{title}
-                </button>
-              ))}
+            {vp.titles.length > 0 && (
+              <div className="space-y-1.5">
+                {vp.titles.map((title, i) => (
+                  <button key={i} onClick={() => setVp((p) => ({ ...p, selectedTitle: title }))}
+                    className={`w-full text-left p-2.5 rounded-xl border transition-all text-xs ${vp.selectedTitle === title ? "border-purple-500 bg-purple-500/10 text-foreground" : "border-border/50 bg-secondary/20 text-muted-foreground hover:bg-secondary/40"}`}>
+                    <span className="text-purple-500 font-mono mr-1.5">{i + 1}.</span>{title}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-1">{isPT ? "Título seleccionado (podes editar)" : "Selected title (you can edit)"}</p>
+              <input
+                value={vp.selectedTitle}
+                onChange={(e) => setVp((p) => ({ ...p, selectedTitle: e.target.value }))}
+                placeholder={isPT ? "Escreve ou edita o teu título aqui..." : "Write or edit your title here..."}
+                className="w-full rounded-lg border border-border bg-secondary/30 px-3 py-2 text-xs focus:outline-none focus:border-purple-500/50"
+              />
             </div>
-            <Button variant="outline" size="sm" onClick={handleGenerateTitles} disabled={vpLoading} className="gap-1 text-xs">
-              <RefreshCw className="h-3 w-3" />Gerar novos títulos
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleGenerateTitles} disabled={vpLoading} className="gap-1 text-xs">
+                <RefreshCw className="h-3 w-3" />{isPT ? "Gerar títulos" : "Generate titles"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setVp((p) => ({ ...p, selectedTitle: "", titles: [] }))} className="gap-1 text-xs">
+                <FileText className="h-3 w-3" />{isPT ? "Escrever o meu" : "Write my own"}
+              </Button>
+            </div>
             <div>
               <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Palavras no roteiro</p>
               <div className="flex gap-2">
