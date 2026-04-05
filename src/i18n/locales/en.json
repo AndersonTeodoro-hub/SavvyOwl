@@ -79,7 +79,10 @@
       "starter_cta": "GET STARTED",
       "pro_name": "Pro", "pro_price": "€59.99", "pro_period": "/mo", "pro_sub": "For professional creators",
       "pro_features": ["180 credits/month", "+ AI Dubbing", "+ Dark Pipeline Pro", "Unlimited Character Engine", "Dedicated support"],
-      "pro_cta": "GET STARTED"
+      "pro_cta": "GET STARTED",
+      "studio_name": "Studio", "studio_price": "€119.99", "studio_period": "/mo", "studio_sub": "For teams and agencies",
+      "studio_features": ["500 credits/month", "Everything in Pro", "Queue priority", "Early access to new tools", "VIP support"],
+      "studio_cta": "GET STARTED"
     },
     "faq": {
       "badge": "FAQ",

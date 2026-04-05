@@ -113,8 +113,9 @@ export default function Landing() {
 
   const plans = [
     { key: "free", name: t("landing.pricing.free_name"), price: t("landing.pricing.free_price"), period: t("landing.pricing.free_period"), sub: t("landing.pricing.free_sub"), features: t("landing.pricing.free_features", { returnObjects: true }) as string[], cta: t("landing.pricing.free_cta"), primary: false, action: () => navigate("/register") },
-    { key: "starter", name: t("landing.pricing.starter_name"), price: t("landing.pricing.starter_price"), period: t("landing.pricing.starter_period"), sub: t("landing.pricing.starter_sub"), features: t("landing.pricing.starter_features", { returnObjects: true }) as string[], cta: t("landing.pricing.starter_cta"), primary: true, action: () => handleCheckout("starter") },
-    { key: "pro", name: t("landing.pricing.pro_name"), price: t("landing.pricing.pro_price"), period: t("landing.pricing.pro_period"), sub: t("landing.pricing.pro_sub"), features: t("landing.pricing.pro_features", { returnObjects: true }) as string[], cta: t("landing.pricing.pro_cta"), primary: false, action: () => handleCheckout("pro") },
+    { key: "starter", name: t("landing.pricing.starter_name"), price: t("landing.pricing.starter_price"), period: t("landing.pricing.starter_period"), sub: t("landing.pricing.starter_sub"), features: t("landing.pricing.starter_features", { returnObjects: true }) as string[], cta: t("landing.pricing.starter_cta"), primary: false, action: () => handleCheckout("starter") },
+    { key: "pro", name: t("landing.pricing.pro_name"), price: t("landing.pricing.pro_price"), period: t("landing.pricing.pro_period"), sub: t("landing.pricing.pro_sub"), features: t("landing.pricing.pro_features", { returnObjects: true }) as string[], cta: t("landing.pricing.pro_cta"), primary: true, action: () => handleCheckout("pro") },
+    { key: "studio", name: t("landing.pricing.studio_name"), price: t("landing.pricing.studio_price"), period: t("landing.pricing.studio_period"), sub: t("landing.pricing.studio_sub"), features: t("landing.pricing.studio_features", { returnObjects: true }) as string[], cta: t("landing.pricing.studio_cta"), primary: false, action: () => handleCheckout("studio") },
   ];
 
   const faqs = [1, 2, 3, 4, 5, 6].map((n) => ({ q: t(`landing.faq.q${n}`), a: t(`landing.faq.a${n}`) }));
@@ -394,7 +395,7 @@ export default function Landing() {
             </div>
           </Reveal>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 1 }}>
             {plans.map((plan, i) => (
               <Reveal key={plan.key} delay={i * 0.1}>
                 <div style={{ backgroundColor: plan.primary ? C.bg : C.surfaceHover, padding: "48px 36px", position: "relative", borderTop: plan.primary ? `2px solid ${C.gold}` : `2px solid transparent`, display: "flex", flexDirection: "column", height: "100%" }}>
