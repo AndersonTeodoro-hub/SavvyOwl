@@ -328,27 +328,41 @@ REGRAS DE ESTRUTURA:
 
 ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
 
-1. HOOK (primeiros 5-8 segundos / ~${Math.round(vp.wordCount * 0.15)} palavras):
-   Frase de abertura que PRENDE imediatamente. Deve criar urgência, curiosidade ou emoção forte.
+1. HOOK (primeiros 3 segundos / ~${Math.round(vp.wordCount * 0.12)} palavras):
+   Os primeiros 3 segundos decidem TUDO. O viewer ou fica ou faz scroll.
+   Usa um destes frameworks de hook profissional:
+   • PAS (Problem-Agitate-Solve): Identifica a dor, intensifica, resolve
+   • Curiosity Gap: Abre um loop que o viewer precisa de fechar
+   • Bold Claim: Declaração forte que exige atenção
+   • Direct Challenge: Confronta o viewer directamente
+   • Social Proof: Resultado real, dado concreto
+   O hook DEVE falar a dor do público-alvo directamente. Não sejas genérico.
 
 2. DESENVOLVIMENTO (corpo principal):
-   Narração imersiva, envolvente, com ritmo emocional.
+   Narração imersiva com ritmo crescente. Cada frase aumenta o interesse.
+   Linguagem UGC autêntica — fala como uma pessoa real, não como um anúncio.
    Adapta o tom ao nicho:
-   · Religioso/Espiritual: tom de autoridade espiritual, conexão com Deus, linguagem de fé e esperança
-   · Dark/Mistério: tom misterioso, suspense, revelações graduais
-   · Educação: tom de autoridade, dados surpreendentes, explicações claras
-   · Motivação: tom inspirador, história de superação, virada emocional
+   · Religioso/Espiritual: autoridade espiritual, conexão com Deus, linguagem de fé
+   · Dark/Mistério: suspense, revelações graduais
+   · Educação: autoridade, dados surpreendentes, explicações claras
+   · Motivação: história de superação, virada emocional
    · Outro: adapta naturalmente
 
 3. CTAs NATIVOS (distribuídos dentro do roteiro — NÃO no final como bloco separado):
-   Insere 2-3 CTAs ao longo do roteiro de forma NATURAL, como se fosse parte da narração.
-   Os CTAs devem ser adaptados ao nicho (espiritual, mistério, educação, motivação).
+   Insere 2-3 CTAs ao longo do roteiro de forma NATURAL, como parte da narração.
+   Os CTAs devem ser adaptados ao nicho. NÃO podem parecer genéricos.
 
-   REGRA CRÍTICA: Os CTAs NÃO podem parecer genéricos. Devem fluir naturalmente como parte da mensagem.
-
-4. CONCLUSÃO (últimos ~${Math.round(vp.wordCount * 0.15)} palavras):
-   Encerramento emocional forte que conecta com o início.
+4. CONCLUSÃO + CTA FINAL (últimos 3 segundos / ~${Math.round(vp.wordCount * 0.12)} palavras):
+   Um único CTA claro, confiante, com urgência real.
+   Diz exactamente o que fazer. Não "saiba mais" — algo específico e accionável.
    Termina com uma frase de impacto que fica na mente do espectador.
+
+REGRAS DE COPYWRITING PROFISSIONAL:
+- Frases curtas e directas. Máximo 12 palavras por frase.
+- Linguagem de conversa, não de apresentação corporativa.
+- Usar "tu/você" directamente — falar COM o viewer, não SOBRE o tema.
+- Cada frase deve ganhar o direito à frase seguinte.
+- Zero fluff. Cada palavra tem que justificar a sua existência.
 
 REGRA ABSOLUTA DE OUTPUT:
 - Retorna APENAS o texto de narração. NADA MAIS.
@@ -698,6 +712,19 @@ Para cada cena, gera:
    - "Photorealistic, shot on iPhone 15 Pro, handheld, available light, UGC aesthetic"
    - NÃO incluas a descrição física do personagem no prompt (é adicionada automaticamente)
 ${silentRule_VP}
+
+REGRAS PARA CENA 1 (HOOK):
+- A cena 1 É o hook. Os primeiros 3 segundos decidem tudo.
+- O personagem DEVE transmitir emoção imediata: frustração, choque, urgência, curiosidade.
+- Expressão facial intensa e autêntica. Não neutra.
+- Movimento de câmera que captura atenção: push-in rápido, ou close-up expressivo.
+- O diálogo do hook deve ser a frase mais forte do roteiro.
+
+REGRAS PARA A ÚLTIMA CENA (CTA):
+- A última cena É o CTA. Deve ser impossível de ignorar.
+- O personagem fala com convicção absoluta, olhar directo para câmera.
+- Gesto assertivo (apontar para câmera, palma aberta, ou gesto de "vem comigo").
+- O diálogo deve ser um comando claro e específico.
 
 Formato OBRIGATÓRIO (uma cena por bloco):
 CENA 1:

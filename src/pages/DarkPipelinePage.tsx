@@ -603,10 +603,25 @@ REGRAS DE ESTRUTURA:
 - Apenas o texto de narração puro — SEM indicações de cena, SEM timestamps, SEM [corte], SEM (pausa)
 
 ESTRUTURA OBRIGATÓRIA DO ROTEIRO:
-1. HOOK (primeiros 5-8 segundos / ~30 palavras): Frase de abertura que PRENDE imediatamente.
-2. DESENVOLVIMENTO (corpo principal): Narração imersiva, envolvente, com ritmo emocional.
+1. HOOK (primeiros 3 segundos / ~${Math.round(pipeline.wordCount * 0.12)} palavras):
+   Os primeiros 3 segundos decidem TUDO. Usa um framework de hook profissional:
+   • PAS (Problem-Agitate-Solve) • Curiosity Gap • Bold Claim • Direct Challenge • Social Proof
+   O hook DEVE falar a dor do público-alvo directamente. Não sejas genérico.
+
+2. DESENVOLVIMENTO (corpo principal):
+   Narração imersiva com ritmo crescente. Linguagem UGC autêntica.
+   Cada frase aumenta o interesse.
+
 3. CTAs NATIVOS (2-3, distribuídos dentro do roteiro de forma NATURAL).
-4. CONCLUSÃO (últimos ~50 palavras): Encerramento emocional forte.
+
+4. CONCLUSÃO + CTA FINAL (últimos 3 segundos):
+   Um único CTA claro, confiante, com urgência real. Algo específico e accionável.
+   Termina com frase de impacto.
+
+REGRAS DE COPYWRITING:
+- Frases curtas e directas. Máximo 12 palavras por frase.
+- Linguagem de conversa. Usar "tu/você" directamente.
+- Zero fluff. Cada palavra justifica a sua existência.
 
 REGRA ABSOLUTA DE OUTPUT:
 - Retorna APENAS o texto de narração. NADA MAIS.
@@ -856,6 +871,15 @@ Para cada cena, gera:
    - NÃO incluas a descrição física do personagem no prompt (é adicionada automaticamente)
 ${styleBlock ? "   - OBRIGATÓRIO: segue o estilo visual definido acima (paleta de cores, atmosfera, composição)" : ""}
 ${silentRule}
+
+REGRAS PARA CENA 1 (HOOK):
+- A cena 1 É o hook. Os primeiros 3 segundos decidem tudo.
+- O personagem DEVE transmitir emoção imediata: frustração, choque, urgência, curiosidade.
+- Expressão facial intensa. Movimento de câmera que captura atenção: push-in rápido ou close-up expressivo.
+
+REGRAS PARA A ÚLTIMA CENA (CTA):
+- A última cena É o CTA. O personagem fala com convicção absoluta, olhar directo para câmera.
+- Gesto assertivo. O diálogo deve ser um comando claro e específico.
 
 Formato OBRIGATÓRIO (uma cena por bloco):
 CENA 1:
