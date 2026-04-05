@@ -984,7 +984,7 @@ Sem texto adicional fora deste formato.`,
       const { requestId, statusUrl, responseUrl } = submitData;
 
       // Step 2: Poll for result (from frontend — no timeout issue)
-      const maxWait = 600000; // 10 min max
+      const maxWait = 900000; // 15 min max
       const pollInterval = 5000;
       let elapsed = 0;
 

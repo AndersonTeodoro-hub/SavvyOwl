@@ -797,7 +797,7 @@ Sem texto adicional fora deste formato.`,
       const { requestId, statusUrl, responseUrl } = submitData;
 
       // Poll
-      const maxWait = 600000;
+      const maxWait = 900000;
       const pollInterval = 5000;
       let elapsed = 0;
       while (elapsed < maxWait) {
@@ -831,7 +831,7 @@ Sem texto adicional fora deste formato.`,
           throw new Error(pollData.error || "Geração falhou");
         }
       }
-      throw new Error("Timeout — vídeo a demorar mais de 10 minutos");
+      throw new Error("Timeout — vídeo a demorar mais de 15 minutos");
     } catch (e: any) {
       setVp((p) => ({
         ...p,

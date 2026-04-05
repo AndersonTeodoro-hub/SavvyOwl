@@ -298,7 +298,7 @@ export default function DubbingPage() {
       setProgress(t("dubbing.generate.generatingProgress"));
 
       // Poll
-      const maxWait = 600000;
+      const maxWait = 900000;
       let elapsed = 0;
       while (elapsed < maxWait) {
         await new Promise((r) => setTimeout(r, 5000));

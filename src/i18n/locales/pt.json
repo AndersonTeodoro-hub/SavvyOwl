@@ -531,7 +531,7 @@
       "sceneFailed": "Cena {{index}}: geração falhou — 8 créditos devolvidos",
       "sceneError": "Cena {{index}}: {{error}}",
       "failed": "Geração falhou no servidor",
-      "timeout": "Timeout — o vídeo está a demorar mais de 10 minutos",
+      "timeout": "Timeout — o vídeo está a demorar mais de 15 minutos",
       "backStep": "Voltar ao passo anterior"
     }
   }
