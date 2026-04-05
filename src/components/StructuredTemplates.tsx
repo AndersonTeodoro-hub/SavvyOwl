@@ -786,8 +786,9 @@ Sem texto adicional fora deste formato.`,
       const parts: string[] = [];
 
       // Layer 1: dialogue with language command (first words set the audio language)
-      if (scene.dialogueText) {
-        parts.push(`Character speaks in ${langName}. Character saying "${scene.dialogueText}"`);
+      const speechText = scene.dialogueText || scene.narrationText;
+      if (speechText) {
+        parts.push(`Character speaks in ${langName}. Character saying "${speechText}"`);
       }
 
       // Layer 2: identity block (skip for I2V — reference image provides visual consistency)
