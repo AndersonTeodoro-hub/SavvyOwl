@@ -71,6 +71,7 @@ interface PipelineState {
   scenes: SceneData[];
   aspectRatio: string;
   speechLang: string;
+  sceneMode: string;
 }
 
 const NICHE_IDS = [
@@ -100,6 +101,19 @@ function getSpeechLangPrompt(id: string): string {
 }
 
 const DEFAULT_NEGATIVE = "no perfect symmetry, no airbrushed skin, no CGI render, no illustration, no anime, no cartoon, screen on wrong side of device, screen on back of phone, screen on back of laptop, extra fingers, missing fingers, deformed hands";
+
+const SCENE_MODES = [
+  { id: "dynamic",       label: "Dynamic Impact",   labelPT: "Impacto Dinâmico",     desc: "Impacto directo, hook forte, mensagem que acorda a audiência. Expressões intensas, gestos assertivos." },
+  { id: "energetic",     label: "Energetic",        labelPT: "Energético",            desc: "Energia positiva, motivação, inspiração. Expressões vibrantes, gestos abertos e entusiásticos." },
+  { id: "spiritual",     label: "Spiritual",        labelPT: "Espiritual",            desc: "Reflexão, oração, paz interior. Expressões serenas, gestos suaves, ritmo calmo." },
+  { id: "confrontation", label: "Tough Love",       labelPT: "Confrontação",          desc: "Confrontação directa, tough love. Expressões firmes, gestos pontuais, olhar directo." },
+  { id: "educational",   label: "Educational",      labelPT: "Educativo",             desc: "Tom didáctico, explicativo, claro. Expressões acessíveis, gestos ilustrativos." },
+  { id: "auto",          label: "Auto (AI decides)", labelPT: "Auto (IA decide)",     desc: "Escolhe e combina os tons mais adequados para cada cena com base no conteúdo do roteiro." },
+];
+
+function getSceneModeDesc(id: string): string {
+  return SCENE_MODES.find((m) => m.id === id)?.desc ?? SCENE_MODES[0].desc;
+}
 
 const STEP_KEYS: { key: Step; icon: any }[] = [
   { key: "niche", icon: Sparkles },
@@ -260,6 +274,7 @@ export default function DarkPipelinePage() {
       scenes: [],
       aspectRatio: "9:16",
       speechLang: getDefaultSpeechLang(i18n.language),
+      sceneMode: "dynamic",
     };
   });
 
@@ -512,7 +527,7 @@ export default function DarkPipelinePage() {
     setPipeline({
       niche: "", styleProfileId: null, styleProfile: null, theme: "", titles: [], selectedTitle: "", wordCount: 450, script: "",
       characterId: null, characterName: null, characterVoiceId: null,
-      referenceImageUrl: null, sceneDuration: 15, sceneCount: 5, scenes: [], aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language),
+      referenceImageUrl: null, sceneDuration: 15, sceneCount: 5, scenes: [], aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language), sceneMode: "dynamic",
     });
     setVoiceUrl(null);
     setNarrationStorageUrl(null);
@@ -827,6 +842,9 @@ ${pipeline.script}
 
 ${charSection}
 ${styleSection}
+TOM E ENERGIA DAS CENAS: ${getSceneModeDesc(pipeline.sceneMode)}
+Adapta a linguagem, expressões, gestos e intensidade do personagem a este tom.
+
 Para cada cena, gera:
 1. Descrição curta da cena (1 frase em PT)
 2. Prompt completo em inglês para geração de vídeo IA (3-5 frases). O prompt deve descrever:
@@ -1780,6 +1798,18 @@ Sem texto adicional fora deste formato.`,
                       <button key={l.id} onClick={() => setPipeline((p) => ({ ...p, speechLang: l.id }))}
                         className={`px-3 py-1.5 rounded text-[10px] font-medium transition-all ${pipeline.speechLang === l.id ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
                         {l.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[10px] text-muted-foreground mb-1">{i18n.language?.startsWith("pt") ? "Tom das cenas" : "Scene tone"}</p>
+                  <div className="flex gap-1 flex-wrap">
+                    {SCENE_MODES.map((m) => (
+                      <button key={m.id} onClick={() => setPipeline((p) => ({ ...p, sceneMode: m.id }))}
+                        className={`px-2.5 py-1.5 rounded text-[10px] font-medium transition-all ${pipeline.sceneMode === m.id ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
+                        {i18n.language?.startsWith("pt") ? m.labelPT : m.label}
                       </button>
                     ))}
                   </div>

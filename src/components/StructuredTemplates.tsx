@@ -133,6 +133,7 @@ interface VPState {
   sceneCount: number;
   aspectRatio: string;
   speechLang: string;
+  sceneMode: string;
   script: string;
   characterId: string | null;
   characterName: string | null;
@@ -182,9 +183,22 @@ function getSpeechLangPrompt(id: string): string {
 
 const DEFAULT_NEGATIVE = "no perfect symmetry, no airbrushed skin, no CGI render, no illustration, no anime, no cartoon, screen on wrong side of device, screen on back of phone, screen on back of laptop, extra fingers, missing fingers, deformed hands";
 
+const SCENE_MODES = [
+  { id: "dynamic",       label: "Dynamic Impact",   labelPT: "Impacto Dinâmico",     desc: "Impacto directo, hook forte, mensagem que acorda a audiência. Expressões intensas, gestos assertivos." },
+  { id: "energetic",     label: "Energetic",        labelPT: "Energético",            desc: "Energia positiva, motivação, inspiração. Expressões vibrantes, gestos abertos e entusiásticos." },
+  { id: "spiritual",     label: "Spiritual",        labelPT: "Espiritual",            desc: "Reflexão, oração, paz interior. Expressões serenas, gestos suaves, ritmo calmo." },
+  { id: "confrontation", label: "Tough Love",       labelPT: "Confrontação",          desc: "Confrontação directa, tough love. Expressões firmes, gestos pontuais, olhar directo." },
+  { id: "educational",   label: "Educational",      labelPT: "Educativo",             desc: "Tom didáctico, explicativo, claro. Expressões acessíveis, gestos ilustrativos." },
+  { id: "auto",          label: "Auto (AI decides)", labelPT: "Auto (IA decide)",     desc: "Escolhe e combina os tons mais adequados para cada cena com base no conteúdo do roteiro." },
+];
+
+function getSceneModeDesc(id: string): string {
+  return SCENE_MODES.find((m) => m.id === id)?.desc ?? SCENE_MODES[0].desc;
+}
+
 const EMPTY_VP: VPState = {
   theme: "", titles: [], selectedTitle: "", wordCount: 60,
-  sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: "pt-BR",
+  sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: "pt-BR", sceneMode: "dynamic",
   script: "", characterId: null, characterName: null,
   characterVoiceId: null, referenceImageUrl: null, scenes: [],
 };
@@ -670,6 +684,9 @@ ${vp.script}
 
 ${charSection}
 
+TOM E ENERGIA DAS CENAS: ${getSceneModeDesc(vp.sceneMode)}
+Adapta a linguagem, expressões, gestos e intensidade do personagem a este tom.
+
 Para cada cena, gera:
 1. Descrição curta da cena (1 frase em PT)
 2. O trecho exacto do roteiro que corresponde a esta cena (campo DIALOGUE)
@@ -895,7 +912,7 @@ Sem texto adicional fora deste formato.`,
     const fv = { ...fieldValues };
     setVmSelectedVideo(vid);
     setVmFieldValues(fv);
-    setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language) }));
+    setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language), sceneMode: "dynamic" }));
     setPipelineMode("viral-model");
     setPipelineActive(true);
     setVpStep("vm-adapt");
@@ -1721,6 +1738,18 @@ Negative: [negative prompt]
                   <button key={l.id} onClick={() => setVp((p) => ({ ...p, speechLang: l.id }))}
                     className={`px-3 py-1.5 rounded text-[10px] font-medium transition-all ${vp.speechLang === l.id ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
                     {l.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-1">{isPT ? "Tom das cenas" : "Scene tone"}</p>
+              <div className="flex gap-1 flex-wrap">
+                {SCENE_MODES.map((m) => (
+                  <button key={m.id} onClick={() => setVp((p) => ({ ...p, sceneMode: m.id }))}
+                    className={`px-2.5 py-1.5 rounded text-[10px] font-medium transition-all ${vp.sceneMode === m.id ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
+                    {isPT ? m.labelPT : m.label}
                   </button>
                 ))}
               </div>
