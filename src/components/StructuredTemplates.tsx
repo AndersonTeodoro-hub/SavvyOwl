@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ChevronRight, X, Loader2, ExternalLink, Eye, ThumbsUp, Play, Users, Lock,
   Sparkles, FileText, Clapperboard, Film, ArrowRight, ArrowLeft, RefreshCw,
-  Copy, Video, Download, Mic, Volume2, Coins, Check,
+  Copy, Video, Download, Mic, Volume2, Coins, Check, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,6 +124,20 @@ interface SceneData {
   lipsyncStatus?: "pending" | "processing" | "done" | "error";
 }
 
+interface ReferenceContext {
+  type: "youtube" | "website";
+  title: string;
+  description: string;
+  tags?: string[];
+  duration?: string;
+  views?: number;
+  likes?: number;
+  transcript?: string;
+  content?: string;
+  image?: string;
+  searchResults?: { title: string; snippet: string; link: string }[];
+}
+
 interface VPState {
   theme: string;
   titles: string[];
@@ -139,6 +153,8 @@ interface VPState {
   characterName: string | null;
   characterVoiceId: string | null;
   referenceImageUrl: string | null;
+  referenceUrl: string;
+  referenceContext: ReferenceContext | null;
   scenes: SceneData[];
 }
 
@@ -205,7 +221,8 @@ const EMPTY_VP: VPState = {
   theme: "", titles: [], selectedTitle: "", wordCount: 60,
   sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: "pt-BR", sceneMode: "dynamic",
   script: "", characterId: null, characterName: null,
-  characterVoiceId: null, referenceImageUrl: null, scenes: [],
+  characterVoiceId: null, referenceImageUrl: null,
+  referenceUrl: "", referenceContext: null, scenes: [],
 };
 
 // ──────────────────────────────────────────────────────────
@@ -239,6 +256,7 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [selectedTtsVoice, setSelectedTtsVoice] = useState(TTS_VOICES[0]);
   const [sceneAudiosGenerating, setSceneAudiosGenerating] = useState(false);
+  const [refLoading, setRefLoading] = useState(false);
   const [pipelineMode, setPipelineMode] = useState<PipelineMode>("viral");
   const [sgFields, setSgFields] = useState<Record<string, string>>({});
   const [vmSelectedVideo, setVmSelectedVideo] = useState<any>(null);
@@ -280,6 +298,49 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
     toast.success("Novo projeto iniciado");
   };
 
+  // ── Analyze reference URL ──
+  const handleAnalyzeReference = async () => {
+    const url = vp.referenceUrl.trim();
+    if (!url) return;
+    setRefLoading(true);
+    try {
+      const isYouTube = /youtube\.com|youtu\.be/i.test(url);
+      const action = isYouTube ? "analyze-youtube" : "analyze-website";
+
+      const { data, error } = await supabase.functions.invoke("analyze-reference", {
+        body: { action, url },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      const ref: ReferenceContext = {
+        type: isYouTube ? "youtube" : "website",
+        title: data.title || "",
+        description: data.description || "",
+        ...(isYouTube && { tags: data.tags, duration: data.duration, views: data.views, likes: data.likes, transcript: data.transcript }),
+        ...(!isYouTube && { content: data.content, image: data.image }),
+      };
+
+      // Search for more context using the title
+      if (ref.title) {
+        try {
+          const { data: searchData } = await supabase.functions.invoke("analyze-reference", {
+            body: { action: "search-context", query: ref.title },
+          });
+          if (searchData?.results) ref.searchResults = searchData.results;
+        } catch { /* search is optional */ }
+      }
+
+      setVp((p) => ({ ...p, referenceContext: ref }));
+      toast.success(isPT ? "Referência analisada!" : "Reference analyzed!");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Erro";
+      toast.error(msg);
+    } finally {
+      setRefLoading(false);
+    }
+  };
+
   // ── STEP 1: Titles ──
   const handleGenerateTitles = async () => {
     if (!vp.theme.trim()) return;
@@ -316,15 +377,44 @@ Regras:
     }
   };
 
+  // ── Build reference context block for prompts ──
+  const buildReferenceBlock = (): string => {
+    const ref = vp.referenceContext;
+    if (!ref) return "";
+    const lines: string[] = [
+      `\nREFERÊNCIA ANALISADA — usa estes dados REAIS no roteiro:`,
+      `- Título: "${ref.title}"`,
+    ];
+    if (ref.description) lines.push(`- Descrição: ${ref.description.slice(0, 500)}`);
+    if (ref.type === "youtube") {
+      if (ref.views != null) lines.push(`- ${ref.views.toLocaleString()} views, ${ref.likes?.toLocaleString() ?? 0} likes, duração: ${ref.duration}`);
+      if (ref.tags && ref.tags.length > 0) lines.push(`- Tags: ${ref.tags.slice(0, 10).join(", ")}`);
+      if (ref.transcript && !ref.transcript.startsWith("[")) lines.push(`- Transcrição: ${ref.transcript.slice(0, 1000)}`);
+    }
+    if (ref.type === "website" && ref.content) {
+      lines.push(`- Conteúdo extraído: ${ref.content.slice(0, 1500)}`);
+    }
+    if (ref.searchResults && ref.searchResults.length > 0) {
+      lines.push(`- Contexto de mercado:`);
+      for (const r of ref.searchResults.slice(0, 3)) {
+        lines.push(`  · ${r.title}: ${r.snippet}`);
+      }
+    }
+    lines.push(`O roteiro deve usar informação concreta e específica desta referência. Não inventes dados — usa o que foi extraído.`);
+    return lines.join("\n");
+  };
+
   // ── STEP 4: Script ──
   const handleGenerateScript = async () => {
     if (!vp.selectedTitle) return;
     setVpLoading(true);
     try {
       const token = await getToken();
+      const referenceBlock = buildReferenceBlock();
       const reply = await callChat(
         `Escreve um roteiro completo para vídeo com o título: "${vp.selectedTitle}".
 Tema original: "${vp.theme}"
+${referenceBlock}
 
 REGRAS DE ESTRUTURA:
 - Exatamente ${vp.wordCount} palavras (pode variar ±10%)
@@ -695,6 +785,8 @@ REGRAS DE USO DO PERSONAGEM NOS PROMPTS:
       // Narration is always intended in this pipeline (step 6 = voice selection)
       const silentRule_VP = `   - No PROMPT inclui OBRIGATORIAMENTE: character speaking in ${getSpeechLangName(vp.speechLang)}: "[texto do DIALOGUE]" with appropriate emotion and gestures`;
 
+      const refBlock = buildReferenceBlock();
+
       const reply = await callChat(
         `Analisa este roteiro e divide-o em exatamente ${vp.sceneCount} cenas visuais para geração de vídeo IA.
 
@@ -702,6 +794,7 @@ ROTEIRO:
 ${vp.script}
 
 ${charSection}
+${refBlock}
 
 TOM E ENERGIA DAS CENAS: ${getSceneModeDesc(vp.sceneMode)}
 Adapta a linguagem, expressões, gestos e intensidade do personagem a este tom.
@@ -1660,8 +1753,56 @@ Negative: [negative prompt]
               rows={3}
               className="w-full rounded-xl border border-border bg-secondary/30 px-3 py-2 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:border-purple-400/40 resize-none"
             />
+
+            {/* Reference URL */}
+            <div className="space-y-2">
+              <p className="text-[10px] text-muted-foreground">{isPT ? "Referência (opcional) — vídeo YouTube ou site/produto" : "Reference (optional) — YouTube video or website/product"}</p>
+              <div className="flex gap-2">
+                <input
+                  value={vp.referenceUrl}
+                  onChange={(e) => setVp((p) => ({ ...p, referenceUrl: e.target.value }))}
+                  placeholder={isPT ? "Cola aqui o link de um vídeo YouTube ou site/produto (opcional)" : "Paste a YouTube video or website/product link (optional)"}
+                  className="flex-1 rounded-lg border border-border bg-secondary/30 px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500/50"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAnalyzeReference}
+                  disabled={!vp.referenceUrl.trim() || refLoading}
+                  className="gap-1 text-xs shrink-0"
+                >
+                  {refLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
+                  {isPT ? "Analisar" : "Analyze"}
+                </Button>
+              </div>
+
+              {vp.referenceContext && (
+                <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-2.5 space-y-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-medium bg-purple-600 text-white px-1.5 py-0.5 rounded">{isPT ? "Referência" : "Reference"} &#10003;</span>
+                    <span className="text-[10px] text-muted-foreground">{vp.referenceContext.type === "youtube" ? "YouTube" : "Website"}</span>
+                  </div>
+                  <p className="text-xs font-medium text-foreground leading-tight">{vp.referenceContext.title}</p>
+                  {vp.referenceContext.description && (
+                    <p className="text-[10px] text-muted-foreground line-clamp-2">{vp.referenceContext.description.slice(0, 200)}</p>
+                  )}
+                  <ul className="text-[10px] text-muted-foreground space-y-0.5">
+                    {vp.referenceContext.type === "youtube" && vp.referenceContext.views != null && (
+                      <li>&#8226; {vp.referenceContext.views.toLocaleString()} views &middot; {vp.referenceContext.likes?.toLocaleString() ?? 0} likes &middot; {vp.referenceContext.duration}</li>
+                    )}
+                    {vp.referenceContext.tags && vp.referenceContext.tags.length > 0 && (
+                      <li>&#8226; Tags: {vp.referenceContext.tags.slice(0, 5).join(", ")}</li>
+                    )}
+                    {vp.referenceContext.searchResults && vp.referenceContext.searchResults.length > 0 && (
+                      <li>&#8226; +{vp.referenceContext.searchResults.length} {isPT ? "resultados de contexto" : "context results"}</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+
             <Button onClick={handleGenerateTitles} disabled={!vp.theme.trim() || vpLoading} className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-sm">
-              {vpLoading ? <><Loader2 className="h-4 w-4 animate-spin" />A gerar títulos...</> : <><ArrowRight className="h-4 w-4" />Gerar 5 Títulos</>}
+              {vpLoading ? <><Loader2 className="h-4 w-4 animate-spin" />{isPT ? "A gerar títulos..." : "Generating titles..."}</> : <><ArrowRight className="h-4 w-4" />{isPT ? "Gerar 5 Títulos" : "Generate 5 Titles"}</>}
             </Button>
           </div>
         )}
