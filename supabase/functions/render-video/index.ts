@@ -31,28 +31,56 @@ type SubtitleStyle = {
 };
 
 const DEFAULT_SUBTITLE_STYLE: Required<SubtitleStyle> = {
-  fontSize: 32,
+  fontSize: 22,
   color: "#FFFFFF",
   background: "#00000080",
   position: "bottom",
 };
 
-function buildSubtitleClips(subtitles: Subtitle[], style: Required<SubtitleStyle>) {
+// Map numeric fontSize → Shotstack title `size` enum (x-small|small|medium|large|x-large)
+function fontSizeToShotstackSize(fontSize: number): string {
+  if (fontSize <= 22) return "x-small";
+  if (fontSize <= 26) return "small";
+  if (fontSize <= 32) return "medium";
+  if (fontSize <= 40) return "large";
+  return "x-large";
+}
+
+function fontSizeForAspect(aspectRatio?: string): number {
+  switch (aspectRatio) {
+    case "16:9": return 28;
+    case "1:1":  return 24;
+    case "9:16":
+    default:     return 22;
+  }
+}
+
+function buildSubtitleClips(
+  subtitles: Subtitle[],
+  style: Required<SubtitleStyle>,
+  trimEnd: number,
+) {
   return subtitles
     .filter((s) => s.text && typeof s.start === "number" && typeof s.duration === "number")
-    .map((s) => ({
-      asset: {
-        type: "title" as const,
-        text: s.text,
-        style: "subtitle",
-        color: style.color,
-        size: "medium",
-        background: style.background,
-        position: style.position,
-      },
-      start: Number(s.start.toFixed(3)),
-      length: s.duration,
-    }));
+    .map((s) => {
+      // Trim end so subtitles disappear before the next scene's transition begins
+      const length = Math.max(0.5, s.duration - trimEnd);
+      return {
+        asset: {
+          type: "title" as const,
+          text: s.text,
+          style: "subtitle",
+          color: style.color,
+          size: fontSizeToShotstackSize(style.fontSize),
+          background: style.background,
+          position: style.position,
+        },
+        // Push the subtitle up from the very bottom for breathing room
+        offset: { x: 0, y: 0.08 },
+        start: Number(s.start.toFixed(3)),
+        length: Number(length.toFixed(3)),
+      };
+    });
 }
 
 function shotstackBaseUrl(apiKey: string): string {
@@ -111,8 +139,15 @@ function buildTimeline(
   // Subtitle track sits ABOVE the video track (Shotstack renders track[0] on top)
   const tracks: Array<{ clips: Array<Record<string, unknown>> }> = [];
   if (subtitles && subtitles.length > 0) {
-    const style = { ...DEFAULT_SUBTITLE_STYLE, ...(subtitleStyle ?? {}) };
-    const subClips = buildSubtitleClips(subtitles, style);
+    const merged: Required<SubtitleStyle> = {
+      ...DEFAULT_SUBTITLE_STYLE,
+      fontSize: fontSizeForAspect(aspectRatio),
+      ...(subtitleStyle ?? {}),
+    };
+    // Each subtitle ends transitionDuration + 0.5s before the scene ends,
+    // so it disappears cleanly before the next scene's crossfade begins.
+    const trimEnd = transitionDuration + 0.5;
+    const subClips = buildSubtitleClips(subtitles, merged, trimEnd);
     if (subClips.length > 0) tracks.push({ clips: subClips });
   }
   tracks.push({ clips });
