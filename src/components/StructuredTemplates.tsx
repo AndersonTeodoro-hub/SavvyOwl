@@ -284,6 +284,14 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const vpRef = useRef(vp);
   useEffect(() => { vpRef.current = vp; }, [vp]);
 
+  // Auto-calc sceneCount from wordCount: ~20 spoken words per 8s scene (~150 wpm)
+  useEffect(() => {
+    const auto = Math.max(3, Math.ceil(vp.wordCount / 20));
+    if (auto !== vp.sceneCount) {
+      setVp((p) => ({ ...p, sceneCount: auto }));
+    }
+  }, [vp.wordCount, vp.sceneCount]);
+
   // Re-select character after navigation (same pattern as DarkPipelinePage)
   useEffect(() => {
     if (pipelineActive && vp.characterId && characters.length > 0 && !activeCharacter) {
@@ -1981,14 +1989,26 @@ Negative: [negative prompt]
             </div>
 
             <div>
-              <p className="text-[10px] text-muted-foreground mb-1">Número de cenas</p>
-              <div className="flex gap-1 flex-wrap">
-                {[3, 5, 7, 10, 15, 20].map((n) => (
-                  <button key={n} onClick={() => setVp((p) => ({ ...p, sceneCount: n }))}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${vp.sceneCount === n ? "bg-purple-600 text-white" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"}`}>
-                    {n}
-                  </button>
-                ))}
+              <p className="text-[10px] text-muted-foreground mb-1">{isPT ? "Número de cenas" : "Number of scenes"}</p>
+              <div className="p-2 rounded-lg border border-purple-500/40 bg-purple-500/5">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-base font-bold text-purple-500">
+                    {vp.sceneCount} {isPT ? "cenas" : "scenes"}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground">
+                    {isPT ? "calculado automaticamente" : "auto-calculated"}
+                  </span>
+                </div>
+                <p className="text-[9px] text-muted-foreground mt-0.5">
+                  {isPT
+                    ? `Baseado em ${vp.wordCount} palavras (~20 palavras por cena de 8s). Ajusta o número de palavras para mudar.`
+                    : `Based on ${vp.wordCount} words (~20 words per 8s scene). Adjust word count to change.`}
+                </p>
+                <p className="text-[9px] text-purple-500/80 mt-1">
+                  {isPT
+                    ? `Custo: ${vp.sceneCount} × 12 = ${vp.sceneCount * 12} créditos`
+                    : `Cost: ${vp.sceneCount} × 12 = ${vp.sceneCount * 12} credits`}
+                </p>
               </div>
             </div>
 
