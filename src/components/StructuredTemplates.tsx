@@ -904,6 +904,7 @@ Sem texto adicional fora deste formato.`,
           scenes: scenes.map((s) => ({ videoUrl: s.videoUrl, duration: vpRef.current.sceneDuration ?? 8 })),
           transition: finalVideoTransition,
           transitionDuration: 0.5,
+          aspectRatio: vpRef.current.aspectRatio,
         },
       });
       if (error) throw new Error(error.message);

@@ -29,10 +29,20 @@ function shotstackBaseUrl(apiKey: string): string {
   return `https://api.shotstack.io/${stage}`;
 }
 
+function aspectToSize(aspectRatio?: string): { width: number; height: number } {
+  switch (aspectRatio) {
+    case "16:9": return { width: 1920, height: 1080 };
+    case "1:1":  return { width: 1080, height: 1080 };
+    case "9:16":
+    default:     return { width: 1080, height: 1920 };
+  }
+}
+
 function buildTimeline(
   scenes: Scene[],
   transition: TransitionType,
   transitionDuration: number,
+  aspectRatio?: string,
 ) {
   const clips: Array<Record<string, unknown>> = [];
   let cursor = 0;
@@ -70,7 +80,7 @@ function buildTimeline(
     },
     output: {
       format: "mp4",
-      resolution: "hd",
+      size: aspectToSize(aspectRatio),
     },
   };
 }
@@ -80,8 +90,9 @@ async function submitRender(
   transition: TransitionType,
   transitionDuration: number,
   apiKey: string,
+  aspectRatio?: string,
 ) {
-  const payload = buildTimeline(scenes, transition, transitionDuration);
+  const payload = buildTimeline(scenes, transition, transitionDuration, aspectRatio);
   const resp = await fetch(`${shotstackBaseUrl(apiKey)}/render`, {
     method: "POST",
     headers: {
@@ -170,7 +181,8 @@ Deno.serve(async (req) => {
         }
       }
 
-      const result = await submitRender(scenes, transition, transitionDuration, shotstackKey);
+      const aspectRatio: string | undefined = body.aspectRatio;
+      const result = await submitRender(scenes, transition, transitionDuration, shotstackKey, aspectRatio);
       return json(result);
     }
 
