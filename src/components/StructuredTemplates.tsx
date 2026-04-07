@@ -187,6 +187,17 @@ const SPEECH_LANGS = [
   { id: "es",    label: "Español",         prompt: "en español" },
 ];
 
+const SUBTITLE_LANGS: { id: string; label: string; labelPT: string; name: string }[] = [
+  { id: "none",  label: "No subtitles",     labelPT: "Sem legenda",        name: "" },
+  { id: "pt-BR", label: "Portuguese (BR)",  labelPT: "Português (BR)",     name: "Brazilian Portuguese" },
+  { id: "pt-PT", label: "Portuguese (PT)",  labelPT: "Português (PT)",     name: "European Portuguese" },
+  { id: "en",    label: "English",          labelPT: "English",            name: "English" },
+  { id: "es",    label: "Español",          labelPT: "Español",            name: "Spanish" },
+  { id: "fr",    label: "Français",         labelPT: "Français",           name: "French" },
+  { id: "hi",    label: "Hindi",            labelPT: "Hindi",              name: "Hindi" },
+  { id: "zh",    label: "中文",              labelPT: "中文",                name: "Simplified Chinese" },
+];
+
 function getDefaultSpeechLang(lang: string): string {
   if (lang.startsWith("pt")) return "pt-BR";
   if (lang.startsWith("es")) return "es";
@@ -263,6 +274,7 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const [finalVideoTransition, setFinalVideoTransition] = useState<"fade" | "dissolve" | "slideLeft" | "slideRight">("fade");
   const [finalVideoRendering, setFinalVideoRendering] = useState(false);
   const [finalVideoError, setFinalVideoError] = useState<string | null>(null);
+  const [subtitleLang, setSubtitleLang] = useState<string>("none");
   const [vmSelectedVideo, setVmSelectedVideo] = useState<any>(null);
   const [vmFieldValues, setVmFieldValues] = useState<Record<string, string>>({});
 
@@ -898,13 +910,48 @@ Sem texto adicional fora deste formato.`,
     setFinalVideoRendering(true);
     setFinalVideoError(null);
     try {
+      const sceneDuration = vpRef.current.sceneDuration ?? 8;
+      const transitionDuration = 0.5;
+
+      // Build subtitles if a language is selected
+      let subtitles: Array<{ text: string; start: number; duration: number }> | undefined;
+      if (subtitleLang !== "none") {
+        const sourceLines = scenes.map((s, i) => `${i + 1}. ${(s.dialogueText || s.description || "").replace(/\s+/g, " ").trim()}`);
+        const langName = SUBTITLE_LANGS.find((l) => l.id === subtitleLang)?.name ?? subtitleLang;
+        const prompt = `Translate each numbered line to ${langName}. Keep the same numbering. Output ONLY the translated lines, one per line, no extra text.\n\n${sourceLines.join("\n")}`;
+        try {
+          const token = await getToken();
+          const reply = await callChat(prompt, token, null, "quick");
+          const translated = reply
+            .split("\n")
+            .map((l) => l.replace(/^\s*\d+[\.\)]\s*/, "").trim())
+            .filter((l) => l.length > 0);
+
+          subtitles = [];
+          let cursor = 0;
+          for (let i = 0; i < scenes.length; i++) {
+            const text = translated[i] ?? sourceLines[i].replace(/^\d+\.\s*/, "");
+            subtitles.push({
+              text,
+              start: Number(cursor.toFixed(3)),
+              duration: sceneDuration,
+            });
+            cursor += sceneDuration - (i === scenes.length - 1 ? 0 : transitionDuration);
+          }
+        } catch (e) {
+          console.warn("Subtitle translation failed, continuing without subtitles", e);
+          subtitles = undefined;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("render-video", {
         body: {
           action: "render",
-          scenes: scenes.map((s) => ({ videoUrl: s.videoUrl, duration: vpRef.current.sceneDuration ?? 8 })),
+          scenes: scenes.map((s) => ({ videoUrl: s.videoUrl, duration: sceneDuration })),
           transition: finalVideoTransition,
-          transitionDuration: 0.5,
+          transitionDuration,
           aspectRatio: vpRef.current.aspectRatio,
+          ...(subtitles && subtitles.length > 0 ? { subtitles } : {}),
         },
       });
       if (error) throw new Error(error.message);
@@ -2283,6 +2330,26 @@ Negative: [negative prompt]
 
                 {!vp.finalVideoUrl && (
                   <>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1">{isPT ? "Legendas" : "Subtitles"}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {SUBTITLE_LANGS.map((opt) => (
+                          <button
+                            key={opt.id}
+                            onClick={() => setSubtitleLang(opt.id)}
+                            disabled={finalVideoRendering}
+                            className={`px-2.5 py-1 rounded-full text-[11px] transition-all ${
+                              subtitleLang === opt.id
+                                ? "bg-purple-600 text-white"
+                                : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                            }`}
+                          >
+                            {isPT ? opt.labelPT : opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-1">{isPT ? "Transição" : "Transition"}</p>
                       <div className="flex flex-wrap gap-1.5">

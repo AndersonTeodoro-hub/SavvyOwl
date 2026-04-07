@@ -22,6 +22,38 @@ async function getUser(authHeader: string, supabaseUrl: string, serviceKey: stri
 
 type Scene = { videoUrl: string; duration: number };
 type TransitionType = "fade" | "dissolve" | "slideLeft" | "slideRight";
+type Subtitle = { text: string; start: number; duration: number };
+type SubtitleStyle = {
+  fontSize?: number;
+  color?: string;
+  background?: string;
+  position?: "bottom" | "center" | "top";
+};
+
+const DEFAULT_SUBTITLE_STYLE: Required<SubtitleStyle> = {
+  fontSize: 32,
+  color: "#FFFFFF",
+  background: "#00000080",
+  position: "bottom",
+};
+
+function buildSubtitleClips(subtitles: Subtitle[], style: Required<SubtitleStyle>) {
+  return subtitles
+    .filter((s) => s.text && typeof s.start === "number" && typeof s.duration === "number")
+    .map((s) => ({
+      asset: {
+        type: "title" as const,
+        text: s.text,
+        style: "subtitle",
+        color: style.color,
+        size: "medium",
+        background: style.background,
+        position: style.position,
+      },
+      start: Number(s.start.toFixed(3)),
+      length: s.duration,
+    }));
+}
 
 function shotstackBaseUrl(apiKey: string): string {
   // Sandbox keys typically start with "sk_" → use stage. Otherwise production v1.
@@ -43,6 +75,8 @@ function buildTimeline(
   transition: TransitionType,
   transitionDuration: number,
   aspectRatio?: string,
+  subtitles?: Subtitle[],
+  subtitleStyle?: SubtitleStyle,
 ) {
   const clips: Array<Record<string, unknown>> = [];
   let cursor = 0;
@@ -74,9 +108,18 @@ function buildTimeline(
     cursor += scene.duration - (isLast ? 0 : transitionDuration);
   }
 
+  // Subtitle track sits ABOVE the video track (Shotstack renders track[0] on top)
+  const tracks: Array<{ clips: Array<Record<string, unknown>> }> = [];
+  if (subtitles && subtitles.length > 0) {
+    const style = { ...DEFAULT_SUBTITLE_STYLE, ...(subtitleStyle ?? {}) };
+    const subClips = buildSubtitleClips(subtitles, style);
+    if (subClips.length > 0) tracks.push({ clips: subClips });
+  }
+  tracks.push({ clips });
+
   return {
     timeline: {
-      tracks: [{ clips }],
+      tracks,
     },
     output: {
       format: "mp4",
@@ -91,8 +134,10 @@ async function submitRender(
   transitionDuration: number,
   apiKey: string,
   aspectRatio?: string,
+  subtitles?: Subtitle[],
+  subtitleStyle?: SubtitleStyle,
 ) {
-  const payload = buildTimeline(scenes, transition, transitionDuration, aspectRatio);
+  const payload = buildTimeline(scenes, transition, transitionDuration, aspectRatio, subtitles, subtitleStyle);
   const resp = await fetch(`${shotstackBaseUrl(apiKey)}/render`, {
     method: "POST",
     headers: {
@@ -182,7 +227,17 @@ Deno.serve(async (req) => {
       }
 
       const aspectRatio: string | undefined = body.aspectRatio;
-      const result = await submitRender(scenes, transition, transitionDuration, shotstackKey, aspectRatio);
+      const subtitles: Subtitle[] | undefined = Array.isArray(body.subtitles) ? body.subtitles : undefined;
+      const subtitleStyle: SubtitleStyle | undefined = body.subtitleStyle;
+      const result = await submitRender(
+        scenes,
+        transition,
+        transitionDuration,
+        shotstackKey,
+        aspectRatio,
+        subtitles,
+        subtitleStyle,
+      );
       return json(result);
     }
 
