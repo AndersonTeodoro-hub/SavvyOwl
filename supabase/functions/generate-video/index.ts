@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         "veo3-fast": 15, "veo3-fast-i2v": 15, "veo3": 20,
         "wan26-t2v-flash": 8, "wan26-t2v": 8, "wan26-i2v-flash": 8, "wan26-i2v": 8,
         "wan26-r2v-flash": 8, "wan26-r2v": 8,
-        "seedance-t2v": 12, "seedance-i2v": 12,
+        "seedance-t2v": 12, "seedance-i2v": 12, "seedance-r2v": 12,
         "kling": 10, "kling-motion-standard": 20, "kling-motion-pro": 30,
       };
       const refundAmount = FAL_MODELS_REF[refundModel];
@@ -235,8 +235,9 @@ Deno.serve(async (req) => {
       "wan26-i2v":       { endpoint: "wan/v2.6/image-to-video",           credits: 8,  label: "Wan 2.6 I2V" },
       "wan26-r2v-flash": { endpoint: "wan/v2.6/reference-to-video/flash", credits: 8,  label: "Wan 2.6 R2V Flash" },
       "wan26-r2v":       { endpoint: "wan/v2.6/reference-to-video",       credits: 8,  label: "Wan 2.6 R2V" },
-      "seedance-t2v":           { endpoint: "fal-ai/bytedance/seedance/v1.5/pro/text-to-video",  credits: 12, label: "Seedance 1.5 Pro T2V" },
-      "seedance-i2v":           { endpoint: "fal-ai/bytedance/seedance/v1.5/pro/image-to-video", credits: 12, label: "Seedance 1.5 Pro I2V" },
+      "seedance-t2v":           { endpoint: "bytedance/seedance-2.0/text-to-video",       credits: 12, label: "Seedance 2.0 T2V" },
+      "seedance-i2v":           { endpoint: "bytedance/seedance-2.0/image-to-video",      credits: 12, label: "Seedance 2.0 I2V" },
+      "seedance-r2v":           { endpoint: "bytedance/seedance-2.0/reference-to-video",  credits: 12, label: "Seedance 2.0 R2V" },
       "kling":                  { endpoint: "fal-ai/kling-video/v2.1/pro",                credits: 10, label: "Kling 2.1 Pro" },
       "kling-motion-standard":  { endpoint: "fal-ai/kling-video/v3/standard/motion-control", credits: 20, label: "Kling v3 Motion Standard" },
       "kling-motion-pro":       { endpoint: "fal-ai/kling-video/v3/pro/motion-control",      credits: 30, label: "Kling v3 Motion Pro" },
@@ -271,10 +272,13 @@ Deno.serve(async (req) => {
     // Build request body
     const falBody: Record<string, unknown> = { prompt, aspect_ratio: ar };
     if (isSeedance) {
-      falBody.duration = "8";
+      falBody.duration = String(dur);
       falBody.resolution = "720p";
       falBody.generate_audio = true;
       if (selectedModel === "seedance-i2v" && referenceImageUrl) {
+        falBody.image_url = referenceImageUrl;
+      }
+      if (selectedModel === "seedance-r2v" && referenceImageUrl) {
         falBody.image_url = referenceImageUrl;
       }
     } else if (isKlingMotion) {
