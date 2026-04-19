@@ -143,7 +143,7 @@ interface VPState {
   titles: string[];
   selectedTitle: string;
   wordCount: number;
-  sceneDuration: 8;
+  sceneDuration: number;
   sceneCount: number;
   aspectRatio: string;
   speechLang: string;
@@ -231,7 +231,7 @@ function getSceneModeDesc(id: string): string {
 
 const EMPTY_VP: VPState = {
   theme: "", titles: [], selectedTitle: "", wordCount: 60,
-  sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: "pt-BR", sceneMode: "dynamic",
+  sceneDuration: 15, sceneCount: 5, aspectRatio: "9:16", speechLang: "pt-BR", sceneMode: "dynamic",
   script: "", characterId: null, characterName: null,
   characterVoiceId: null, referenceImageUrl: null,
   referenceUrl: "", referenceContext: null, scenes: [],
@@ -284,9 +284,9 @@ export function StructuredTemplates({ onSend, disabled }: Props) {
   const vpRef = useRef(vp);
   useEffect(() => { vpRef.current = vp; }, [vp]);
 
-  // Auto-calc sceneCount from wordCount: ~20 spoken words per 8s scene (~150 wpm)
+  // Auto-calc sceneCount from wordCount: ~37 spoken words per 15s scene (~150 wpm)
   useEffect(() => {
-    const auto = Math.max(3, Math.ceil(vp.wordCount / 20));
+    const auto = Math.max(3, Math.ceil(vp.wordCount / 37));
     if (auto !== vp.sceneCount) {
       setVp((p) => ({ ...p, sceneCount: auto }));
     }
@@ -918,7 +918,7 @@ Sem texto adicional fora deste formato.`,
     setFinalVideoRendering(true);
     setFinalVideoError(null);
     try {
-      const sceneDuration = vpRef.current.sceneDuration ?? 8;
+      const sceneDuration = vpRef.current.sceneDuration ?? 15;
       const transitionDuration = 0.5;
 
       // Build subtitles if a language is selected
@@ -1145,7 +1145,7 @@ Sem texto adicional fora deste formato.`,
     const fv = { ...fieldValues };
     setVmSelectedVideo(vid);
     setVmFieldValues(fv);
-    setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: 5, aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language), sceneMode: "dynamic" }));
+    setVp((p) => ({ ...p, sceneDuration: 15, sceneCount: 5, aspectRatio: "9:16", speechLang: getDefaultSpeechLang(i18n.language), sceneMode: "dynamic" }));
     setPipelineMode("viral-model");
     setPipelineActive(true);
     setVpStep("vm-adapt");
@@ -1625,7 +1625,7 @@ STEP 3 — EXECUTION PLAN: Which to do first, weekly calendar, how to iterate.`,
       const count = parseInt(fieldValues.scenes) || 5;
       const ar = fieldValues.aspect?.startsWith("16:9") ? "16:9" : fieldValues.aspect?.startsWith("1:1") ? "1:1" : "9:16";
       setSgFields({ ...fieldValues });
-      setVp((p) => ({ ...p, sceneDuration: 8, sceneCount: count, aspectRatio: ar }));
+      setVp((p) => ({ ...p, sceneDuration: 15, sceneCount: count, aspectRatio: ar }));
       setPipelineMode("scene-gen");
       setPipelineActive(true);
       setVpStep("sg-form");
@@ -2001,8 +2001,8 @@ Negative: [negative prompt]
                 </div>
                 <p className="text-[9px] text-muted-foreground mt-0.5">
                   {isPT
-                    ? `Baseado em ${vp.wordCount} palavras (~20 palavras por cena de 8s). Ajusta o número de palavras para mudar.`
-                    : `Based on ${vp.wordCount} words (~20 words per 8s scene). Adjust word count to change.`}
+                    ? `Baseado em ${vp.wordCount} palavras (~37 palavras por cena de 15s). Ajusta o número de palavras para mudar.`
+                    : `Based on ${vp.wordCount} words (~37 words per 15s scene). Adjust word count to change.`}
                 </p>
                 <p className="text-[9px] text-purple-500/80 mt-1">
                   {isPT
